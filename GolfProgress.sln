@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{129BE80A-EDC3-45E0-BEA6-A80B2E233B7F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GolfProgress.Api", "src\GolfProgress.Api\GolfProgress.Api.csproj", "{D989D8B7-2024-4778-B5C8-D7C09F4EC0FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GolfProgress.Domain", "src\GolfProgress.Domain\GolfProgress.Domain.csproj", "{AF2D0E4B-A062-49D6-BEC3-72CD5DA16DD0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GolfProgress.Infrastructure", "src\GolfProgress.Infrastructure\GolfProgress.Infrastructure.csproj", "{783ED7F2-7A13-4A33-8BAA-081CF7F260C7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D989D8B7-2024-4778-B5C8-D7C09F4EC0FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D989D8B7-2024-4778-B5C8-D7C09F4EC0FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D989D8B7-2024-4778-B5C8-D7C09F4EC0FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D989D8B7-2024-4778-B5C8-D7C09F4EC0FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF2D0E4B-A062-49D6-BEC3-72CD5DA16DD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF2D0E4B-A062-49D6-BEC3-72CD5DA16DD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF2D0E4B-A062-49D6-BEC3-72CD5DA16DD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF2D0E4B-A062-49D6-BEC3-72CD5DA16DD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{783ED7F2-7A13-4A33-8BAA-081CF7F260C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{783ED7F2-7A13-4A33-8BAA-081CF7F260C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{783ED7F2-7A13-4A33-8BAA-081CF7F260C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{783ED7F2-7A13-4A33-8BAA-081CF7F260C7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D989D8B7-2024-4778-B5C8-D7C09F4EC0FC} = {129BE80A-EDC3-45E0-BEA6-A80B2E233B7F}
+		{AF2D0E4B-A062-49D6-BEC3-72CD5DA16DD0} = {129BE80A-EDC3-45E0-BEA6-A80B2E233B7F}
+		{783ED7F2-7A13-4A33-8BAA-081CF7F260C7} = {129BE80A-EDC3-45E0-BEA6-A80B2E233B7F}
+	EndGlobalSection
+EndGlobal
