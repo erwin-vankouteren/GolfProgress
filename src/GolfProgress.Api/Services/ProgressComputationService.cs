@@ -59,7 +59,7 @@ public sealed class ProgressComputationService
         return (baseline, fitness);
     }
 
-    private static decimal ComputeCompleteness(List<Round> rounds)
+    internal static decimal ComputeCompleteness(List<Round> rounds)
     {
         if (rounds.Count == 0) return 0m;
 
@@ -80,7 +80,7 @@ public sealed class ProgressComputationService
         return totalPossible == 0 ? 0m : (decimal)available / totalPossible;
     }
 
-    private static ConfidenceLevel ConfidenceFrom(int sampleCount, decimal completenessRatio)
+    internal static ConfidenceLevel ConfidenceFrom(int sampleCount, decimal completenessRatio)
     {
         if (sampleCount >= 8 && completenessRatio >= 0.5m) return ConfidenceLevel.High;
         if (sampleCount >= 4) return ConfidenceLevel.Medium;
@@ -177,7 +177,7 @@ public sealed class ProgressComputationService
         return existing;
     }
 
-    private static (short execution, short damage, short consistency, short habits) ComputePillars(Round r, UserBaseline b)
+    internal static (short execution, short damage, short consistency, short habits) ComputePillars(Round r, UserBaseline b)
     {
         // Very simple v1 scoring (0..25 each). Improve later.
         // Execution: better score than baseline => higher
@@ -208,14 +208,14 @@ public sealed class ProgressComputationService
         return (execution, damage, consistency, habits);
     }
 
-    private static decimal? AvgNullable(IEnumerable<short?> values)
+    internal static decimal? AvgNullable(IEnumerable<short?> values)
     {
         var list = values.Where(v => v != null).Select(v => (decimal)v!.Value).ToList();
         if (list.Count == 0) return null;
         return list.Average();
     }
 
-    private static decimal StdDev(IEnumerable<decimal> values)
+    internal static decimal StdDev(IEnumerable<decimal> values)
     {
         var list = values.ToList();
         if (list.Count < 2) return 0m;
