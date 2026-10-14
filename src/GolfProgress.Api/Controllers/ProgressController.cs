@@ -1,4 +1,3 @@
-﻿using GolfProgress.Api.Caching;
 using GolfProgress.Api.Contracts.Progress;
 using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
@@ -6,7 +5,6 @@ using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -16,34 +14,29 @@ public sealed class ProgressController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
     private readonly ProgressComputationService _svc;
-    private readonly IMemoryCache _cache;
 
-    public ProgressController(GolfProgressDbContext db, ProgressComputationService svc, IMemoryCache cache)
+    public ProgressController(GolfProgressDbContext db, ProgressComputationService svc)
     {
         _db = db;
         _svc = svc;
-        _cache = cache;
     }
 
     // POST /rounds/{roundId}/compute
     [HttpPost("/rounds/{roundId:guid}/compute")]
     public async Task<ActionResult> Compute(Guid roundId, CancellationToken ct)
     {
-        await _svc.ComputeForRoundAsync(roundId, windowN: 5, ct);
+        var userId = User.GetUserId();
+        if (!await _db.OwnsRoundAsync(roundId, userId, ct)) return NotFound();
+
+        await _svc.ComputeForRoundAsync(roundId, userId, windowN: 5, ct);
         return NoContent();
     }
 
-    [Authorize(Roles ="Admin")]
     // GET /me/baseline
     [HttpGet("/me/baseline")]
     public async Task<ActionResult<UserBaselineResponse>> GetBaseline(CancellationToken ct)
     {
         var userId = User.GetUserId();
-        var cacheKey = $"baseline:{userId}";
-
-        if (_cache.TryGetValue(cacheKey, out UserBaselineResponse cached))
-            return Ok(cached);
-
 
         var b = await _db.UserBaselines.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == userId, ct);
         if (b is null) return NotFound();
@@ -70,7 +63,10 @@ public sealed class ProgressController : ControllerBase
     [HttpGet("/rounds/{roundId:guid}/fitness-score")]
     public async Task<ActionResult<FitnessScoreResponse>> GetFitnessScore(Guid roundId, CancellationToken ct)
     {
-        var fs = await _db.FitnessScores.AsNoTracking().FirstOrDefaultAsync(x => x.RoundId == roundId, ct);
+        var userId = User.GetUserId();
+
+        var fs = await _db.FitnessScores.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.RoundId == roundId && x.UserId == userId, ct);
         if (fs is null) return NotFound();
 
         return Ok(new FitnessScoreResponse

@@ -68,7 +68,7 @@ public sealed class DashboardService
                 .ToListAsync(ct);
 
             var (leverKey, title, rec, rationale, conf) =
-                await _nextLeverSvc.RecommendAsync(lastRound.RoundId, ct);
+                await _nextLeverSvc.RecommendAsync(lastRound.RoundId, userId, ct);
 
             nextLever = new NextLeverResponse
             {

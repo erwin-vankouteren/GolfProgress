@@ -1,4 +1,5 @@
-﻿using GolfProgress.Api.Contracts.Reflections;
+using GolfProgress.Api.Contracts.Reflections;
+using GolfProgress.Api.Security;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -20,7 +21,9 @@ public sealed class ReflectionsController : ControllerBase
     [HttpPost("/rounds/{roundId:guid}/reflections")]
     public async Task<ActionResult<ReflectionResponse>> Create(Guid roundId, [FromBody] CreateReflectionRequest request, CancellationToken ct)
     {
-        var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId, ct);
+        var userId = User.GetUserId();
+
+        var round = await _db.FindOwnedRoundAsync(roundId, userId, ct);
         if (round is null) return NotFound($"Round {roundId} not found.");
 
         var now = DateTimeOffset.UtcNow;
@@ -28,7 +31,7 @@ public sealed class ReflectionsController : ControllerBase
         var reflection = new Reflection
         {
             ReflectionId = Guid.NewGuid(),
-            UserId = round.UserId,
+            UserId = userId,
             RoundId = roundId,
             FocusRating = request.FocusRating,
             MoodRating = request.MoodRating,
@@ -44,7 +47,7 @@ public sealed class ReflectionsController : ControllerBase
         _db.Events.Add(new EventLog
         {
             EventLogId = Guid.NewGuid(),
-            UserId = round.UserId,
+            UserId = userId,
             EventType = "ReflectionAdded",
             RelatedId = roundId,
             PayloadJson = JsonDocument.Parse("{\"reflectionId\":\"" + reflection.ReflectionId + "\"}", new JsonDocumentOptions()),
@@ -60,8 +63,11 @@ public sealed class ReflectionsController : ControllerBase
     [HttpGet("/rounds/{roundId:guid}/reflections")]
     public async Task<ActionResult<List<ReflectionResponse>>> List(Guid roundId, CancellationToken ct)
     {
+        var userId = User.GetUserId();
+        if (!await _db.OwnsRoundAsync(roundId, userId, ct)) return NotFound();
+
         var items = await _db.Reflections.AsNoTracking()
-            .Where(r => r.RoundId == roundId)
+            .Where(r => r.RoundId == roundId && r.UserId == userId)
             .OrderByDescending(r => r.CreatedAt)
             .Select(r => ToResponse(r))
             .ToListAsync(ct);

@@ -12,9 +12,9 @@ public sealed class MicroWinsService
 
     public MicroWinsService(GolfProgressDbContext db) => _db = db;
 
-    public async Task<List<MicroWin>> GenerateForRoundAsync(Guid roundId, CancellationToken ct)
+    public async Task<List<MicroWin>> GenerateForRoundAsync(Guid roundId, Guid userId, CancellationToken ct)
     {
-        var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId, ct)
+        var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
             ?? throw new InvalidOperationException($"Round {roundId} not found.");
 
         var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == round.UserId, ct)

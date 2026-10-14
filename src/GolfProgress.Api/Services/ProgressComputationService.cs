@@ -12,9 +12,9 @@ public sealed class ProgressComputationService
 
     public ProgressComputationService(GolfProgressDbContext db) => _db = db;
 
-    public async Task<(UserBaseline baseline, FitnessScore fitness)> ComputeForRoundAsync(Guid roundId, short windowN, CancellationToken ct)
+    public async Task<(UserBaseline baseline, FitnessScore fitness)> ComputeForRoundAsync(Guid roundId, Guid userId, short windowN, CancellationToken ct)
     {
-        var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId, ct)
+        var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
             ?? throw new InvalidOperationException($"Round {roundId} not found.");
 
         // Baseline rounds: last N rounds BEFORE this round (date-based)
