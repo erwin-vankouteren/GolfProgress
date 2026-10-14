@@ -1,5 +1,4 @@
 ﻿using GolfProgress.Api.Contracts.Auth;
-using GolfProgress.Api.Contracts.Auth;
 using GolfProgress.Api.Services;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
@@ -17,15 +16,13 @@ public sealed class AuthController : ControllerBase
     private readonly GolfProgressDbContext _db;
     private readonly IPasswordHasher<User> _hasher;
     private readonly JwtTokenService _jwt;
-    private readonly IConfiguration _config;
     private readonly RefreshTokenService _refresh;
 
-    public AuthController(GolfProgressDbContext db, IPasswordHasher<User> hasher, JwtTokenService jwt, IConfiguration config, RefreshTokenService refresh)
+    public AuthController(GolfProgressDbContext db, IPasswordHasher<User> hasher, JwtTokenService jwt, RefreshTokenService refresh)
     {
         _db = db;
         _hasher = hasher;
         _jwt = jwt;
-        _config = config;
         _refresh = refresh;
     }
 
@@ -62,7 +59,7 @@ public sealed class AuthController : ControllerBase
         await _db.SaveChangesAsync(ct);
 
         var token = _jwt.CreateToken(user);
-        var expiresMinutes = int.Parse(_config["Jwt:ExpiresMinutes"]!);
+        var expiresMinutes = _jwt.ExpiresMinutes;
 
         var (rawRefresh, refreshHash) = _refresh.GenerateToken();
         await _refresh.StoreAsync(user.UserId, refreshHash, ct);
@@ -94,7 +91,7 @@ public sealed class AuthController : ControllerBase
         if (result == PasswordVerificationResult.Failed) return Unauthorized();
 
         var token = _jwt.CreateToken(user);
-        var expiresMinutes = int.Parse(_config["Jwt:ExpiresMinutes"]!);
+        var expiresMinutes = _jwt.ExpiresMinutes;
 
         var (rawRefresh, refreshHash) = _refresh.GenerateToken();
         await _refresh.StoreAsync(user.UserId, refreshHash, ct);
@@ -129,7 +126,7 @@ public sealed class AuthController : ControllerBase
 
         // Issue new access token
         var accessToken = _jwt.CreateToken(user);
-        var expiresMinutes = int.Parse(_config["Jwt:ExpiresMinutes"]!);
+        var expiresMinutes = _jwt.ExpiresMinutes;
 
         return Ok(new AuthResponse
         {

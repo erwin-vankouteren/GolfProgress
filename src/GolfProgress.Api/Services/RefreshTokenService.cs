@@ -1,6 +1,8 @@
-﻿using GolfProgress.Domain.Entities;
+using GolfProgress.Api.Configuration;
+using GolfProgress.Domain.Entities;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -9,12 +11,12 @@ namespace GolfProgress.Api.Services;
 public sealed class RefreshTokenService
 {
     private readonly GolfProgressDbContext _db;
-    private readonly IConfiguration _config;
+    private readonly RefreshTokenOptions _options;
 
-    public RefreshTokenService(GolfProgressDbContext db, IConfiguration config)
+    public RefreshTokenService(GolfProgressDbContext db, IOptions<RefreshTokenOptions> options)
     {
         _db = db;
-        _config = config;
+        _options = options.Value;
     }
 
     public (string rawToken, string tokenHash) GenerateToken()
@@ -28,7 +30,6 @@ public sealed class RefreshTokenService
 
     public async Task<RefreshToken> StoreAsync(Guid userId, string tokenHash, CancellationToken ct)
     {
-        var days = int.Parse(_config["RefreshTokens:ExpiresDays"] ?? "14");
         var now = DateTimeOffset.UtcNow;
 
         var rt = new RefreshToken
@@ -37,7 +38,7 @@ public sealed class RefreshTokenService
             UserId = userId,
             TokenHash = tokenHash,
             CreatedAt = now,
-            ExpiresAt = now.AddDays(days)
+            ExpiresAt = now.AddDays(_options.ExpiresDays)
         };
 
         _db.RefreshTokens.Add(rt);
