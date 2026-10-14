@@ -27,20 +27,25 @@ public sealed class ProgressComputationService
         var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
             ?? throw new InvalidOperationException($"Round {roundId} not found.");
 
-        // Baseline rounds: last N rounds BEFORE this round (date-based)
-        var priorRounds = await _db.Rounds.AsNoTracking()
-            .Where(r => r.UserId == round.UserId && (r.PlayedAt < round.PlayedAt || (r.PlayedAt == round.PlayedAt && r.RoundId != round.RoundId)))
-            .OrderByDescending(r => r.PlayedAt)
-            .Take(windowN)
-            .ToListAsync(ct);
+        // Two different baselines, for two different jobs.
+        //
+        // The SCORING baseline is the window of rounds played before this one --
+        // the yardstick this round is judged against. It is never persisted,
+        // because it belongs to this round rather than to the user.
+        var priorRounds = await RecentRoundsAsync(round.UserId, windowN, before: round, ct);
+        var scoringBaseline = BuildBaseline(round.UserId, windowN, priorRounds);
 
-        var completeness = ComputeCompleteness(priorRounds);
-        var confidence = ConfidenceFrom(priorRounds.Count, completeness);
+        var fitness = await UpsertFitnessScoreAsync(
+            round, scoringBaseline, scoringBaseline.ConfidenceLevel, ct);
 
-        var baseline = await UpsertBaselineAsync(round.UserId, windowN, priorRounds, completeness, confidence, ct);
-
-        // Compute FitnessScore vs baseline (simple v1)
-        var fitness = await UpsertFitnessScoreAsync(round, baseline, confidence, ct);
+        // The CURRENT baseline is the user's most recent rounds, and is what
+        // UserBaselines stores and GET /me/baseline serves. It is recomputed from
+        // scratch on every call and does not depend on which round was just scored,
+        // so recomputing an old round can no longer overwrite it with a stale
+        // window. Any compute leaves it correct.
+        var currentRounds = await RecentRoundsAsync(round.UserId, windowN, before: null, ct);
+        var baseline = await UpsertCurrentBaselineAsync(
+            BuildBaseline(round.UserId, windowN, currentRounds), ct);
 
         // Emit events (append-only)
         var now = DateTimeOffset.UtcNow;
@@ -97,46 +102,88 @@ public sealed class ProgressComputationService
         return ConfidenceLevel.Low;
     }
 
-    private async Task<UserBaseline> UpsertBaselineAsync(Guid userId, short windowN, List<Round> rounds, decimal completeness, ConfidenceLevel confidence, CancellationToken ct)
+    /// <summary>
+    /// The user's most recent <paramref name="windowN"/> rounds, newest first.
+    /// When <paramref name="before"/> is supplied, only rounds played before it are
+    /// considered -- same-day rounds count as prior, matching the original window.
+    /// </summary>
+    private Task<List<Round>> RecentRoundsAsync(
+        Guid userId, short windowN, Round? before, CancellationToken ct)
     {
-        decimal? avgScore = rounds.Count == 0 ? null : (decimal)rounds.Average(r => r.TotalStrokes);
-        decimal? std = rounds.Count < 2 ? null : StdDev(rounds.Select(r => (decimal)r.TotalStrokes));
+        var query = _db.Rounds.AsNoTracking().Where(r => r.UserId == userId);
 
-        decimal? avgPutts = AvgNullable(rounds.Select(r => r.TotalPutts));
-        decimal? avgPen = AvgNullable(rounds.Select(r => r.Penalties));
-        decimal? avg3p = AvgNullable(rounds.Select(r => r.ThreePutts));
-        decimal? avgBlow = AvgNullable(rounds.Select(r => r.BlowUpHoles));
-        decimal? avgFair = AvgNullable(rounds.Select(r => r.FairwaysHit));
-        decimal? avgGir = AvgNullable(rounds.Select(r => r.Gir));
+        if (before is not null)
+        {
+            query = query.Where(r =>
+                r.PlayedAt < before.PlayedAt ||
+                (r.PlayedAt == before.PlayedAt && r.RoundId != before.RoundId));
+        }
 
-        var existing = await _db.UserBaselines.FirstOrDefaultAsync(b => b.UserId == userId, ct);
+        return query
+            .OrderByDescending(r => r.PlayedAt)
+            // PlayedAt is a date, so rounds on the same day tie. Without a
+            // tiebreaker the window was whatever order SQL Server happened to
+            // return, which could differ between runs on identical data (#10).
+            .ThenByDescending(r => r.CreatedAt)
+            .Take(windowN)
+            .ToListAsync(ct);
+    }
 
-        var now = DateTimeOffset.UtcNow;
+    /// <summary>
+    /// Computes baseline statistics from a set of rounds. Pure: nothing is read
+    /// from or written to the database, so the same rounds always give the same
+    /// baseline.
+    /// </summary>
+    internal static UserBaseline BuildBaseline(Guid userId, short windowN, List<Round> rounds)
+    {
+        var completeness = ComputeCompleteness(rounds);
+
+        return new UserBaseline
+        {
+            UserId = userId,
+            WindowRounds = windowN,
+            AvgScore = rounds.Count == 0 ? null : (decimal)rounds.Average(r => r.TotalStrokes),
+            ScoreStdDev = rounds.Count < 2 ? null : StdDev(rounds.Select(r => (decimal)r.TotalStrokes)),
+            AvgPutts = AvgNullable(rounds.Select(r => r.TotalPutts)),
+            AvgPenalties = AvgNullable(rounds.Select(r => r.Penalties)),
+            AvgThreePutts = AvgNullable(rounds.Select(r => r.ThreePutts)),
+            AvgBlowUpHoles = AvgNullable(rounds.Select(r => r.BlowUpHoles)),
+            AvgFairwaysHit = AvgNullable(rounds.Select(r => r.FairwaysHit)),
+            AvgGir = AvgNullable(rounds.Select(r => r.Gir)),
+            CompletenessRatio = completeness,
+            ConfidenceLevel = ConfidenceFrom(rounds.Count, completeness),
+            ComputedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    /// <summary>Writes the user's single current baseline row.</summary>
+    private async Task<UserBaseline> UpsertCurrentBaselineAsync(
+        UserBaseline computed, CancellationToken ct)
+    {
+        var existing = await _db.UserBaselines
+            .FirstOrDefaultAsync(b => b.UserId == computed.UserId, ct);
 
         if (existing is null)
         {
-            existing = new UserBaseline
-            {
-                UserId = userId,
-                WindowRounds = windowN
-            };
-            _db.UserBaselines.Add(existing);
+            _db.UserBaselines.Add(computed);
+            await _db.SaveChangesAsync(ct);
+            return computed;
         }
 
-        existing.WindowRounds = windowN;
-        existing.AvgScore = avgScore;
-        existing.ScoreStdDev = std;
+        existing.WindowRounds = computed.WindowRounds;
+        existing.AvgScore = computed.AvgScore;
+        existing.ScoreStdDev = computed.ScoreStdDev;
 
-        existing.AvgPutts = avgPutts;
-        existing.AvgPenalties = avgPen;
-        existing.AvgThreePutts = avg3p;
-        existing.AvgBlowUpHoles = avgBlow;
-        existing.AvgFairwaysHit = avgFair;
-        existing.AvgGir = avgGir;
+        existing.AvgPutts = computed.AvgPutts;
+        existing.AvgPenalties = computed.AvgPenalties;
+        existing.AvgThreePutts = computed.AvgThreePutts;
+        existing.AvgBlowUpHoles = computed.AvgBlowUpHoles;
+        existing.AvgFairwaysHit = computed.AvgFairwaysHit;
+        existing.AvgGir = computed.AvgGir;
 
-        existing.CompletenessRatio = completeness;
-        existing.ConfidenceLevel = confidence;
-        existing.ComputedAt = now;
+        existing.CompletenessRatio = computed.CompletenessRatio;
+        existing.ConfidenceLevel = computed.ConfidenceLevel;
+        existing.ComputedAt = computed.ComputedAt;
 
         await _db.SaveChangesAsync(ct);
         return existing;
