@@ -1,12 +1,12 @@
-﻿using GolfProgress.Infrastructure.Persistence;
+using GolfProgress.Api.Configuration;
+using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using GolfProgress.Domain.Entities;
-using Microsoft.AspNetCore.Authentication;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,30 +16,56 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-// Password hashing (recommended instead of low-level PBKDF2 for new apps) [2](https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/consumer-apis/password-hashing?view=aspnetcore-10.0)[3](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.identity.passwordhasher-1?view=aspnetcore-10.0)
+// ---------- Configuration (validated at startup, so misconfiguration fails fast
+// with a readable message instead of an obscure crash on first request)
+
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+    .ValidateDataAnnotations()
+    .Validate(
+        o => Encoding.UTF8.GetByteCount(o.Key) >= JwtOptions.MinimumKeyBytes,
+        $"Jwt:Key must be at least {JwtOptions.MinimumKeyBytes} bytes for HMAC-SHA256. " +
+        "Supply it via user-secrets, the Jwt__Key environment variable, or Key Vault — never appsettings.json.")
+    .ValidateOnStart();
+
+builder.Services.AddOptions<RefreshTokenOptions>()
+    .Bind(builder.Configuration.GetSection(RefreshTokenOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection is not configured. Supply it via user-secrets, " +
+        "the ConnectionStrings__DefaultConnection environment variable, or Key Vault.");
+}
+
+// Password hashing (recommended instead of low-level PBKDF2 for new apps)
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
-// JWT auth (recommended for API auth) [1](https://learn.microsoft.com/en-us/azure/azure-sql/database/azure-sql-dotnet-quickstart?view=azuresql)
+// JWT auth. The signing key is read from the same validated options the token
+// service uses, so issuing and validating can never drift apart.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var jwt = builder.Configuration.GetSection("Jwt");
+        var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()!;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwt["Issuer"],
-            ValidAudience = jwt["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!))
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key))
         };
     });
 builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<GolfProgressDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-    sqloptions => 
+    options.UseSqlServer(connectionString,
+    sqloptions =>
     {
         sqloptions.EnableRetryOnFailure(
             maxRetryCount: 5,
@@ -70,8 +96,4 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
-
-
 app.Run();
-
