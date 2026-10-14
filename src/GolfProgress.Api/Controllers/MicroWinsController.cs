@@ -1,4 +1,5 @@
-﻿using GolfProgress.Api.Contracts.MicroWins;
+using GolfProgress.Api.Contracts.MicroWins;
+using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -24,7 +25,10 @@ public sealed class MicroWinsController : ControllerBase
     [HttpPost("/rounds/{roundId:guid}/micro-wins/generate")]
     public async Task<ActionResult<GenerateMicroWinsResponse>> Generate(Guid roundId, CancellationToken ct)
     {
-        var wins = await _svc.GenerateForRoundAsync(roundId, ct);
+        var userId = User.GetUserId();
+        if (!await _db.OwnsRoundAsync(roundId, userId, ct)) return NotFound();
+
+        var wins = await _svc.GenerateForRoundAsync(roundId, userId, ct);
 
         return Ok(new GenerateMicroWinsResponse
         {
@@ -38,8 +42,11 @@ public sealed class MicroWinsController : ControllerBase
     [HttpGet("/rounds/{roundId:guid}/micro-wins")]
     public async Task<ActionResult<List<MicroWinResponse>>> Get(Guid roundId, CancellationToken ct)
     {
+        var userId = User.GetUserId();
+        if (!await _db.OwnsRoundAsync(roundId, userId, ct)) return NotFound();
+
         var items = await _db.MicroWins.AsNoTracking()
-            .Where(mw => mw.RoundId == roundId)
+            .Where(mw => mw.RoundId == roundId && mw.UserId == userId)
             .OrderBy(mw => mw.CreatedAt)
             .ToListAsync(ct);
 

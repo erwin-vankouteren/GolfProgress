@@ -89,8 +89,9 @@ public sealed class RoundsController : ControllerBase
     [HttpGet("/rounds/{id:guid}")]
     public async Task<ActionResult<RoundResponse>> GetById(Guid id, CancellationToken ct)
     {
-        var round = await _db.Rounds.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.RoundId == id, ct);
+        var userId = User.GetUserId();
+
+        var round = await _db.FindOwnedRoundReadOnlyAsync(id, userId, ct);
 
         if (round is null) return NotFound();
 

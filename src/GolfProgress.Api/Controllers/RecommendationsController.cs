@@ -1,9 +1,9 @@
-﻿using GolfProgress.Api.Contracts.Recommendations;
+using GolfProgress.Api.Contracts.Recommendations;
+using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -24,16 +24,18 @@ public sealed class RecommendationsController : ControllerBase
     [HttpPost("/rounds/{roundId:guid}/next-lever")]
     public async Task<ActionResult<NextLeverResponse>> Recommend(Guid roundId, CancellationToken ct)
     {
-        var round = await _db.Rounds.AsNoTracking().FirstOrDefaultAsync(r => r.RoundId == roundId, ct);
+        var userId = User.GetUserId();
+
+        var round = await _db.FindOwnedRoundReadOnlyAsync(roundId, userId, ct);
         if (round is null) return NotFound();
 
-        var (leverKey, title, rec, rationale, confidence) = await _svc.RecommendAsync(roundId, ct);
-        await _svc.LogEventAsync(round.UserId, roundId, leverKey, ct);
+        var (leverKey, title, rec, rationale, confidence) = await _svc.RecommendAsync(roundId, userId, ct);
+        await _svc.LogEventAsync(userId, roundId, leverKey, ct);
 
         return Ok(new NextLeverResponse
         {
             RoundId = roundId,
-            UserId = round.UserId,
+            UserId = userId,
             LeverKey = leverKey,
             Title = title,
             Recommendation = rec,
