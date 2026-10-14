@@ -97,3 +97,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+// Exposed so WebApplicationFactory<Program> can reference the entry point;
+// top-level statements otherwise generate an internal Program class.
+public partial class Program { }
