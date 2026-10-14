@@ -8,6 +8,16 @@ namespace GolfProgress.Api.Services;
 
 public sealed class ProgressComputationService
 {
+    /// <summary>Highest score any single pillar can contribute.</summary>
+    internal const short PillarMax = 25;
+
+    /// <summary>
+    /// Score used when there is no evidence to judge a pillar on -- neither good nor
+    /// bad. Deliberately below <see cref="PillarMax"/> so that absent data is never
+    /// rewarded as if it were a clean result.
+    /// </summary>
+    internal const short PillarNeutral = 12;
+
     private readonly GolfProgressDbContext _db;
 
     public ProgressComputationService(GolfProgressDbContext db) => _db = db;
@@ -179,23 +189,29 @@ public sealed class ProgressComputationService
 
     internal static (short execution, short damage, short consistency, short habits) ComputePillars(Round r, UserBaseline b)
     {
-        // Very simple v1 scoring (0..25 each). Improve later.
+        // Very simple v1 scoring (0..PillarMax each). Improve later.
         // Execution: better score than baseline => higher
-        short execution = 12;
+        short execution = PillarNeutral;
         if (b.AvgScore != null)
         {
             var diff = (decimal)r.TotalStrokes - b.AvgScore.Value; // negative is good
-            execution = (short)Math.Clamp(12 - (int)Math.Round(diff), 0, 25);
+            execution = (short)Math.Clamp(PillarNeutral - (int)Math.Round(diff), 0, PillarMax);
         }
 
-        // Damage control: penalties + blow-up holes
-        short damage = 12;
-        int pen = r.Penalties ?? 0;
-        int blow = r.BlowUpHoles ?? 0;
-        damage = (short)Math.Clamp(25 - (pen * 4) - (blow * 2), 0, 25);
+        // Damage control: penalties + blow-up holes.
+        //
+        // A null metric means "not tracked", not "zero". Reading it as zero awarded
+        // an untracked round the full 25, so tracking less scored better than
+        // tracking honestly -- the opposite of what the confidence model elsewhere
+        // in this service is for. Instead, each untracked metric lowers the
+        // attainable ceiling toward the neutral midpoint, so a perfect damage score
+        // requires actual evidence. Deductions themselves are unchanged.
+        short damage = (short)Math.Clamp(
+            DamageCeiling(r) - ((r.Penalties ?? 0) * 4) - ((r.BlowUpHoles ?? 0) * 2),
+            0, PillarMax);
 
         // Consistency: reward staying within 1 std dev of baseline
-        short consistency = 12;
+        short consistency = PillarNeutral;
         if (b.ScoreStdDev != null && b.AvgScore != null && b.ScoreStdDev.Value > 0)
         {
             var within = Math.Abs((decimal)r.TotalStrokes - b.AvgScore.Value) <= b.ScoreStdDev.Value;
@@ -206,6 +222,27 @@ public sealed class ProgressComputationService
         short habits = 10;
 
         return (execution, damage, consistency, habits);
+    }
+
+    /// <summary>
+    /// The highest damage-control score a round can reach, given how many of its two
+    /// damage metrics were actually tracked.
+    ///
+    /// With both tracked the full <see cref="PillarMax"/> is attainable. With neither,
+    /// there is no evidence either way and the score is the neutral
+    /// <see cref="PillarNeutral"/>. With one, the ceiling is the midpoint of those two
+    /// -- so partial evidence earns a partial ceiling rather than full marks.
+    /// </summary>
+    internal static short DamageCeiling(Round r)
+    {
+        var tracked = (r.Penalties.HasValue ? 1 : 0) + (r.BlowUpHoles.HasValue ? 1 : 0);
+
+        return tracked switch
+        {
+            2 => PillarMax,
+            1 => (short)((PillarMax + PillarNeutral) / 2),
+            _ => PillarNeutral
+        };
     }
 
     internal static decimal? AvgNullable(IEnumerable<short?> values)

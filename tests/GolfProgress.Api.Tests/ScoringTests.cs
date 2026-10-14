@@ -75,23 +75,62 @@ public sealed class ScoringTests
     }
 
     /// <summary>
-    /// Documents CURRENT behaviour, which is wrong. See issue #27.
-    /// Missing penalty/blow-up data is coerced to zero, so a round that tracked
-    /// nothing scores full marks while an honest round reporting 2 penalties
-    /// scores 17. Update this test when #27 is fixed.
+    /// Regression guard for issue #27. A null metric means "not tracked", not
+    /// "zero", so an untracked round must not reach the full 25.
+    /// </summary>
+    [Theory]
+    // penalties, blowUps, expected
+    [InlineData(null, null, 12)]   // no evidence either way -> neutral
+    [InlineData(null, (short)0, 18)]   // half tracked, clean -> half ceiling
+    [InlineData((short)0, null, 18)]
+    [InlineData((short)0, (short)0, 25)]   // fully tracked and clean -> full marks
+    [InlineData((short)2, null, 10)]   // 18 ceiling - 8 for two penalties
+    [InlineData((short)2, (short)0, 17)]   // 25 ceiling - 8
+    public void DamageControl_UntrackedMetricsLowerTheCeiling_Issue27(
+        short? penalties, short? blowUps, int expected)
+    {
+        var (_, damage, _, _) = ProgressComputationService.ComputePillars(
+            RoundWith(penalties: penalties, blowUps: blowUps), BaselineWith());
+
+        Assert.Equal(expected, damage);
+    }
+
+    /// <summary>
+    /// The core of issue #27: tracking honestly must never score worse than
+    /// tracking nothing at all.
     /// </summary>
     [Fact]
-    public void DamageControl_WithNoData_CurrentlyScoresFullMarks_Issue27()
+    public void DamageControl_TrackingNothingNeverBeatsTrackingHonestly_Issue27()
     {
-        var (_, withoutData, _, _) = ProgressComputationService.ComputePillars(
+        var (_, untracked, _, _) = ProgressComputationService.ComputePillars(
             RoundWith(penalties: null, blowUps: null), BaselineWith());
 
-        var (_, honestRound, _, _) = ProgressComputationService.ComputePillars(
+        var (_, cleanRound, _, _) = ProgressComputationService.ComputePillars(
+            RoundWith(penalties: 0, blowUps: 0), BaselineWith());
+
+        var (_, twoPenalties, _, _) = ProgressComputationService.ComputePillars(
             RoundWith(penalties: 2, blowUps: 0), BaselineWith());
 
-        Assert.Equal(25, withoutData);
-        Assert.Equal(17, honestRound);
-        Assert.True(withoutData > honestRound, "tracking nothing currently outscores honest tracking");
+        // A verified clean round beats an untracked one.
+        Assert.True(cleanRound > untracked);
+
+        // And an honestly-reported imperfect round still beats tracking nothing,
+        // so the incentive points toward logging rather than away from it.
+        Assert.True(twoPenalties > untracked);
+    }
+
+    [Fact]
+    public void DamageCeiling_IsDerivedFromTheTrackedMetricCount()
+    {
+        Assert.Equal(ProgressComputationService.PillarMax,
+            ProgressComputationService.DamageCeiling(RoundWith(penalties: 1, blowUps: 1)));
+
+        Assert.Equal(
+            (ProgressComputationService.PillarMax + ProgressComputationService.PillarNeutral) / 2,
+            ProgressComputationService.DamageCeiling(RoundWith(penalties: 1, blowUps: null)));
+
+        Assert.Equal(ProgressComputationService.PillarNeutral,
+            ProgressComputationService.DamageCeiling(RoundWith(penalties: null, blowUps: null)));
     }
 
     // ---------- Consistency
