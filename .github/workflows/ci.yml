@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Scoped to main on push, so a PR branch is not built twice (once for the push
+# and once for the pull_request event).
+
+# A newer push to the same ref supersedes the one before it; cancelling the
+# older run keeps it from being billed to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The job only reads the repository. No write scopes are granted to the token.
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    # Linux is the 1x minute multiplier; windows-latest bills 2x and macos-latest
+    # 10x. Nothing here is platform-specific -- the tests substitute EF InMemory
+    # for SQL Server, so no database, connection string or secret is needed.
+    runs-on: ubuntu-latest
+
+    # The suite finishes well inside two minutes. This cap exists so that a hung
+    # job cannot burn the default six-hour limit out of the Actions quota.
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # Honours global.json, so CI builds on the same SDK version as local.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # This project has no packages.lock.json, so setup-dotnet's own cache
+      # option does not apply. Key on the project files instead: the cache is
+      # reused until a dependency or the SDK version changes.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
