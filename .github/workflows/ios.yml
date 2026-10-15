@@ -81,7 +81,8 @@ jobs:
           key: ${{ runner.os }}-app-spm-${{ hashFiles('clients/ios/project.yml', 'clients/ios/Packages/GolfProgressAPI/Package.swift') }}
 
       # Any available iPhone simulator, rather than a model name that changes as the
-      # runner image is updated.
+      # runner image is updated. Ad-hoc signing ("-") needs no team but still gives the
+      # app its entitlements, which the Keychain tests need (#70).
       - name: Build and test
         run: |
           udid=$(xcrun simctl list devices available --json \
@@ -93,7 +94,8 @@ jobs:
             -destination "id=$udid" \
             -skipPackagePluginValidation \
             -resultBundlePath TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
             -quiet
 
       # -quiet hides test output, so print the result bundle's summary: proof that the

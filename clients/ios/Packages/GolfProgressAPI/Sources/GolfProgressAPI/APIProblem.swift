@@ -15,16 +15,20 @@ public struct APIProblem: Error, Equatable, Sendable, Decodable {
     public var traceId: String?
     /// For 400s: validation messages keyed by field, to show next to that field.
     public var errors: [String: [String]]
+    /// For 429s: seconds to wait before trying again, from the Retry-After header. Set by
+    /// `ProblemDetailsMiddleware`; not part of the body.
+    public var retryAfterSeconds: Int?
 
     public init(
         status: Int, title: String? = nil, detail: String? = nil,
-        traceId: String? = nil, errors: [String: [String]] = [:]
+        traceId: String? = nil, errors: [String: [String]] = [:], retryAfterSeconds: Int? = nil
     ) {
         self.status = status
         self.title = title
         self.detail = detail
         self.traceId = traceId
         self.errors = errors
+        self.retryAfterSeconds = retryAfterSeconds
     }
 
     private enum CodingKeys: String, CodingKey {
