@@ -34,6 +34,7 @@ jobs:
       web: ${{ steps.areas.outputs.web }}
       android: ${{ steps.areas.outputs.android }}
       ios: ${{ steps.areas.outputs.ios }}
+      design: ${{ steps.areas.outputs.design }}
 
     steps:
       - name: Check out
@@ -79,9 +80,15 @@ jobs:
     if: needs.changes.outputs.ios == 'true'
     uses: ./.github/workflows/ios.yml
 
+  design:
+    name: Design
+    needs: changes
+    if: needs.changes.outputs.design == 'true'
+    uses: ./.github/workflows/design.yml
+
   result:
     name: CI result
-    needs: [changes, api, web, android, ios]
+    needs: [changes, api, web, android, ios, design]
     # Always runs, so there is always a status to require. Areas that didn't need to
     # run count as passed; anything that failed or was cancelled fails the result.
     if: always()
