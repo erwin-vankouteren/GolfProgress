@@ -63,6 +63,61 @@ The app user should be able to read:
 dotnet ef migrations list --project src\GolfProgress.Infrastructure --startup-project src\GolfProgress.Api
 ```
 
+## Rotating the `golfprogress_app` password
+
+Rotate it on a schedule, whenever someone who knew it leaves, or whenever it may have
+leaked. `create-app-user.sql` is idempotent: run against an existing user, it **resets the
+password** instead of failing, so rotation is the setup procedure run again.
+
+### Where the password lives
+
+Only in the connection strings that use it:
+
+- **locally:** your user-secrets, in
+  `%APPDATA%\Microsoft\UserSecrets\84eb63b2-1208-46e7-9f80-1b038879c952\secrets.json`;
+- **deployed:** the `ConnectionStrings__DefaultConnection` app setting or Key Vault secret
+  of each environment that uses this account.
+
+Nothing else records it. SQL Server stores only a hash, so the password **cannot be
+recovered** from the database.
+
+### Steps
+
+1. **Set a new password in the database.** Use the same command as in setup step 1, with
+   a new password:
+
+   ```powershell
+   $appPw   = Read-Host 'New password for golfprogress_app'
+   $adminPw = Read-Host 'Server admin password'
+
+   sqlcmd -S "tcp:<your-server>.database.windows.net,1433" -d "GolfProgressDb" -U "<admin-user>" -P $adminPw -N -l 60 -v AppUserPassword="$appPw" -i db/create-app-user.sql
+   ```
+
+   It prints `User golfprogress_app already existed; password rotated.` The old password
+   stops working **immediately** for new connections.
+
+2. **Update every connection string that uses the account, straight away.** Until you do,
+   a running app keeps its already-open pooled connections but fails to open new ones.
+   - **Locally:** set the user-secret again, as in setup step 3.
+   - **Deployed:** update the app setting or Key Vault secret. Changing an app setting
+     restarts the app; after updating a Key Vault secret, restart the app so it picks up
+     the new version.
+
+3. **Verify.** Locally, the `migrations list` command from step 4 should succeed. Deployed,
+   call any endpoint that reads data, and check the log for login failures.
+
+4. **Clean up:** `Remove-Variable appPw, adminPw`, and delete any other copy of the old password.
+
+There is a short window between steps 1 and 2 in which new database connections fail, so
+rotate at a quiet time. To have no window at all, and no password to rotate, use a
+[managed identity](#managed-identity-recommended-in-azure) instead.
+
+### If the password has been lost
+
+For example, after user-secrets were deleted or the machine that held them was replaced.
+There is nothing to recover: follow the rotation steps above. Re-running the script with
+a new password replaces the lost one, and the user's roles are unchanged.
+
 ## Running migrations
 
 Migrations need the elevated credential. Environment variables override user-secrets, so
@@ -84,6 +139,8 @@ that is the safety net working, not a bug.
 Neither credential belongs in `appsettings.json`. Supply them as environment variables
 (`ConnectionStrings__DefaultConnection`, `Jwt__Key`) or from Key Vault. Startup validates
 both and fails fast with a readable message if either is missing or too weak.
+[`docs/deployment.md`](../docs/deployment.md) covers supplying them, and every other
+setting a deployed environment needs.
 
 In Azure, prefer a **managed identity** over the `golfprogress_app` password; see below.
 
