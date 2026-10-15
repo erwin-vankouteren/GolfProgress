@@ -8,7 +8,14 @@
  */
 
 export const knownSessionTypes = ["Range", "Putting", "ShortGame", "Simulator", "Lesson", "Other"] as const;
-export const knownMicroWinCategories = ["StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea"] as const;
+export const knownMicroWinCategories = [
+  "StatDelta",
+  "Behavior",
+  "Narrative",
+  "Habit",
+  "Recovery",
+  "FocusArea",
+] as const;
 export const knownRoundSources = ["Manual", "Import", "Coach", "Other"] as const;
 
 /** A value from an open enum: one this build knows, or "unknown". */

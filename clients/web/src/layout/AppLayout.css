@@ -1,0 +1,126 @@
+/* App frame (#75). Colours, spacing and type come only from the design tokens. */
+
+.app-layout {
+  display: grid;
+  grid-template-columns: 14rem 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header header"
+    "nav main";
+  min-height: 100vh;
+}
+
+.app-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-name {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-headline);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.menu-button {
+  display: none;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  background: none;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-headline);
+}
+
+.app-nav {
+  grid-area: nav;
+  padding: var(--space-lg) var(--space-sm);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+
+.app-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.app-nav a {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-size: var(--font-size-callout);
+}
+
+.app-nav a[aria-current="page"] {
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  font-weight: var(--font-weight-label);
+}
+
+.app-main {
+  grid-area: main;
+  padding: var(--space-xl);
+  outline: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-sm);
+  top: -10rem;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-md);
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: var(--space-sm);
+}
+
+/* Narrow screens: the sidebar becomes a menu opened from the header. */
+@media (max-width: 900px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "main";
+  }
+
+  .menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .app-nav {
+    display: none;
+    position: fixed;
+    inset: 3.75rem 0 auto 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    z-index: 5;
+  }
+
+  .app-nav[data-open="true"] {
+    display: block;
+  }
+
+  .app-main {
+    padding: var(--space-lg);
+  }
+}

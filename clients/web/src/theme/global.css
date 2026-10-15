@@ -1,0 +1,93 @@
+/* Base styles (#75). Every value comes from the design tokens in tokens.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+h1 {
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-title);
+  font-weight: var(--font-weight-title);
+  margin: 0 0 var(--space-lg);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* A visible focus ring for keyboard users, on every interactive element (#78). */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: var(--font-weight-label);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.page {
+  max-width: 60rem;
+}
+
+.empty-state {
+  display: grid;
+  gap: var(--space-md);
+  justify-items: start;
+  padding: var(--space-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+.update-required {
+  max-width: 32rem;
+  margin: 15vh auto;
+  padding: var(--space-xl);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
