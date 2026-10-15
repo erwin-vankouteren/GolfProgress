@@ -256,6 +256,10 @@ public class GolfProgressDbContext : DbContext
             e.HasIndex(x => new { x.UserId, x.CreatedAt });
             e.HasIndex(x => x.EventType);
 
+            // The retention purge filters on CreatedAt alone, which the
+            // (UserId, CreatedAt) index cannot serve (#20).
+            e.HasIndex(x => x.CreatedAt);
+
             e.Property(x => x.PayloadJson)
                 .HasConversion(jsonDocumentConverter, jsonDocumentComparer)
                 .HasColumnType("nvarchar(max)");
