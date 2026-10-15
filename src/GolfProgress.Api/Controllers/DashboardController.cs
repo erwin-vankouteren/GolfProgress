@@ -22,18 +22,13 @@ public sealed class DashboardController : ControllerBase
 
     // GET /me/dashboard
     [HttpGet("/me/dashboard")]
+    // A missing user surfaces as NotFoundException, which the global handler
+    // turns into a 404 (#7).
     public async Task<ActionResult<DashboardResponse>> Get(CancellationToken ct)
     {
-        try
-        {
-            var userId = User.GetUserId();
-            var result = await _cache.GetOrCreateAsync(
-                userId, CacheKeys.Dashboard(userId), () => _svc.BuildAsync(userId, ct));
-            return Ok(result);
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound();
-        }
+        var userId = User.GetUserId();
+        var result = await _cache.GetOrCreateAsync(
+            userId, CacheKeys.Dashboard(userId), () => _svc.BuildAsync(userId, ct));
+        return Ok(result);
     }
 }

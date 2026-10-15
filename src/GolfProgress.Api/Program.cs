@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Api.Caching;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Security;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -19,6 +21,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+// Errors are returned as RFC 7807 ProblemDetails (#7): NotFoundException as 404,
+// anything unhandled as a 500 that does not leak exception details.
+builder.Services.AddProblemDetails(options =>
+    // Lets a client-reported error be matched to its log entry.
+    options.CustomizeProblemDetails = ctx =>
+        ctx.ProblemDetails.Extensions.TryAdd(
+            "traceId", Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier));
+builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
 
 // ---------- Configuration (validated at startup, so misconfiguration fails fast
 // with a readable message instead of an obscure crash on first request)
@@ -147,6 +158,10 @@ builder.Services.AddScoped<GolfProgress.Api.Services.EventRetentionService>();
 builder.Services.AddHostedService<GolfProgress.Api.Services.EventRetentionWorker>();
 
 var app = builder.Build();
+
+// First in the pipeline, so it catches exceptions from everything after it (#7).
+app.UseExceptionHandler();
+
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

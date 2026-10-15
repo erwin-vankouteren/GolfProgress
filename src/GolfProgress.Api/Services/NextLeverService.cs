@@ -1,4 +1,5 @@
 ﻿using GolfProgress.Domain.Entities;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ public sealed class NextLeverService
     public async Task<(string leverKey, string title, string rec, string rationale, ConfidenceLevel confidence)> RecommendAsync(Guid roundId, Guid userId, CancellationToken ct)
     {
         var round = await _db.Rounds.AsNoTracking().FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
-            ?? throw new InvalidOperationException($"Round {roundId} not found.");
+            ?? throw new NotFoundException($"Round {roundId} not found.");
 
         var baseline = await _db.UserBaselines.AsNoTracking().FirstOrDefaultAsync(b => b.UserId == round.UserId, ct);
         var confidence = baseline?.ConfidenceLevel ?? ConfidenceLevel.Low;

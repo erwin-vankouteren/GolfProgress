@@ -1,4 +1,5 @@
 ﻿using GolfProgress.Domain.Entities;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,7 @@ public sealed class ProgressComputationService
     public async Task<(UserBaseline baseline, FitnessScore fitness)> ComputeForRoundAsync(Guid roundId, Guid userId, short windowN, CancellationToken ct)
     {
         var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
-            ?? throw new InvalidOperationException($"Round {roundId} not found.");
+            ?? throw new NotFoundException($"Round {roundId} not found.");
 
         // Two different baselines, for two different jobs.
         //
