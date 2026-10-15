@@ -96,14 +96,35 @@ public sealed class RoundsController : ControllerBase
         return Ok(ToResponse(round));
     }
 
-    // GET /me/rounds
+    /// <summary>Response header carrying the total number of the caller's rounds.</summary>
+    public const string TotalCountHeader = "X-Total-Count";
+
+    // GET /me/rounds?skip=0&take=20
+    //
+    // Paged, newest first (#13). take is clamped to 1..100 like /me/timeline; the
+    // total is returned in X-Total-Count so a client knows when it has them all.
     [HttpGet("/me/rounds")]
-    public async Task<ActionResult<List<RoundResponse>>> GetRoundsForUser(CancellationToken ct)
+    public async Task<ActionResult<List<RoundResponse>>> GetRoundsForUser(
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20,
+        CancellationToken ct = default)
     {
         var userId = User.GetUserId();
-        var rounds = await _db.Rounds.AsNoTracking()
-            .Where(r => r.UserId == userId)
+        skip = Math.Max(skip, 0);
+        take = Math.Clamp(take, 1, 100);
+
+        var query = _db.Rounds.AsNoTracking().Where(r => r.UserId == userId);
+
+        Response.Headers[TotalCountHeader] = (await query.CountAsync(ct)).ToString();
+
+        var rounds = await query
             .OrderByDescending(r => r.PlayedAt)
+            // PlayedAt is a date, so same-day rounds tie. Paging needs a total
+            // order, or a round could repeat on one page and be missing from the next.
+            .ThenByDescending(r => r.CreatedAt)
+            .ThenBy(r => r.RoundId)
+            .Skip(skip)
+            .Take(take)
             .Select(r => ToResponse(r))
             .ToListAsync(ct);
 
