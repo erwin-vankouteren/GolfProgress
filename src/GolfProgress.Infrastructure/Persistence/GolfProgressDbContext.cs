@@ -1,6 +1,7 @@
 using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Text.Json;
 
@@ -33,7 +34,14 @@ public class GolfProgressDbContext : DbContext
             v => DeserializeStringList(v)
         );
 
-
+        // Without a comparer EF compares a List by reference and snapshots the same
+        // instance, so editing the list in place (GoalFocus.Add(...)) was never
+        // detected and never saved (#12). Compare by contents, snapshot a copy.
+        var stringListComparer = new ValueComparer<List<string>>(
+            (a, b) => StringListsEqual(a, b),
+            v => StringListHash(v),
+            v => v == null ? null! : v.ToList()
+        );
 
         // JsonDocument <-> nvarchar(max)
 
@@ -47,6 +55,15 @@ public class GolfProgressDbContext : DbContext
                 : JsonDocument.Parse(v, jsonDocOptions)
         );
 
+        // JsonDocument has no value equality, so EF compared these by reference: any
+        // newly parsed document counted as a change, even with identical content
+        // (#12). Compare by the JSON text that is actually stored instead.
+        // JsonDocument is immutable, so the snapshot can safely be the same instance.
+        var jsonDocumentComparer = new ValueComparer<JsonDocument>(
+            (a, b) => JsonDocumentsEqual(a, b),
+            v => v == null ? 0 : v.RootElement.GetRawText().GetHashCode(),
+            v => v
+        );
 
 
         // ---------- USERS
@@ -61,7 +78,7 @@ public class GolfProgressDbContext : DbContext
             e.Property(x => x.TrackingMode).HasConversion<string>();
 
             e.Property(x => x.GoalFocus)
-                .HasConversion(stringListConverter)
+                .HasConversion(stringListConverter, stringListComparer)
                 .HasColumnType("nvarchar(max)");
 
             e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
@@ -110,7 +127,7 @@ public class GolfProgressDbContext : DbContext
             e.Property(x => x.SessionType).HasConversion<string>();
 
             e.Property(x => x.Tags)
-                .HasConversion(stringListConverter)
+                .HasConversion(stringListConverter, stringListComparer)
                 .HasColumnType("nvarchar(max)");
 
             e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
@@ -164,7 +181,7 @@ public class GolfProgressDbContext : DbContext
             e.Property(x => x.ConfidenceLevel).HasConversion<string>();
 
             e.Property(x => x.ExplanationJson)
-                .HasConversion(jsonDocumentConverter)
+                .HasConversion(jsonDocumentConverter, jsonDocumentComparer)
                 .HasColumnType("nvarchar(max)");
 
             e.Property(x => x.ComputedAt).HasDefaultValueSql("sysutcdatetime()");
@@ -194,7 +211,7 @@ public class GolfProgressDbContext : DbContext
             e.Property(x => x.ConfidenceLevel).HasConversion<string>();
 
             e.Property(x => x.EvidenceJson)
-                .HasConversion(jsonDocumentConverter)
+                .HasConversion(jsonDocumentConverter, jsonDocumentComparer)
                 .HasColumnType("nvarchar(max)");
 
             e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
@@ -219,7 +236,7 @@ public class GolfProgressDbContext : DbContext
             e.HasIndex(x => new { x.UserId, x.MonthStart }).IsUnique();
 
             e.Property(x => x.HighlightsJson)
-                .HasConversion(jsonDocumentConverter)
+                .HasConversion(jsonDocumentConverter, jsonDocumentComparer)
                 .HasColumnType("nvarchar(max)");
 
             e.Property(x => x.ComputedAt).HasDefaultValueSql("sysutcdatetime()");
@@ -240,7 +257,7 @@ public class GolfProgressDbContext : DbContext
             e.HasIndex(x => x.EventType);
 
             e.Property(x => x.PayloadJson)
-                .HasConversion(jsonDocumentConverter)
+                .HasConversion(jsonDocumentConverter, jsonDocumentComparer)
                 .HasColumnType("nvarchar(max)");
 
             e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
@@ -284,5 +301,22 @@ public class GolfProgressDbContext : DbContext
         string.IsNullOrWhiteSpace(value)
             ? new List<string>()
             : (JsonSerializer.Deserialize<List<string>>(value, _jsonOptions) ?? new List<string>());
+
+    private static bool StringListsEqual(List<string>? a, List<string>? b) =>
+        a is null ? b is null : b is not null && a.SequenceEqual(b);
+
+    private static int StringListHash(List<string>? value)
+    {
+        if (value is null) return 0;
+
+        var hash = new HashCode();
+        foreach (var item in value) hash.Add(item);
+        return hash.ToHashCode();
+    }
+
+    private static bool JsonDocumentsEqual(JsonDocument? a, JsonDocument? b) =>
+        a is null
+            ? b is null
+            : b is not null && a.RootElement.GetRawText() == b.RootElement.GetRawText();
 
 }
