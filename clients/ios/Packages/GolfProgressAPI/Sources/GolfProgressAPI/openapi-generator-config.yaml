@@ -1,0 +1,6 @@
+# swift-openapi-generator configuration (#64). The plugin reads openapi.json next to
+# this file and generates the API's types and a client for them.
+generate:
+  - types
+  - client
+accessModifier: public

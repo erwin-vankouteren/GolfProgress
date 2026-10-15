@@ -69,9 +69,13 @@ jobs:
         shell: pwsh
         run: |
           ./api/generate-openapi.ps1 -NoBuild
-          if (git status --porcelain -- api/openapi.json) {
-            git --no-pager diff -- api/openapi.json
-            Write-Error "api/openapi.json is out of date. Run ./api/generate-openapi.ps1 and commit the result."
+          $specs = @(
+            'api/openapi.json'
+            'clients/ios/Packages/GolfProgressAPI/Sources/GolfProgressAPI/openapi.json'
+          )
+          if (git status --porcelain -- $specs) {
+            git --no-pager diff --stat -- $specs
+            Write-Error "The OpenAPI spec or its client copies are out of date. Run ./api/generate-openapi.ps1 and commit the result."
           }
 
       - name: Test

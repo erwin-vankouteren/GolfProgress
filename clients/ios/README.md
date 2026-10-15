@@ -2,20 +2,59 @@
 
 The GolfProgress iOS app.
 
-**Status:** not started. The Xcode project is created in #76 (app shell, theme and navigation).
+**Status:** the API client package exists (#64). The Xcode project for the app is
+created in #76 (app shell, theme and navigation).
 
 ## Stack
 
-Swift 6 and SwiftUI, for iOS 17 and later. The API client is generated from
-[`api/openapi.json`](../../api/) by Apple's `swift-openapi-generator`, in a local Swift
-package (#64). Tests with Swift Testing and XCUITest.
+Swift and SwiftUI, for iOS 17 and later. Tests with XCTest / Swift Testing and XCUITest.
 
 Building needs a Mac with Xcode. CI builds on GitHub's macOS runners, but only for
-changes that affect the iOS app, because those runners cost 10x Linux minutes (#59).
+changes that affect the iOS client (`.github/workflows/ios.yml`), because those runners
+cost 10x Linux minutes.
 
 Full details: [`docs/architecture.md`](../../docs/architecture.md) → "Client architecture".
 Screens: [`docs/clients/ux-design.md`](../../docs/clients/ux-design.md).
 
-## Build and run
+## API client: `Packages/GolfProgressAPI`
 
-To be added with the project in #76: open the project, select a simulator, run and test.
+A local Swift package. Apple's `swift-openapi-generator` build plugin generates the API's
+types and a `Client` from `Sources/GolfProgressAPI/openapi.json` on every build. That file
+is a copy of [`api/openapi.json`](../../api/): SwiftPM plugins can only read inside their
+package. `api/generate-openapi.ps1` keeps the copy in sync, and CI fails if it isn't.
+
+```swift
+import GolfProgressAPI
+
+let api = GolfProgressAPI.makeClient(serverURL: apiURL, tokens: session)
+
+do {
+    let me = try await api.getMe().ok.body.json
+} catch {
+    if let problem = APIProblem.from(error) {
+        // problem.status, problem.detail, problem.messages(for: "playedAt")
+    }
+}
+```
+
+What `makeClient` adds around the generated client:
+
+- **`BearerAuthMiddleware`** sends the access token on authenticated operations. On a
+  `401` it asks the `AccessTokenProvider` to refresh once and retries. Sign-in operations
+  never carry a token or trigger a refresh, so a wrong password stays a plain `401`. The
+  session layer that implements `AccessTokenProvider` (Keychain storage, one shared
+  refresh) is #70.
+- **`ProblemDetailsMiddleware`** turns every `application/problem+json` error into a thrown
+  `APIProblem`, with `messages(for:)` for per-field validation errors. A call therefore
+  returns its success value or throws; views don't switch over each operation's error cases.
+- **`DotNetDateTranscoder`** reads the API's timestamps, which have up to seven
+  fractional-second digits that the default ISO 8601 decoder rejects.
+
+Build and test on a Mac:
+
+```bash
+cd clients/ios/Packages/GolfProgressAPI
+swift test
+```
+
+Or open `Package.swift` in Xcode. The app adds the package as a local dependency in #76.
