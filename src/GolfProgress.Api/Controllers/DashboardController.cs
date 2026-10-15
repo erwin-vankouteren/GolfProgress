@@ -29,7 +29,7 @@ public sealed class DashboardController : ControllerBase
         {
             var userId = User.GetUserId();
             var cacheKey = $"dashboard:{userId}";
-            if (_cache.TryGetValue(cacheKey, out DashboardResponse cached)) 
+            if (_cache.TryGetValue(cacheKey, out DashboardResponse? cached))
                 return Ok(cached);
             var result = await _svc.BuildAsync(userId, ct);
             _cache.Set(cacheKey, result, TimeSpan.FromMinutes(2));
