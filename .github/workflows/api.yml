@@ -1,0 +1,73 @@
+name: API
+
+# Builds and tests the API and checks the OpenAPI spec. Called by ci.yml when the API
+# or the spec changes (#59); can also be run by hand from the Actions tab.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+# The job only reads the repository. No write scopes are granted to the token.
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    # Linux is the 1x minute multiplier; windows-latest bills 2x and macos-latest
+    # 10x. Most tests substitute EF InMemory for SQL Server. The persistence tests
+    # (tests/.../Persistence) start a real SQL Server in a container with
+    # Testcontainers, using the runner's built-in Docker (#33) -- still no external
+    # database, connection string or secret. GitHub sets CI=true, which makes those
+    # tests mandatory here; locally they skip when Docker is unavailable.
+    runs-on: ubuntu-latest
+
+    # Pulling and starting the SQL Server image adds roughly a minute. This cap
+    # exists so that a hung job cannot burn the default six-hour limit out of the
+    # Actions quota.
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # Honours global.json, so CI builds on the same SDK version as local.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # This project has no packages.lock.json, so setup-dotnet's own cache
+      # option does not apply. Key on the project files instead: the cache is
+      # reused until a dependency or the SDK version changes.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # api/openapi.json is the contract the clients are generated from, so it must
+      # match the code (#61). Regenerate it from the build above and fail if the
+      # committed file differs, showing the difference.
+      - name: Check the OpenAPI spec is up to date
+        shell: pwsh
+        run: |
+          ./api/generate-openapi.ps1 -NoBuild
+          $specs = @(
+            'api/openapi.json'
+            'clients/ios/Packages/GolfProgressAPI/Sources/GolfProgressAPI/openapi.json'
+          )
+          if (git status --porcelain -- $specs) {
+            git --no-pager diff --stat -- $specs
+            Write-Error "The OpenAPI spec or its client copies are out of date. Run ./api/generate-openapi.ps1 and commit the result."
+          }
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal

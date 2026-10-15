@@ -1,24 +1,10 @@
 name: Web
 
-# Type-checks and tests the web client. Runs only when something it depends on changes
-# (#59, #63).
+# Type-checks and tests the web client. Called by ci.yml when the web client or the API
+# spec changes (#59, #63); can also be run by hand from the Actions tab.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "clients/web/**"
-      - "api/openapi.json"
-      - ".github/workflows/web.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "clients/web/**"
-      - "api/openapi.json"
-      - ".github/workflows/web.yml"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read

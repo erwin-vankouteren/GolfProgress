@@ -1,82 +1,100 @@
 name: CI
 
+# The single entry point for CI (#59). It works out which areas a change touches, runs
+# only those workflows, and reports one combined result.
+#
+# Why one workflow instead of path filters on each: a path-filtered workflow that
+# doesn't run never reports a status, so it can't be a required check -- a pull request
+# that skipped it would wait forever. Here every run ends with "CI result", which always
+# reports, and is the one check to require if branch protection is turned on.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
-# Scoped to main on push, so a PR branch is not built twice (once for the push
-# and once for the pull_request event).
-
-# A newer push to the same ref supersedes the one before it; cancelling the
-# older run keeps it from being billed to completion.
+# Scoped to main on push, so a PR branch isn't built twice (once for the push and once
+# for the pull_request event). A newer push to the same ref supersedes the one before
+# it; cancelling the older run keeps it from being billed to completion.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The job only reads the repository. No write scopes are granted to the token.
 permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Build and test
-    # Linux is the 1x minute multiplier; windows-latest bills 2x and macos-latest
-    # 10x. Most tests substitute EF InMemory for SQL Server. The persistence tests
-    # (tests/.../Persistence) start a real SQL Server in a container with
-    # Testcontainers, using the runner's built-in Docker (#33) -- still no external
-    # database, connection string or secret. GitHub sets CI=true, which makes those
-    # tests mandatory here; locally they skip when Docker is unavailable.
+  changes:
+    name: Detect changed areas
     runs-on: ubuntu-latest
-
-    # Pulling and starting the SQL Server image adds roughly a minute. This cap
-    # exists so that a hung job cannot burn the default six-hour limit out of the
-    # Actions quota.
-    timeout-minutes: 15
+    timeout-minutes: 5
+    outputs:
+      api: ${{ steps.areas.outputs.api }}
+      web: ${{ steps.areas.outputs.web }}
+      android: ${{ steps.areas.outputs.android }}
+      ios: ${{ steps.areas.outputs.ios }}
 
     steps:
       - name: Check out
         uses: actions/checkout@v4
-
-      # Honours global.json, so CI builds on the same SDK version as local.
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
         with:
-          global-json-file: global.json
+          # The comparison needs the base commit as well as the head.
+          fetch-depth: 0
 
-      # This project has no packages.lock.json, so setup-dotnet's own cache
-      # option does not apply. Key on the project files instead: the cache is
-      # reused until a dependency or the SDK version changes.
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'global.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      # api/openapi.json is the contract the clients are generated from, so it must
-      # match the code (#61). Regenerate it from the build above and fail if the
-      # committed file differs, showing the difference.
-      - name: Check the OpenAPI spec is up to date
-        shell: pwsh
+      - name: Detect changed areas
+        id: areas
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
-          ./api/generate-openapi.ps1 -NoBuild
-          $specs = @(
-            'api/openapi.json'
-            'clients/ios/Packages/GolfProgressAPI/Sources/GolfProgressAPI/openapi.json'
-          )
-          if (git status --porcelain -- $specs) {
-            git --no-pager diff --stat -- $specs
-            Write-Error "The OpenAPI spec or its client copies are out of date. Run ./api/generate-openapi.ps1 and commit the result."
-          }
+          case "$EVENT" in
+            pull_request) bash .github/scripts/changed-areas.sh "$PR_BASE" "$GITHUB_SHA" ;;
+            push)         bash .github/scripts/changed-areas.sh "$PUSH_BEFORE" "$GITHUB_SHA" ;;
+            *)            bash .github/scripts/changed-areas.sh --all ;;
+          esac | tee -a "$GITHUB_OUTPUT"
 
-      - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+  api:
+    name: API
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    uses: ./.github/workflows/api.yml
+
+  web:
+    name: Web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    uses: ./.github/workflows/web.yml
+
+  android:
+    name: Android
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    uses: ./.github/workflows/android.yml
+
+  ios:
+    name: iOS
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
+    uses: ./.github/workflows/ios.yml
+
+  result:
+    name: CI result
+    needs: [changes, api, web, android, ios]
+    # Always runs, so there is always a status to require. Areas that didn't need to
+    # run count as passed; anything that failed or was cancelled fails the result.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check every area that ran
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          failed=$(echo "$RESULTS" | jq -r '[to_entries[] | select(.value.result != "success" and .value.result != "skipped") | .key] | join(", ")')
+          if [ -n "$failed" ]; then
+            echo "::error::Failed or cancelled: $failed"
+            exit 1
+          fi

@@ -76,15 +76,21 @@ flowchart LR
 └── docs/                    This documentation
 ```
 
-CI is split per area with path filters, so a web-only change doesn't trigger an iOS build
-(macOS runners cost 10x Linux minutes):
+CI runs only what a change affects, so a web-only change doesn't trigger an iOS build
+(macOS runners cost 10x Linux minutes). `.github/workflows/ci.yml` is the single entry
+point: it detects the changed areas (`.github/scripts/changed-areas.sh`), calls each
+affected area's workflow, and ends with a **CI result** check that always reports.
+That check is the one to require before merging (#59).
 
 | Workflow | Runs on changes to | Runner |
 |---|---|---|
-| API (existing) | `src/`, `tests/`, `api/` | ubuntu |
-| Web | `clients/web/`, `api/openapi.json`, `design/` | ubuntu |
-| Android | `clients/android/`, `api/openapi.json`, `design/` | ubuntu |
-| iOS | `clients/ios/`, `api/openapi.json`, `design/` | macOS |
+| API (`api.yml`) | `src/`, `tests/`, `api/`, the .NET tool and SDK pins | ubuntu |
+| Web (`web.yml`) | `clients/web/`, `api/openapi.json`, `design/` | ubuntu |
+| Android (`android.yml`) | `clients/android/`, `api/openapi.json`, `design/` | ubuntu |
+| iOS (`ios.yml`) | `clients/ios/`, `api/openapi.json`, `design/` | macOS |
+
+Changing the CI setup itself, or `.gitattributes`, runs every area. Documentation-only
+changes run none, and still get a passing **CI result**.
 
 ## The API contract
 

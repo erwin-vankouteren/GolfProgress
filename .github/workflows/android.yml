@@ -1,24 +1,10 @@
 name: Android
 
-# Builds and tests the Android client. Runs only when something it depends on changes
-# (#59, #65).
+# Builds and tests the Android client. Called by ci.yml when the Android client or the
+# API spec changes (#59, #65); can also be run by hand from the Actions tab.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "clients/android/**"
-      - "api/openapi.json"
-      - ".github/workflows/android.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "clients/android/**"
-      - "api/openapi.json"
-      - ".github/workflows/android.yml"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
