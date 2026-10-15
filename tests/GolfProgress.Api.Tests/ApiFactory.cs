@@ -2,6 +2,7 @@ using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GolfProgress.Api.Tests;
@@ -37,6 +38,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     }
 
     private readonly string _databaseName = $"golfprogress-tests-{Guid.NewGuid()}";
+    private readonly IInterceptor[] _interceptors;
+
+    /// <param name="interceptors">EF interceptors added to the app's DbContext, e.g. to inject failures.</param>
+    public ApiFactory(params IInterceptor[] interceptors) => _interceptors = interceptors;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -54,7 +59,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
                 services.Remove(descriptor);
 
             services.AddDbContext<GolfProgressDbContext>(options =>
-                options.UseInMemoryDatabase(_databaseName));
+                options.UseInMemoryDatabase(_databaseName).AddInterceptors(_interceptors));
         });
     }
 
