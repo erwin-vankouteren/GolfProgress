@@ -19,7 +19,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// The "v1" document is also written to api/openapi.json, the contract the clients are
+// generated from (#61). Regenerate it with api/generate-openapi.ps1.
+builder.Services.AddSwaggerGen(options =>
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "GolfProgress API",
+        Version = "v1",
+        Description = "Golf progress tracking: rounds, practice, fitness scores, micro-wins and reviews."
+    }));
 builder.Services.AddControllers();
 
 // Errors are returned as RFC 7807 ProblemDetails (#7): NotFoundException as 404,
