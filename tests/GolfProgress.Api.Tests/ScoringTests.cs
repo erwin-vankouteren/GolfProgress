@@ -274,6 +274,48 @@ public sealed class ScoringTests
         Assert.Equal(2m, baseline.ScoreStdDev);
     }
 
+    /// <summary>
+    /// Regression guard for issue #35. Every baseline average, not just the score,
+    /// is held in 18-hole equivalents.
+    /// </summary>
+    [Fact]
+    public void Baseline_FromMixedHoleCounts_ScalesEveryCountToEighteen_Issue35()
+    {
+        var baseline = ProgressComputationService.BuildBaseline(Guid.NewGuid(), 5, new List<Round>
+        {
+            RoundWith(penalties: 2, blowUps: 1, putts: 30, fairways: 6, gir: 6, threePutts: 1),
+            RoundWith(totalStrokes: 45, penalties: 2, blowUps: 1, putts: 17, fairways: 4, gir: 4, threePutts: 1, holes: 9)
+        });
+
+        // The 9-hole round contributes 4, 2, 34, 8, 8 and 2 per 18 holes.
+        Assert.Equal(3m, baseline.AvgPenalties);
+        Assert.Equal(1.5m, baseline.AvgBlowUpHoles);
+        Assert.Equal(32m, baseline.AvgPutts);
+        Assert.Equal(7m, baseline.AvgFairwaysHit);
+        Assert.Equal(7m, baseline.AvgGir);
+        Assert.Equal(1.5m, baseline.AvgThreePutts);
+    }
+
+    /// <summary>
+    /// Regression guard for issue #35. Damage control deducts per 18 holes, so a
+    /// 9-hole round is held to the same rate of damage as an 18-hole one.
+    /// </summary>
+    [Theory]
+    // penalties, blowUps, holes, expected
+    [InlineData(1, 0, 18, 21)]   // 25 - 4
+    [InlineData(1, 0, 9, 17)]    // one penalty in nine holes is two per 18: 25 - 8
+    [InlineData(2, 0, 18, 17)]   // the same rate over 18 holes scores the same
+    [InlineData(0, 1, 9, 21)]    // 25 - 2 blow-ups per 18 * 2
+    [InlineData(0, 0, 9, 25)]    // a clean 9 still earns full marks
+    public void DamageControl_DeductsPerEighteenHoles_Issue35(
+        short penalties, short blowUps, short holes, int expected)
+    {
+        var (_, damage, _, _) = ProgressComputationService.ComputePillars(
+            RoundWith(penalties: penalties, blowUps: blowUps, holes: holes), BaselineWith());
+
+        Assert.Equal(expected, damage);
+    }
+
     // ---------- Completeness
 
     [Fact]

@@ -142,16 +142,16 @@ public sealed class ProgressComputationService
         {
             UserId = userId,
             WindowRounds = windowN,
-            // Scores are averaged as 18-hole equivalents so a mix of 9- and 18-hole
-            // rounds yields one coherent yardstick (#5).
+            // Every figure is averaged as an 18-hole equivalent so a mix of 9- and
+            // 18-hole rounds yields one coherent yardstick (#5, #35).
             AvgScore = rounds.Count == 0 ? null : rounds.Average(StrokesPer18),
             ScoreStdDev = rounds.Count < 2 ? null : StdDev(rounds.Select(StrokesPer18)),
-            AvgPutts = AvgNullable(rounds.Select(r => r.TotalPutts)),
-            AvgPenalties = AvgNullable(rounds.Select(r => r.Penalties)),
-            AvgThreePutts = AvgNullable(rounds.Select(r => r.ThreePutts)),
-            AvgBlowUpHoles = AvgNullable(rounds.Select(r => r.BlowUpHoles)),
-            AvgFairwaysHit = AvgNullable(rounds.Select(r => r.FairwaysHit)),
-            AvgGir = AvgNullable(rounds.Select(r => r.Gir)),
+            AvgPutts = AvgNullable(rounds.Select(r => HoleScaling.Per18(r.TotalPutts, r))),
+            AvgPenalties = AvgNullable(rounds.Select(r => HoleScaling.Per18(r.Penalties, r))),
+            AvgThreePutts = AvgNullable(rounds.Select(r => HoleScaling.Per18(r.ThreePutts, r))),
+            AvgBlowUpHoles = AvgNullable(rounds.Select(r => HoleScaling.Per18(r.BlowUpHoles, r))),
+            AvgFairwaysHit = AvgNullable(rounds.Select(r => HoleScaling.Per18(r.FairwaysHit, r))),
+            AvgGir = AvgNullable(rounds.Select(r => HoleScaling.Per18(r.Gir, r))),
             CompletenessRatio = completeness,
             ConfidenceLevel = ConfidenceFrom(rounds.Count, completeness),
             ComputedAt = DateTimeOffset.UtcNow
@@ -261,8 +261,15 @@ public sealed class ProgressComputationService
         // in this service is for. Instead, each untracked metric lowers the
         // attainable ceiling toward the neutral midpoint, so a perfect damage score
         // requires actual evidence. Deductions themselves are unchanged.
+        //
+        // Deductions are per 18 holes: two penalties in nine holes is the same rate
+        // of damage as four in eighteen, and is scored that way (#35).
+        var deductions =
+            (HoleScaling.Per18((decimal)(r.Penalties ?? 0), r.Holes) * 4) +
+            (HoleScaling.Per18((decimal)(r.BlowUpHoles ?? 0), r.Holes) * 2);
+
         short damage = (short)Math.Clamp(
-            DamageCeiling(r) - ((r.Penalties ?? 0) * 4) - ((r.BlowUpHoles ?? 0) * 2),
+            DamageCeiling(r) - (int)Math.Round(deductions),
             0, PillarMax);
 
         // Consistency: reward staying within 1 std dev of baseline
@@ -304,11 +311,14 @@ public sealed class ProgressComputationService
     /// The round's total scaled to 18 holes, so 9- and 18-hole rounds can be compared
     /// and averaged together. A 9-hole 45 counts as a 90.
     /// </summary>
-    internal static decimal StrokesPer18(Round r) => r.TotalStrokes * 18m / r.Holes;
+    internal static decimal StrokesPer18(Round r) => HoleScaling.Per18((decimal)r.TotalStrokes, r.Holes);
 
-    internal static decimal? AvgNullable(IEnumerable<short?> values)
+    internal static decimal? AvgNullable(IEnumerable<short?> values) =>
+        AvgNullable(values.Select(v => (decimal?)v));
+
+    internal static decimal? AvgNullable(IEnumerable<decimal?> values)
     {
-        var list = values.Where(v => v != null).Select(v => (decimal)v!.Value).ToList();
+        var list = values.Where(v => v != null).Select(v => v!.Value).ToList();
         if (list.Count == 0) return null;
         return list.Average();
     }
