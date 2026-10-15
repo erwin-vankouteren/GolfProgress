@@ -142,8 +142,10 @@ public sealed class ProgressComputationService
         {
             UserId = userId,
             WindowRounds = windowN,
-            AvgScore = rounds.Count == 0 ? null : (decimal)rounds.Average(r => r.TotalStrokes),
-            ScoreStdDev = rounds.Count < 2 ? null : StdDev(rounds.Select(r => (decimal)r.TotalStrokes)),
+            // Scores are averaged as 18-hole equivalents so a mix of 9- and 18-hole
+            // rounds yields one coherent yardstick (#5).
+            AvgScore = rounds.Count == 0 ? null : rounds.Average(StrokesPer18),
+            ScoreStdDev = rounds.Count < 2 ? null : StdDev(rounds.Select(StrokesPer18)),
             AvgPutts = AvgNullable(rounds.Select(r => r.TotalPutts)),
             AvgPenalties = AvgNullable(rounds.Select(r => r.Penalties)),
             AvgThreePutts = AvgNullable(rounds.Select(r => r.ThreePutts)),
@@ -237,11 +239,17 @@ public sealed class ProgressComputationService
     internal static (short execution, short damage, short consistency, short habits) ComputePillars(Round r, UserBaseline b)
     {
         // Very simple v1 scoring (0..PillarMax each). Improve later.
+        //
+        // The baseline is held in 18-hole equivalents, so the round is compared on
+        // the same footing. Comparing a 9-hole total directly read as a ~45-stroke
+        // improvement (#5).
+        var strokes = StrokesPer18(r);
+
         // Execution: better score than baseline => higher
         short execution = PillarNeutral;
         if (b.AvgScore != null)
         {
-            var diff = (decimal)r.TotalStrokes - b.AvgScore.Value; // negative is good
+            var diff = strokes - b.AvgScore.Value; // negative is good
             execution = (short)Math.Clamp(PillarNeutral - (int)Math.Round(diff), 0, PillarMax);
         }
 
@@ -261,7 +269,7 @@ public sealed class ProgressComputationService
         short consistency = PillarNeutral;
         if (b.ScoreStdDev != null && b.AvgScore != null && b.ScoreStdDev.Value > 0)
         {
-            var within = Math.Abs((decimal)r.TotalStrokes - b.AvgScore.Value) <= b.ScoreStdDev.Value;
+            var within = Math.Abs(strokes - b.AvgScore.Value) <= b.ScoreStdDev.Value;
             consistency = (short)(within ? 18 : 8);
         }
 
@@ -291,6 +299,12 @@ public sealed class ProgressComputationService
             _ => PillarNeutral
         };
     }
+
+    /// <summary>
+    /// The round's total scaled to 18 holes, so 9- and 18-hole rounds can be compared
+    /// and averaged together. A 9-hole 45 counts as a 90.
+    /// </summary>
+    internal static decimal StrokesPer18(Round r) => r.TotalStrokes * 18m / r.Holes;
 
     internal static decimal? AvgNullable(IEnumerable<short?> values)
     {
