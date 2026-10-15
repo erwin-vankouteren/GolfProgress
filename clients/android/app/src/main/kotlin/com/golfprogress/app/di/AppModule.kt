@@ -1,25 +1,57 @@
 package com.golfprogress.app.di
 
+import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStoreFile
 import com.golfprogress.api.AccessTokenProvider
 import com.golfprogress.api.GolfProgressApi
+import com.golfprogress.api.generated.apis.AuthApi
 import com.golfprogress.api.generated.apis.ClientConfigApi
 import com.golfprogress.api.unwrap
 import com.golfprogress.app.BuildConfig
+import com.golfprogress.app.session.EncryptedRefreshTokenStore
+import com.golfprogress.app.session.KeystoreTokenCipher
+import com.golfprogress.app.session.RefreshTokenStore
+import com.golfprogress.app.session.Session
+import com.golfprogress.app.session.TokenRefresher
 import com.golfprogress.app.version.MinimumVersionSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Named
 import javax.inject.Singleton
 
-/** App-wide dependencies (#77). Tests replace them by constructing classes directly. */
+/** App-wide dependencies (#77, #71). Tests replace them by constructing classes directly. */
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+    /** The API client for everything after sign-in: its tokens come from the session. */
     @Provides
     @Singleton
-    fun api(): GolfProgressApi = GolfProgressApi(BuildConfig.API_BASE_URL, SignedOut)
+    fun api(session: Session): GolfProgressApi = GolfProgressApi(BuildConfig.API_BASE_URL, session)
+
+    @Provides
+    @Singleton
+    fun session(tokens: TokenRefresher): Session = Session(tokens)
+
+    /** The auth endpoints through a client of their own, without tokens: those calls are anonymous. */
+    @Provides
+    @Singleton
+    fun tokenRefresher(store: RefreshTokenStore): TokenRefresher =
+        TokenRefresher(GolfProgressApi(BuildConfig.API_BASE_URL, SignedOut).service<AuthApi>(), store)
+
+    /** The refresh token, encrypted with a Keystore key, in DataStore file "session". */
+    @Provides
+    @Singleton
+    fun refreshTokenStore(
+        @ApplicationContext context: Context,
+    ): RefreshTokenStore =
+        EncryptedRefreshTokenStore(
+            PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("session") },
+            KeystoreTokenCipher(),
+        )
 
     @Provides
     @Named("appVersion")
@@ -36,8 +68,8 @@ object AppModule {
         }
 }
 
-/** The token provider before anyone has signed in; the session layer replaces it in #71. */
-private object SignedOut : AccessTokenProvider {
+/** For clients that only make anonymous calls: no token, nothing to refresh. */
+object SignedOut : AccessTokenProvider {
     override fun accessToken(): String? = null
 
     override fun refreshAccessToken(): String? = null

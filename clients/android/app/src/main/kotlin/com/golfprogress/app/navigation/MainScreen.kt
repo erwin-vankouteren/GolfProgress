@@ -33,6 +33,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.golfprogress.app.R
+import com.golfprogress.app.sections.ProfileContent
 import com.golfprogress.app.sections.SectionContent
 
 /**
@@ -64,7 +65,10 @@ private val bottomBar =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavHostController = rememberNavController()) {
+fun MainScreen(
+    navController: NavHostController = rememberNavController(),
+    onSignOut: () -> Unit = {},
+) {
     val backStack by navController.currentBackStackEntryAsState()
     val current = Destination.entries.firstOrNull { it.route == backStack?.destination?.route } ?: Destination.Home
 
@@ -108,7 +112,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             composable(Destination.LogRound.route) { SectionContent(R.string.log_round_intro) }
             composable(Destination.Practice.route) { SectionContent(R.string.practice_empty) }
             composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }
-            composable(Destination.Profile.route) { SectionContent(R.string.profile_intro) }
+            composable(Destination.Profile.route) { ProfileContent(onSignOut) }
         }
     }
 }

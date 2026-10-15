@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +49,20 @@ fun SectionContent(
                     Text(stringResource(R.string.log_round))
                 }
             }
+        }
+    }
+}
+
+/** Profile (#77); sign out (#71). Preferences and account settings arrive in M2. */
+@Composable
+fun ProfileContent(onSignOut: () -> Unit) {
+    Column {
+        SectionContent(R.string.profile_intro)
+        OutlinedButton(
+            onClick = onSignOut,
+            modifier = Modifier.padding(horizontal = DesignTokens.Spacing.lg).heightIn(min = DesignTokens.touchTarget),
+        ) {
+            Text(stringResource(R.string.auth_sign_out))
         }
     }
 }
