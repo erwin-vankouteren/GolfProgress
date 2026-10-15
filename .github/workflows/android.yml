@@ -1,0 +1,56 @@
+name: Android
+
+# Builds and tests the Android client. Runs only when something it depends on changes
+# (#59, #65).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "clients/android/**"
+      - "api/openapi.json"
+      - ".github/workflows/android.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "clients/android/**"
+      - "api/openapi.json"
+      - ".github/workflows/android.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: clients/android
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # The committed gradle-wrapper.jar is executable code: check it matches an official
+      # Gradle release before running it.
+      - name: Validate the Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Generates the API client from api/openapi.json, compiles it and runs the tests.
+      - name: Build and test
+        run: ./gradlew build
