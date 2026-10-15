@@ -60,3 +60,25 @@ struct MainTabView: View {
         }
     }
 }
+
+// Accessibility checks (#78): the shell at the default and the largest accessibility
+// text size, in light and dark. Nothing may be cut off or overlap at the largest size.
+#Preview("Default") {
+    MainTabView()
+}
+
+#Preview("Largest text") {
+    MainTabView()
+        .environment(\.dynamicTypeSize, .accessibility5)
+}
+
+#Preview("Largest text, dark") {
+    MainTabView()
+        .environment(\.dynamicTypeSize, .accessibility5)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Update required, largest text") {
+    UpdateRequiredView()
+        .environment(\.dynamicTypeSize, .accessibility5)
+}

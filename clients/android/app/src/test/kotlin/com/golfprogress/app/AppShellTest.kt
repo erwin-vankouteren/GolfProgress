@@ -1,14 +1,18 @@
 package com.golfprogress.app
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
 import com.golfprogress.app.navigation.MainScreen
 import com.golfprogress.app.ui.theme.GolfProgressTheme
 import com.golfprogress.app.version.MinimumVersionSource
@@ -128,5 +132,34 @@ class VersionViewModelTest {
         assertEquals(true, compareVersions("1.0.0", "1.0.1") < 0)
         assertEquals(true, compareVersions("1.10.0", "1.9.0") > 0)
         assertEquals(0, compareVersions("1.0", "1.0.0"))
+    }
+}
+
+/**
+ * Accessibility checks (#78): at 200% font scale the shell keeps its heading and every
+ * bottom-bar item on screen, and icon-only controls have a label TalkBack can read.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
+class LargeFontScaleTest {
+    @get:Rule
+    val compose = createComposeRule()
+
+    @Test
+    fun theShellWorksAtTwiceTheFontSize() {
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
+                GolfProgressTheme { MainScreen() }
+            }
+        }
+
+        compose.onNode(hasText("Home") and isHeading()).assertIsDisplayed()
+        listOf("Home", "Rounds", "Log round", "Practice", "Progress").forEach {
+            compose
+                .onNode(hasText(it) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
+                .assertIsDisplayed()
+        }
+        compose.onNodeWithContentDescription("Profile").assertIsDisplayed().assertHasClickAction()
     }
 }
