@@ -132,15 +132,55 @@ public sealed class ProgressComputationTests : IAsyncLifetime
         // damage: 25 - 0 penalties - 0 blow-ups = 25
         Assert.Equal(25, score.DamageControl);
 
-        // consistency: |90 - 96| = 6, outside one std dev of 3.162, so 8
-        Assert.Equal(8, score.Consistency);
+        // consistency: 90 is better than the average of 96, so full marks
+        Assert.Equal(25, score.Consistency);
 
-        // habits: fixed placeholder
-        Assert.Equal(10, score.Habits);
+        // habits: six rounds in the 28 days up to May 6 (capped at 4) = 15,
+        // no reflection on this round
+        Assert.Equal(15, score.Habits);
 
-        Assert.Equal(61, score.ScoreTotal);
+        Assert.Equal(83, score.ScoreTotal);
         Assert.Equal(_targetRoundId, score.RoundId);
         Assert.Equal(_userId, score.UserId);
+    }
+
+    /// <summary>
+    /// Habits reads the database: a reflection on the round adds its points on the
+    /// next compute (#28).
+    /// </summary>
+    [Fact]
+    public async Task Compute_AfterAReflection_AwardsTheReflectionHabitPoints()
+    {
+        var client = TestWorld.ClientFor(_factory, _userId);
+
+        await client.PostAsJsonAsync($"/rounds/{_targetRoundId}/reflections",
+            new { focusRating = 4, whatWorked = "tempo" });
+        await client.PostAsync($"/rounds/{_targetRoundId}/compute", content: null);
+
+        var score = await client.GetFromJsonAsync<FitnessScorePayload>(
+            $"/rounds/{_targetRoundId}/fitness-score");
+
+        Assert.Equal(25, score!.Habits);
+        Assert.Equal(93, score.ScoreTotal);
+    }
+
+    /// <summary>
+    /// The habit window ends at the round's own date, not today, so the oldest
+    /// round only counts itself and recomputing it later gives the same score.
+    /// </summary>
+    [Fact]
+    public async Task Compute_HabitWindowEndsAtTheRoundsDate()
+    {
+        var client = TestWorld.ClientFor(_factory, _userId);
+        var oldestId = OldestRoundOn(new DateOnly(2026, 5, 1));
+
+        await client.PostAsync($"/rounds/{oldestId}/compute", content: null);
+
+        var score = await client.GetFromJsonAsync<FitnessScorePayload>(
+            $"/rounds/{oldestId}/fitness-score");
+
+        // 1 round in its window: 1 * 15 / 4 = 3
+        Assert.Equal(3, score!.Habits);
     }
 
     [Fact]
