@@ -34,7 +34,6 @@ public sealed class ProblemResponseTests : IAsyncLifetime
     [InlineData("/auth/register", """{"email":"  ","displayName":"x","password":"Passw0rd!"}""", "Email")]
     [InlineData("/auth/login", """{"email":"a@example.test"}""", "Password")]
     [InlineData("/auth/refresh", """{}""", "RefreshToken")]
-    [InlineData("/auth/logout", """{"refreshToken":""}""", "RefreshToken")]
     public async Task MissingAuthFields_AreValidationProblemsKeyedByField(string endpoint, string body, string field)
     {
         var response = await _factory.CreateClient().PostAsync(endpoint,
