@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Close" : { },
+    "Done" : { },
+    "Home" : { },
+    "Log a few rounds to see your trends." : { },
+    "Log round" : { },
+    "Log your first round to see your fitness score." : { },
+    "No practice logged yet. Practice counts towards your Habits score." : { },
+    "No rounds logged yet." : { },
+    "Practice" : { },
+    "Profile" : { },
+    "Progress" : { },
+    "Rounds" : { },
+    "The round form comes next." : { },
+    "This version of GolfProgress is no longer supported. Update the app to keep using it." : { },
+    "Update required" : { },
+    "Your profile and preferences will appear here." : { }
+  },
+  "version" : "1.0"
+}
