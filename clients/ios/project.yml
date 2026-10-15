@@ -1,0 +1,88 @@
+# The GolfProgress iOS project (#76), for XcodeGen. The .xcodeproj is generated from this
+# file and not committed: run `xcodegen` in clients/ios after cloning or after changing it.
+name: GolfProgress
+
+options:
+  bundleIdPrefix: com.golfprogress
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # The API the app talks to. Debug uses a local API; other configurations override it.
+    GOLFPROGRESS_API_BASE_URL: http://localhost:5068
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+
+packages:
+  GolfProgressAPI:
+    path: Packages/GolfProgressAPI
+  # The API package's generic code is compiled into the app, so the app links its
+  # runtime libraries directly too; versions resolve together with the package's.
+  OpenAPIRuntime:
+    url: https://github.com/apple/swift-openapi-runtime
+    from: 1.5.0
+  OpenAPIURLSession:
+    url: https://github.com/apple/swift-openapi-urlsession
+    from: 1.0.2
+  HTTPTypes:
+    url: https://github.com/apple/swift-http-types
+    from: 1.0.2
+
+targets:
+  GolfProgress:
+    type: application
+    platform: iOS
+    sources:
+      - path: GolfProgress
+    dependencies:
+      - package: GolfProgressAPI
+      - package: OpenAPIRuntime
+      - package: OpenAPIURLSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.golfprogress.app
+        TARGETED_DEVICE_FAMILY: "1"
+    info:
+      path: GolfProgress/Info.plist
+      properties:
+        CFBundleDisplayName: GolfProgress
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        GolfProgressAPIBaseURL: $(GOLFPROGRESS_API_BASE_URL)
+        # Lets the debug build reach an API on the local network over plain HTTP; real
+        # environments are HTTPS only.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+
+  GolfProgressTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: GolfProgressTests
+    dependencies:
+      - target: GolfProgress
+      - package: OpenAPIRuntime
+      - package: HTTPTypes
+      - package: GolfProgressAPI
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  GolfProgress:
+    build:
+      targets:
+        GolfProgress: all
+        GolfProgressTests: [test]
+    test:
+      targets:
+        - GolfProgressTests

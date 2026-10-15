@@ -46,7 +46,7 @@ final class GolfProgressAPITests: XCTestCase {
 
     func testValidationErrorsAreKeyedByField() async throws {
         let transport = FakeTransport { _, _ in
-            .problem(400, #"{"status":400,"title":"One or more validation errors occurred.","errors":{"PlayedAt":["PlayedAt must be an ISO date, yyyy-MM-dd."]}}"#)
+            .problem(400, #"{"status":400,"errors":{"PlayedAt":["PlayedAt must be an ISO date, yyyy-MM-dd."]}}"#)
         }
         let api = GolfProgressAPI.makeClient(serverURL: server, tokens: FakeTokens(), transport: transport)
 

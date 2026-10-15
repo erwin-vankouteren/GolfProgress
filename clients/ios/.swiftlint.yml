@@ -1,0 +1,26 @@
+# SwiftLint for the iOS app and its API package (#76). CI runs it with --strict, so a
+# warning fails the build.
+included:
+  - GolfProgress
+  - GolfProgressTests
+  - Packages/GolfProgressAPI/Sources
+  - Packages/GolfProgressAPI/Tests
+excluded:
+  # Generated from design/tokens.json; its style follows the generator.
+  - GolfProgress/DesignSystem/DesignTokens.swift
+  - Packages/GolfProgressAPI/.build
+
+line_length:
+  warning: 140
+  error: 200
+# Swift 6 encourages trailing commas in multi-line lists.
+disabled_rules:
+  - trailing_comma
+
+identifier_name:
+  # Short names that are meaningful here, e.g. `me` for the signed-in user (GET /me).
+  excluded: [a, b, i, x, y, id, ok, to, me]
+type_body_length:
+  warning: 400
+file_length:
+  warning: 600

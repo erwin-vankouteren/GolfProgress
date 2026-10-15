@@ -2,8 +2,8 @@
 
 The GolfProgress iOS app.
 
-**Status:** the API client package exists (#64). The Xcode project for the app is
-created in #76 (app shell, theme and navigation).
+**Status:** the app shell exists (#76): tabs, theme and the minimum-version check, on top
+of the API client package (#64). Sign-in arrives in #70, and the features in M2.
 
 ## Stack
 
@@ -15,6 +15,45 @@ cost 10x Linux minutes.
 
 Full details: [`docs/architecture.md`](../../docs/architecture.md) → "Client architecture".
 Screens: [`docs/clients/ux-design.md`](../../docs/clients/ux-design.md).
+
+## The app
+
+The Xcode project is **generated** from [`project.yml`](project.yml) with
+[XcodeGen](https://github.com/yonaskolb/XcodeGen) and not committed, so there's no
+hand-merged `.pbxproj`. On a Mac:
+
+```bash
+brew install xcodegen
+cd clients/ios
+xcodegen            # creates GolfProgress.xcodeproj; rerun after changing project.yml
+open GolfProgress.xcodeproj
+```
+
+| Path | What |
+|---|---|
+| `GolfProgress/App/` | `GolfProgressApp`, `RootView` (the version gate) and `AppEnvironment`: the API client and app version, injected with `.environment` |
+| `GolfProgress/Navigation/` | `MainTabView`: Home, Rounds, **Log round** (opens as a sheet), Practice and Progress. Profile opens from the avatar in each screen's top bar. `TabRouter` holds the selection, so it can be tested |
+| `GolfProgress/Sections/` | Each section's screen, with the empty states from the wireframes until the features land |
+| `GolfProgress/Version/` | `VersionCheck`: "Update required" when this build is older than `GET /client-config`'s minimum. It never blocks start-up, and if the check fails the app carries on |
+| `GolfProgress/DesignSystem/DesignTokens.swift` | **Generated** from `design/tokens.json`; don't edit |
+| `GolfProgress/Resources/Localizable.xcstrings` | String Catalog: all user-facing text |
+| `GolfProgressTests/` | Swift Testing tests |
+
+**Conventions:**
+- **Styling:** colours, fonts and spacing only through `DesignTokens`, never literal values.
+- **Text:** through `LocalizedStringKey`, so it goes into the String Catalog.
+- **Controls:** at least `DesignTokens.touchTarget` (44 pt).
+- **Lint:** SwiftLint runs with `--strict` (`.swiftlint.yml`).
+
+**API URL:** `GOLFPROGRESS_API_BASE_URL` in `project.yml` (`http://localhost:5068` for
+development; App Transport Security allows only local networks over plain HTTP).
+
+**Linking:** the app links `OpenAPIRuntime` and `OpenAPIURLSession` directly, not only
+through the API package. The package's generic code is compiled into the app, and without
+those libraries the link step fails.
+
+**CI** (`.github/workflows/ios.yml`) generates the project, lints, and runs the tests on
+an available iPhone simulator, then prints how many tests ran.
 
 ## API client: `Packages/GolfProgressAPI`
 

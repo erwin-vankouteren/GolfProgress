@@ -47,3 +47,61 @@ jobs:
 
       - name: Build and test
         run: swift test
+
+  app:
+    name: App
+    runs-on: macos-15
+    timeout-minutes: 40
+
+    defaults:
+      run:
+        working-directory: clients/ios
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      # The .xcodeproj isn't committed: it's generated from project.yml (#76).
+      - name: Install XcodeGen and SwiftLint
+        run: brew install xcodegen swiftlint
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      - name: Lint
+        run: swiftlint lint --strict
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+          key: ${{ runner.os }}-app-spm-${{ hashFiles('clients/ios/project.yml', 'clients/ios/Packages/GolfProgressAPI/Package.swift') }}
+
+      # Any available iPhone simulator, rather than a model name that changes as the
+      # runner image is updated.
+      - name: Build and test
+        run: |
+          udid=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          echo "Simulator: $udid"
+          xcodebuild test \
+            -project GolfProgress.xcodeproj \
+            -scheme GolfProgress \
+            -destination "id=$udid" \
+            -skipPackagePluginValidation \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
+
+      # -quiet hides test output, so print the result bundle's summary: proof that the
+      # tests actually ran, and how many.
+      - name: Test summary
+        if: always()
+        run: |
+          if [ -d TestResults.xcresult ]; then
+            xcrun xcresulttool get test-results summary --path TestResults.xcresult \
+              | jq '{result, totalTestCount, passedTests, failedTests, skippedTests}'
+          fi
