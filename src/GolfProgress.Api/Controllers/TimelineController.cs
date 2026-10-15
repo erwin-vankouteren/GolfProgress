@@ -5,7 +5,7 @@ using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using GolfProgress.Api.Caching;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -15,13 +15,13 @@ public sealed class TimelineController : ControllerBase
 {
     private readonly TimelineService _svc;
     private readonly GolfProgressDbContext _db;
-    private readonly IMemoryCache _cache;
+    private readonly UserScopedCache _cache;
 
-    public TimelineController(TimelineService svc, GolfProgressDbContext db, IMemoryCache cache)
+    public TimelineController(TimelineService svc, GolfProgressDbContext db, UserScopedCache cache)
     {
         _svc = svc;
         _db = db;
-        _cache = cache; 
+        _cache = cache;
     }
 
     // GET /me/timeline?take=20&from=2026-01-01&to=2026-12-31
@@ -33,12 +33,12 @@ public sealed class TimelineController : ControllerBase
         CancellationToken ct = default)
     {
         var userId = User.GetUserId();
-        var cacheKey = $"timeline:{userId}:take={take}";
         DateOnly? fromDate = null;
         DateOnly? toDate = null;
 
-        if (_cache.TryGetValue(cacheKey, out RoundTimelineResponse? cached))
-            return Ok(cached);
+        // Clamped here as well as in the service, so out-of-range values share one
+        // cache entry instead of each creating their own.
+        take = Math.Clamp(take, 1, 100);
 
         if (!string.IsNullOrWhiteSpace(from))
         {
@@ -52,16 +52,14 @@ public sealed class TimelineController : ControllerBase
             toDate = t;
         }
 
+        // The dates used to be parsed and then dropped -- the service was called with
+        // null, null -- and the cache key left them out too, so ?from/?to never
+        // filtered anything. Both are now applied and part of the key.
+        var result = await _cache.GetOrCreateAsync(
+            userId,
+            CacheKeys.Timeline(userId, take, fromDate, toDate),
+            () => _svc.GetRoundTimelineAsync(userId, take, fromDate, toDate, ct));
 
-        var result = await _svc.GetRoundTimelineAsync(
-                    userId,
-                    take,
-                    null,
-                    null,
-                    ct);
-
-        _cache.Set(cacheKey, result, TimeSpan.FromMinutes(2));
-        //var result = await _svc.GetRoundTimelineAsync(userId, take, fromDate, toDate, ct);
         return Ok(result);
     }
 

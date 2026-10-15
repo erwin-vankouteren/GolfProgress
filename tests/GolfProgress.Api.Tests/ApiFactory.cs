@@ -1,3 +1,4 @@
+using GolfProgress.Api.Caching;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -58,8 +59,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             foreach (var descriptor in toRemove)
                 services.Remove(descriptor);
 
-            services.AddDbContext<GolfProgressDbContext>(options =>
-                options.UseInMemoryDatabase(_databaseName).AddInterceptors(_interceptors));
+            // Keep the app's own interceptors (cache invalidation) alongside any the
+            // test adds, so the test host saves exactly as the real one does.
+            services.AddDbContext<GolfProgressDbContext>((sp, options) =>
+                options.UseInMemoryDatabase(_databaseName)
+                    .AddInterceptors(sp.GetRequiredService<CacheInvalidationInterceptor>())
+                    .AddInterceptors(_interceptors));
         });
     }
 
