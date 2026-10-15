@@ -1,4 +1,5 @@
 ﻿using GolfProgress.Domain.Entities;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +16,10 @@ public sealed class MicroWinsService
     public async Task<List<MicroWin>> GenerateForRoundAsync(Guid roundId, Guid userId, CancellationToken ct)
     {
         var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
-            ?? throw new InvalidOperationException($"Round {roundId} not found.");
+            ?? throw new NotFoundException($"Round {roundId} not found.");
 
         var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == round.UserId, ct)
-            ?? throw new InvalidOperationException($"User {round.UserId} not found.");
+            ?? throw new NotFoundException($"User {round.UserId} not found.");
 
         var baseline = await _db.UserBaselines.AsNoTracking()
             .FirstOrDefaultAsync(b => b.UserId == round.UserId, ct);

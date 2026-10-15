@@ -1,4 +1,5 @@
 ﻿using GolfProgress.Api.Contracts.Dashboard;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Contracts.MicroWins;
 using GolfProgress.Api.Contracts.Recommendations;
 using GolfProgress.Infrastructure.Persistence;
@@ -20,7 +21,7 @@ public sealed class DashboardService
     public async Task<DashboardResponse> BuildAsync(Guid userId, CancellationToken ct)
     {
         var exists = await _db.Users.AnyAsync(u => u.UserId == userId, ct);
-        if (!exists) throw new InvalidOperationException("User not found.");
+        if (!exists) throw new NotFoundException("User not found.");
 
         // Last round
         var lastRound = await _db.Rounds.AsNoTracking()
