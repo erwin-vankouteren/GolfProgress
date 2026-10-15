@@ -3,7 +3,8 @@
 The screens and navigation shared by the web, iOS and Android apps. Each platform
 implements them with its own native controls and conventions, but the structure, content
 and wording are the same everywhere. Every screen has a low-fidelity wireframe in
-[`wireframes.md`](wireframes.md). The technical architecture is in
+[`wireframes.md`](wireframes.md), and every screen meets the
+[accessibility and localisation checklist](accessibility.md). The technical architecture is in
 [`../architecture.md`](../architecture.md).
 
 ## Principles
