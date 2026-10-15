@@ -47,6 +47,10 @@ What `makeClient` adds around the generated client:
 - **`ProblemDetailsMiddleware`** turns every `application/problem+json` error into a thrown
   `APIProblem`, with `messages(for:)` for per-field validation errors. A call therefore
   returns its success value or throws; views don't switch over each operation's error cases.
+- **Open enums** (#134): `sessionType`, micro-win `category` and round `source` are plain
+  strings in responses, because the API may add values at any time. Read them through
+  `knownSessionType`, `knownCategory` and `knownSource` (`KnownValues.swift`), which give
+  `.unknown` for a value this build doesn't know.
 - **`DotNetDateTranscoder`** reads the API's timestamps, which have up to seven
   fractional-second digits that the default ISO 8601 decoder rejects.
 

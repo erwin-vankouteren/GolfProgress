@@ -2,9 +2,17 @@ namespace GolfProgress.Api.OpenApi;
 
 /// <summary>
 /// Documents a string property as taking one of an enum's names (#62). The contracts
-/// carry these as strings, parsed case-insensitively; this lists the values in the
-/// OpenAPI spec so generated clients get a typed set instead of a free string. It has
-/// no effect at runtime.
+/// carry these as strings, parsed case-insensitively. It has no effect at runtime.
+///
+/// A <b>closed</b> enum (the default) lists its values as an OpenAPI <c>enum</c>, so
+/// generated clients get a typed set. Installed apps then fail to read a response with
+/// a value they don't know, so adding a value to a closed enum in a response is a
+/// breaking change: raise the minimum app versions (GET /client-config) first.
+///
+/// An <b>open</b> enum (<see cref="Open"/>) is for response fields expected to gain
+/// values (#134). It's published as a plain string, with the current values in its
+/// description and in <c>x-known-values</c>; clients map the known ones and treat any
+/// other value as unknown, so a new value can be added at any time.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class StringEnumAttribute : Attribute
@@ -16,6 +24,9 @@ public sealed class StringEnumAttribute : Attribute
     }
 
     public Type EnumType { get; }
+
+    /// <summary>Whether new values may be added without breaking installed apps (#134).</summary>
+    public bool Open { get; init; }
 }
 
 /// <summary>

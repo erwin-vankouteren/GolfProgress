@@ -176,7 +176,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
     [Theory]
     [InlineData("UserResponse", "units", new[] { "Metric", "Imperial" })]
     [InlineData("UserResponse", "trackingMode", new[] { "Minimal", "Balanced", "Detailed" })]
-    [InlineData("PracticeSessionResponse", "sessionType", new[] { "Range", "Putting", "ShortGame", "Simulator", "Lesson", "Other" })]
+    [InlineData("CreatePracticeSessionRequest", "sessionType", new[] { "Range", "Putting", "ShortGame", "Simulator", "Lesson", "Other" })]
     [InlineData("MicroWinResponse", "direction", new[] { "Improved", "Stable", "Declined" })]
     [InlineData("FitnessScoreResponse", "confidenceLevel", new[] { "Low", "Medium", "High" })]
     [InlineData("CreateRoundRequest", "source", new[] { "Manual", "Import", "Coach", "Other" })]
@@ -186,6 +186,59 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
             .Cast<OpenApiString>().Select(v => v.Value);
 
         Assert.Equal(expected, values);
+    }
+
+    /// <summary>
+    /// The response fields agreed in #134 as open: they may gain values at any time,
+    /// because installed apps treat unknown values as unknown instead of failing.
+    /// Everything else is closed. Changing this list is a contract decision.
+    /// </summary>
+    private static readonly string[] AgreedOpenEnums =
+    {
+        "MicroWinResponse.category",
+        "PracticeSessionResponse.sessionType",
+        "RoundResponse.source",
+    };
+
+    [Fact]
+    public void OpenEnums_AreExactlyTheAgreedResponseFields_Issue134()
+    {
+        var open = _spec.Components.Schemas
+            .SelectMany(s => s.Value.Properties
+                .Where(p => p.Value.Extensions.ContainsKey("x-known-values"))
+                .Select(p => $"{s.Key}.{p.Key}"))
+            .OrderBy(n => n);
+
+        Assert.Equal(AgreedOpenEnums, open);
+    }
+
+    [Theory]
+    [InlineData("PracticeSessionResponse", "sessionType", new[] { "Range", "Putting", "ShortGame", "Simulator", "Lesson", "Other" })]
+    [InlineData("MicroWinResponse", "category", new[] { "StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea" })]
+    [InlineData("RoundResponse", "source", new[] { "Manual", "Import", "Coach", "Other" })]
+    public void OpenEnums_ArePlainStrings_ListingTheirKnownValues_Issue134(string schema, string property, string[] known)
+    {
+        var field = _spec.Components.Schemas[schema].Properties[property];
+
+        // No `enum`: a generated client keeps a string, so a new value can't break it.
+        Assert.Empty(field.Enum);
+        Assert.Equal("string", field.Type);
+
+        var listed = ((OpenApiArray)field.Extensions["x-known-values"]).Cast<OpenApiString>().Select(v => v.Value);
+        Assert.Equal(known, listed);
+        Assert.Contains("treat any other value as unknown", field.Description);
+    }
+
+    /// <summary>Apps only send values they know, so request fields stay typed (#134).</summary>
+    [Theory]
+    [InlineData("CreatePracticeSessionRequest", "sessionType")]
+    [InlineData("CreateRoundRequest", "source")]
+    public void RequestEnums_StayClosed_Issue134(string schema, string property)
+    {
+        var field = _spec.Components.Schemas[schema].Properties[property];
+
+        Assert.NotEmpty(field.Enum);
+        Assert.False(field.Extensions.ContainsKey("x-known-values"));
     }
 
     [Fact]

@@ -71,5 +71,7 @@ dependencies {
 }
 
 tasks.test {
+    // KnownValuesTest reads the spec directly (#134), so a spec change must re-run it.
+    inputs.file(spec)
     useJUnitPlatform()
 }

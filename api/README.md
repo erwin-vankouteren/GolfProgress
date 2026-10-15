@@ -46,7 +46,8 @@ endpoint follows them.
   action makes itself, and `Problem(...)` otherwise, never a bare string.
 - **Headers** with `[ResponseHeader]`: `Location` on `201`, `X-Total-Count` on paged lists.
 - **Enum values in string fields** with `[StringEnum(typeof(...))]`, and required request
-  fields with `[Required]`.
+  fields with `[Required]`. For a response field expected to gain values, use
+  `[StringEnum(typeof(...), Open = true)]`; see "Changing the contract".
 - **Dates** are `yyyy-MM-dd`, parsed with `IsoDate`, never `DateOnly.TryParse` (that
   follows the server's culture).
 
@@ -59,6 +60,16 @@ Documented automatically, by the filters in `src/GolfProgress.Api/OpenApi/`:
 ## Changing the contract
 
 Installed mobile apps can't be forced to update, so changes must be **additive**: new
-endpoints, new optional fields, new enum values. Don't remove or rename fields, or change
-what they mean. When a breaking change is unavoidable, add a new endpoint next to the old
-one. See `docs/architecture.md` → "API evolution".
+endpoints and new optional fields. Don't remove or rename fields, or change what they
+mean. When a breaking change is unavoidable, add a new endpoint next to the old one. See
+`docs/architecture.md` → "API evolution".
+
+**New values in response enums** (#134):
+
+| Field | Adding a value |
+|---|---|
+| **Open:** `PracticeSessionResponse.sessionType`, `MicroWinResponse.category`, `RoundResponse.source` | Allowed at any time. Clients map unknown values to "unknown". Add the value to the enum and regenerate the spec; then add it to each client's known values (`knownValues.ts`, `KnownValues.kt`, `KnownValues.swift`) so new builds show it properly. Each client has a test that fails until it does |
+| **Closed:** every other enum in a response | **Breaking:** installed apps fail to read the response. Raise the minimum app versions (`ClientConfig:MinimumVersions`) first, or add a new field |
+
+Making a field open or closed is a contract decision. `OpenApiContractTests` lists the
+open fields and fails if that changes.

@@ -8,7 +8,7 @@ public sealed class MicroWinResponse
     public Guid RoundId { get; init; }
     public Guid UserId { get; init; }
 
-    [StringEnum(typeof(Enums.MicroWinCategory))]
+    [StringEnum(typeof(Enums.MicroWinCategory), Open = true)]
     public string Category { get; init; } = "";
     public string? Metric { get; init; }
     [StringEnum(typeof(Enums.MicroWinDirection))]

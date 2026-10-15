@@ -9,7 +9,7 @@ public sealed class PracticeSessionResponse
 
     public string PracticedAt { get; init; } = "";   // "2026-04-20"
     public short? DurationMinutes { get; init; }
-    [StringEnum(typeof(Enums.SessionType))]
+    [StringEnum(typeof(Enums.SessionType), Open = true)]
     public string SessionType { get; init; } = "";
     public string? VenueName { get; init; }
     public List<string> Tags { get; init; } = new();
