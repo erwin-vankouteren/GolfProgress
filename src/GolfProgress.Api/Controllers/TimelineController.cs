@@ -37,7 +37,7 @@ public sealed class TimelineController : ControllerBase
         DateOnly? fromDate = null;
         DateOnly? toDate = null;
 
-        if (_cache.TryGetValue(cacheKey, out RoundTimelineResponse cached))
+        if (_cache.TryGetValue(cacheKey, out RoundTimelineResponse? cached))
             return Ok(cached);
 
         if (!string.IsNullOrWhiteSpace(from))
