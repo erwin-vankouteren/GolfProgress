@@ -52,7 +52,14 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
         });
     }
 
-    /// <summary>Only /auth/* is anonymous; everything else needs the bearer token.</summary>
+    /// <summary>
+    /// The endpoints meant to be reached before signing in. Everything else needs the
+    /// bearer token; a new anonymous endpoint must be added here deliberately.
+    /// </summary>
+    private static bool IsAnonymous(string name) =>
+        name.Contains(" /auth/") || name.EndsWith(" /client-config");
+
+    /// <summary>Only the endpoints in <see cref="IsAnonymous"/> skip the bearer token.</summary>
     [Fact]
     public void AuthenticatedOperations_DeclareTheBearerSchemeAnd401()
     {
@@ -60,7 +67,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
 
         foreach (var (name, op) in Operations())
         {
-            var anonymous = name.Contains(" /auth/");
+            var anonymous = IsAnonymous(name);
 
             if (anonymous)
             {
@@ -75,9 +82,9 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
     }
 
     [Fact]
-    public void RateLimitedAuthOperations_Document429WithRetryAfter()
+    public void AnonymousOperations_AreRateLimited_AndDocument429WithRetryAfter()
     {
-        foreach (var (name, op) in Operations().Where(o => o.Name.Contains(" /auth/")))
+        foreach (var (name, op) in Operations().Where(o => IsAnonymous(o.Name)))
         {
             Assert.True(op.Responses.TryGetValue("429", out var tooMany), $"{name} does not document 429");
             Assert.Contains("Retry-After", tooMany!.Headers.Keys);
