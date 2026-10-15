@@ -35,6 +35,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Jwt__Key", JwtKey);
         Environment.SetEnvironmentVariable("Jwt__ExpiresMinutes", "15");
         Environment.SetEnvironmentVariable("RefreshTokens__ExpiresDays", "14");
+
+        // The retention worker would purge on startup, racing tests that count
+        // saves; its logic is tested directly through EventRetentionService.
+        Environment.SetEnvironmentVariable("EventRetention__Enabled", "false");
     }
 
     private readonly string _databaseName = $"golfprogress-tests-{Guid.NewGuid()}";

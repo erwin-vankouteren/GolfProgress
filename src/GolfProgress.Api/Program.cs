@@ -41,6 +41,11 @@ builder.Services.AddOptions<ProgressOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<EventRetentionOptions>()
+    .Bind(builder.Configuration.GetSection(EventRetentionOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddOptions<AuthRateLimitOptions>()
     .Bind(builder.Configuration.GetSection(AuthRateLimitOptions.SectionName))
     .ValidateDataAnnotations()
@@ -130,6 +135,10 @@ builder.Services.AddScoped<GolfProgress.Api.Services.DashboardService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.JwtTokenService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.RefreshTokenService>();
 builder.Services.AddMemoryCache();
+
+// Audit-event retention (#20): purges old Events rows on a timer.
+builder.Services.AddScoped<GolfProgress.Api.Services.EventRetentionService>();
+builder.Services.AddHostedService<GolfProgress.Api.Services.EventRetentionWorker>();
 
 var app = builder.Build();
 app.UseRateLimiter();
