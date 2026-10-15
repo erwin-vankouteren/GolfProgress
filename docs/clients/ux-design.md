@@ -2,7 +2,8 @@
 
 The screens and navigation shared by the web, iOS and Android apps. Each platform
 implements them with its own native controls and conventions, but the structure, content
-and wording are the same everywhere. The technical architecture is in
+and wording are the same everywhere. Every screen has a low-fidelity wireframe in
+[`wireframes.md`](wireframes.md). The technical architecture is in
 [`../architecture.md`](../architecture.md).
 
 ## Principles
@@ -19,7 +20,10 @@ and wording are the same everywhere. The technical architecture is in
 
 ## Navigation
 
-Five top-level sections, as a tab bar on iOS and Android and a sidebar on the web:
+Five top-level sections, in a sidebar on the web. On iOS and Android, Home, Rounds,
+Practice and Progress are tabs, and **Profile** is the avatar in each screen's top bar:
+together with the centre **Log round** button, five sections would need six tab slots, more
+than fit comfortably on a phone.
 
 | Section | Purpose | Main screens |
 |---|---|---|
@@ -69,7 +73,7 @@ Empty state, before any rounds: an explanation and a "Log your first round" butt
 | Screen | Content | Endpoints |
 |---|---|---|
 | Round list | Newest first, paged on scroll: date, course, strokes, fitness score | `GET /me/rounds` |
-| Log round | Date, 9 or 18 holes, course, tee, strokes; optional stats by tracking mode (putts, penalties, fairways, greens in regulation, three-putts, blow-up holes); notes. Validated as you type, with the same rules as the API | `POST /me/rounds` (scores it, **new**) |
+| Log round | Date, 9 or 18 holes, course, tee, strokes, notes, plus stats by tracking mode: **Minimal** strokes only; **Balanced** adds putts and penalties; **Detailed** also adds fairways, greens in regulation, three-putts and blow-up holes. Validated as you type, with the same rules as the API | `POST /me/rounds` (scores it, **new**) |
 | Round detail | Fitness score with its four pillars, each expandable to its explanation; micro-wins; next lever; the round's stats; reflection | `GET /rounds/{id}`, `/fitness-score`, `/micro-wins`, `/reflections` |
 | Edit round | As Log round, prefilled; delete with confirmation | **new** `PUT` / `DELETE /rounds/{id}` |
 | Add reflection | Focus and mood (1–5), frustration spill-over, what worked, what to repeat, one change for next time | `POST /rounds/{id}/reflections` |
