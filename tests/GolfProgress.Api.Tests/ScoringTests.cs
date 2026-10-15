@@ -13,9 +13,11 @@ public sealed class ScoringTests
 {
     private static Round RoundWith(
         int totalStrokes = 90, short? penalties = 0, short? blowUps = 0,
-        short? putts = null, short? fairways = null, short? gir = null, short? threePutts = null) => new()
+        short? putts = null, short? fairways = null, short? gir = null, short? threePutts = null,
+        short holes = 18) => new()
         {
             RoundId = Guid.NewGuid(),
+            Holes = holes,
             TotalStrokes = (short)totalStrokes,
             Penalties = penalties,
             BlowUpHoles = blowUps,
@@ -230,6 +232,46 @@ public sealed class ScoringTests
 
         Assert.Equal(new short[] { 8, 18 }, observed);
         Assert.True(observed.Max() < 25);
+    }
+
+    // ---------- Hole-count normalisation
+
+    [Theory]
+    [InlineData(18, 90, 90)]
+    [InlineData(9, 45, 90)]
+    [InlineData(9, 47, 94)]
+    public void StrokesPer18_ScalesNineHoleRoundsToEighteen(short holes, int strokes, int expected)
+        => Assert.Equal(expected,
+            ProgressComputationService.StrokesPer18(RoundWith(totalStrokes: strokes, holes: holes)));
+
+    /// <summary>
+    /// Regression guard for issue #5. A 9-hole 45 against an 18-hole baseline of 90
+    /// used to read as 45 strokes better: Execution maxed out at 25 and Consistency
+    /// dropped to 8. Played at the same rate, it is simply an average round.
+    /// </summary>
+    [Fact]
+    public void NineHoleRound_IsScoredAsItsEighteenHoleEquivalent_Issue5()
+    {
+        var (execution, _, consistency, _) = ProgressComputationService.ComputePillars(
+            RoundWith(totalStrokes: 45, holes: 9), BaselineWith(avgScore: 90, stdDev: 3));
+
+        Assert.Equal(12, execution);
+        Assert.Equal(18, consistency);
+    }
+
+    [Fact]
+    public void Baseline_FromMixedHoleCounts_IsInEighteenHoleEquivalents_Issue5()
+    {
+        // 88 and 92 over 18, and 45 over 9 (= 90): mean 90, sample std dev 2.
+        var baseline = ProgressComputationService.BuildBaseline(Guid.NewGuid(), 5, new List<Round>
+        {
+            RoundWith(totalStrokes: 88),
+            RoundWith(totalStrokes: 92),
+            RoundWith(totalStrokes: 45, holes: 9)
+        });
+
+        Assert.Equal(90m, baseline.AvgScore);
+        Assert.Equal(2m, baseline.ScoreStdDev);
     }
 
     // ---------- Completeness
