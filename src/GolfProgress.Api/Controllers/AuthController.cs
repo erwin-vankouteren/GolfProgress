@@ -32,17 +32,16 @@ public sealed class AuthController : ControllerBase
     }
 
     // POST /auth/register
-    [HttpPost("/auth/register")]
+    [HttpPost("/auth/register", Name = "register")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Email)) return BadRequest("Email is required.");
-        if (string.IsNullOrWhiteSpace(request.Password)) return BadRequest("Password is required.");
-        if (string.IsNullOrWhiteSpace(request.DisplayName)) return BadRequest("DisplayName is required.");
-
         var email = request.Email.Trim().ToLowerInvariant();
 
         var exists = await _db.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == email, ct);
-        if (exists) return Conflict("Email already registered.");
+        if (exists) return Problem(statusCode: StatusCodes.Status409Conflict, title: "Email already registered.");
 
         var now = DateTimeOffset.UtcNow;
 
@@ -79,12 +78,12 @@ public sealed class AuthController : ControllerBase
     }
 
     // POST /auth/login
-    [HttpPost("/auth/login")]
+    [HttpPost("/auth/login", Name = "login")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Email)) return BadRequest("Email is required.");
-        if (string.IsNullOrWhiteSpace(request.Password)) return BadRequest("Password is required.");
-
         var email = request.Email.Trim().ToLowerInvariant();
 
         // Checked before the account is looked up, so unknown and known emails are
@@ -121,12 +120,12 @@ public sealed class AuthController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("/auth/refresh")]
+    [HttpPost("/auth/refresh", Name = "refreshToken")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.RefreshToken))
-            return BadRequest("RefreshToken is required.");
-
         var existing = await _refresh.FindValidAsync(request.RefreshToken, ct);
         if (existing is null) return Unauthorized();
 
@@ -153,12 +152,11 @@ public sealed class AuthController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("/auth/logout")]
+    [HttpPost("/auth/logout", Name = "logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Logout([FromBody] RefreshRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.RefreshToken))
-            return BadRequest("RefreshToken is required.");
-
         var token = await _refresh.FindValidAsync(request.RefreshToken, ct);
         if (token is null) return NoContent(); // idempotent logout
 

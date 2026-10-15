@@ -26,7 +26,9 @@ public sealed class ProgressController : ControllerBase
     }
 
     // POST /rounds/{roundId}/compute
-    [HttpPost("/rounds/{roundId:guid}/compute")]
+    [HttpPost("/rounds/{roundId:guid}/compute", Name = "computeRound")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Compute(Guid roundId, CancellationToken ct)
     {
         var userId = User.GetUserId();
@@ -37,7 +39,9 @@ public sealed class ProgressController : ControllerBase
     }
 
     // GET /me/baseline
-    [HttpGet("/me/baseline")]
+    [HttpGet("/me/baseline", Name = "getMyBaseline")]
+    [ProducesResponseType<UserBaselineResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserBaselineResponse>> GetBaseline(CancellationToken ct)
     {
         var userId = User.GetUserId();
@@ -64,7 +68,9 @@ public sealed class ProgressController : ControllerBase
     }
 
     // GET /rounds/{roundId}/fitness-score
-    [HttpGet("/rounds/{roundId:guid}/fitness-score")]
+    [HttpGet("/rounds/{roundId:guid}/fitness-score", Name = "getFitnessScore")]
+    [ProducesResponseType<FitnessScoreResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<FitnessScoreResponse>> GetFitnessScore(Guid roundId, CancellationToken ct)
     {
         var userId = User.GetUserId();

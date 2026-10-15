@@ -1,4 +1,6 @@
-﻿namespace GolfProgress.Api.Contracts.Progress
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
+namespace GolfProgress.Api.Contracts.Progress
 {
     public sealed class UserBaselineResponse
     {
@@ -15,6 +17,7 @@
         public decimal? AvgGir { get; init; }
 
         public decimal CompletenessRatio { get; init; }
+        [StringEnum(typeof(Enums.ConfidenceLevel))]
         public string ConfidenceLevel { get; init; } = "Low";
         public DateTimeOffset ComputedAt { get; init; }
     }

@@ -1,3 +1,5 @@
+using GolfProgress.Api.Contracts;
+using GolfProgress.Api.OpenApi;
 using GolfProgress.Api.Contracts.PracticeSessions;
 using GolfProgress.Api.Security;
 using GolfProgress.Domain.Entities;
@@ -23,7 +25,10 @@ public sealed class PracticeSessionsController : ControllerBase
     public PracticeSessionsController(GolfProgressDbContext db) => _db = db;
 
     // POST /me/practice-sessions
-    [HttpPost("/me/practice-sessions")]
+    [HttpPost("/me/practice-sessions", Name = "createPracticeSession")]
+    [ProducesResponseType<PracticeSessionResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ResponseHeader(StatusCodes.Status201Created, "Location", "string", "URL of the created practice session.")]
     public async Task<ActionResult<PracticeSessionResponse>> Create(
         [FromBody] CreatePracticeSessionRequest request, CancellationToken ct)
     {
@@ -35,7 +40,7 @@ public sealed class PracticeSessionsController : ControllerBase
         {
             PracticeSessionId = Guid.NewGuid(),
             UserId = userId,
-            PracticedAt = DateOnly.Parse(request.PracticedAt),
+            PracticedAt = IsoDate.Parse(request.PracticedAt),
             DurationMinutes = request.DurationMinutes,
             SessionType = Enum.Parse<SessionType>(request.SessionType, ignoreCase: true),
             VenueName = request.VenueName,
@@ -67,7 +72,9 @@ public sealed class PracticeSessionsController : ControllerBase
     }
 
     // GET /me/practice-sessions/{id}
-    [HttpGet("/me/practice-sessions/{id:guid}")]
+    [HttpGet("/me/practice-sessions/{id:guid}", Name = "getPracticeSession")]
+    [ProducesResponseType<PracticeSessionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PracticeSessionResponse>> GetById(Guid id, CancellationToken ct)
     {
         var userId = User.GetUserId();
@@ -82,7 +89,9 @@ public sealed class PracticeSessionsController : ControllerBase
     //
     // Paged and newest first, like GET /me/rounds: take is clamped to 1..100 and
     // the total is returned in X-Total-Count.
-    [HttpGet("/me/practice-sessions")]
+    [HttpGet("/me/practice-sessions", Name = "listMyPracticeSessions")]
+    [ProducesResponseType<List<PracticeSessionResponse>>(StatusCodes.Status200OK)]
+    [ResponseHeader(StatusCodes.Status200OK, "X-Total-Count", "integer", "Total number of the caller's practice sessions.")]
     public async Task<ActionResult<List<PracticeSessionResponse>>> List(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
@@ -108,7 +117,9 @@ public sealed class PracticeSessionsController : ControllerBase
     }
 
     // DELETE /me/practice-sessions/{id}
-    [HttpDelete("/me/practice-sessions/{id:guid}")]
+    [HttpDelete("/me/practice-sessions/{id:guid}", Name = "deletePracticeSession")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var userId = User.GetUserId();

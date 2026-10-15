@@ -21,7 +21,9 @@ public sealed class RecommendationsController : ControllerBase
     }
 
     // POST /rounds/{roundId}/next-lever
-    [HttpPost("/rounds/{roundId:guid}/next-lever")]
+    [HttpPost("/rounds/{roundId:guid}/next-lever", Name = "recommendNextLever")]
+    [ProducesResponseType<NextLeverResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<NextLeverResponse>> Recommend(Guid roundId, CancellationToken ct)
     {
         var userId = User.GetUserId();

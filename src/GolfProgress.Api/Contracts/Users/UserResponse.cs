@@ -1,4 +1,6 @@
-﻿namespace GolfProgress.Api.Contracts.Users
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
+namespace GolfProgress.Api.Contracts.Users
 {
     public sealed class UserResponse
     {
@@ -6,7 +8,9 @@
         public string? Email { get; init; }
         public string? DisplayName { get; init; }
         public string? Timezone { get; init; }
+        [StringEnum(typeof(Enums.Units))]
         public string Units { get; init; } = "Metric";
+        [StringEnum(typeof(Enums.TrackingMode))]
         public string TrackingMode { get; init; } = "Minimal";
 
         public decimal? HandicapIndex { get; init; }

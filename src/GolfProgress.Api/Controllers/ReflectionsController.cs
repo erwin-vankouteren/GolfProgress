@@ -18,13 +18,16 @@ public sealed class ReflectionsController : ControllerBase
     public ReflectionsController(GolfProgressDbContext db) => _db = db;
 
     // POST /rounds/{roundId}/reflections
-    [HttpPost("/rounds/{roundId:guid}/reflections")]
+    [HttpPost("/rounds/{roundId:guid}/reflections", Name = "createReflection")]
+    [ProducesResponseType<ReflectionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReflectionResponse>> Create(Guid roundId, [FromBody] CreateReflectionRequest request, CancellationToken ct)
     {
         var userId = User.GetUserId();
 
         var round = await _db.FindOwnedRoundAsync(roundId, userId, ct);
-        if (round is null) return NotFound($"Round {roundId} not found.");
+        if (round is null) return Problem(statusCode: StatusCodes.Status404NotFound, detail: $"Round {roundId} not found.");
 
         var now = DateTimeOffset.UtcNow;
 
@@ -60,7 +63,9 @@ public sealed class ReflectionsController : ControllerBase
     }
 
     // GET /rounds/{roundId}/reflections
-    [HttpGet("/rounds/{roundId:guid}/reflections")]
+    [HttpGet("/rounds/{roundId:guid}/reflections", Name = "listReflections")]
+    [ProducesResponseType<List<ReflectionResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<ReflectionResponse>>> List(Guid roundId, CancellationToken ct)
     {
         var userId = User.GetUserId();

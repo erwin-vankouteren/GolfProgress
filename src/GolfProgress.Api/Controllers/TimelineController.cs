@@ -1,4 +1,6 @@
 ﻿using GolfProgress.Api.Contracts.Timeline;
+using GolfProgress.Api.Contracts;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
 using GolfProgress.Infrastructure.Persistence;
@@ -25,7 +27,9 @@ public sealed class TimelineController : ControllerBase
     }
 
     // GET /me/timeline?take=20&from=2026-01-01&to=2026-12-31
-    [HttpGet("/me/timeline")]
+    [HttpGet("/me/timeline", Name = "getTimeline")]
+    [ProducesResponseType<RoundTimelineResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RoundTimelineResponse>> GetRoundTimeline(
         [FromQuery] int take = 20,
         [FromQuery] string? from = null,
@@ -42,13 +46,13 @@ public sealed class TimelineController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(from))
         {
-            if (!DateOnly.TryParse(from, out var f)) return BadRequest("from must be yyyy-MM-dd");
+            if (!IsoDate.TryParse(from, out var f)) return this.FieldError(nameof(from), "from must be an ISO date, yyyy-MM-dd.");
             fromDate = f;
         }
 
         if (!string.IsNullOrWhiteSpace(to))
         {
-            if (!DateOnly.TryParse(to, out var t)) return BadRequest("to must be yyyy-MM-dd");
+            if (!IsoDate.TryParse(to, out var t)) return this.FieldError(nameof(to), "to must be an ISO date, yyyy-MM-dd.");
             toDate = t;
         }
 
@@ -64,7 +68,8 @@ public sealed class TimelineController : ControllerBase
     }
 
     // GET /me/timeline/monthly?months=6
-    [HttpGet("/me/timeline/monthly")]
+    [HttpGet("/me/timeline/monthly", Name = "getMonthlyTimeline")]
+    [ProducesResponseType<MonthlyTimelineResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<MonthlyTimelineResponse>> GetMonthlyTimeline(
         [FromQuery] int months = 6,
         CancellationToken ct = default)
