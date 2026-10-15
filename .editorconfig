@@ -34,3 +34,7 @@ indent_style = tab
 
 [*.{cmd,bat}]
 end_of_line = crlf
+
+# ktlint (#77): Compose functions are PascalCase by convention.
+[*.{kt,kts}]
+ktlint_function_naming_ignore_when_annotated_with = Composable
