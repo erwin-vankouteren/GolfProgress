@@ -13,7 +13,7 @@ jobs:
   build-and-test:
     name: Build and test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     defaults:
       run:
@@ -37,6 +37,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # Generates the API client from api/openapi.json, compiles it and runs the tests.
+      # The API client, then the app: ktlint, Android Lint, the unit and Compose UI tests
+      # (Robolectric, on the JVM) and a debug APK. Unit tests run on the debug variant,
+      # where the Compose test activity is declared.
       - name: Build and test
-        run: ./gradlew build
+        run: >-
+          ./gradlew
+          :api-client:build
+          :app:ktlintCheck
+          :app:lintDebug
+          :app:testDebugUnitTest
+          :app:assembleDebug

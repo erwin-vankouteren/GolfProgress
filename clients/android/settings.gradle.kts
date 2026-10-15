@@ -16,5 +16,6 @@ dependencyResolutionManagement {
     }
 }
 
-// The API client, generated from api/openapi.json (#65). The app module follows in #77.
+// The app (#77) and the API client it uses, generated from api/openapi.json (#65).
+include(":app")
 include(":api-client")
