@@ -1,0 +1,19 @@
+# Gradle and build output
+.gradle/
+.kotlin/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Machine-specific SDK path
+local.properties
+
+# Built packages
+*.apk
+*.aab
+
+# Signing keys never belong in the repository (CI gets them from secrets)
+*.jks
+*.keystore
+keystore.properties
