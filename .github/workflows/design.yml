@@ -1,0 +1,29 @@
+name: Design
+
+# Checks the design tokens: WCAG contrast for every declared colour pair, and that each
+# client's generated token file matches design/tokens.json (#73). Called by ci.yml when
+# the tokens or a generated token file change; can also be run by hand.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tokens:
+    name: Design tokens
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: clients/web/.nvmrc
+
+      - name: Check contrast and generated files
+        run: node design/build-tokens.mjs --check --report

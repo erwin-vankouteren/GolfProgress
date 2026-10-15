@@ -10,7 +10,7 @@
 # everything.
 set -euo pipefail
 
-areas=(api web android ios)
+areas=(api web android ios design)
 
 # Extended regexes over repository-relative paths.
 declare -A patterns=(
@@ -18,6 +18,7 @@ declare -A patterns=(
   [web]='^(clients/web/|design/|api/openapi\.json$|\.github/workflows/web\.yml$)'
   [android]='^(clients/android/|design/|api/openapi\.json$|\.github/workflows/android\.yml$)'
   [ios]='^(clients/ios/|design/|api/openapi\.json$|\.github/workflows/ios\.yml$)'
+  [design]='^(design/|clients/web/src/theme/tokens\.|clients/ios/GolfProgress/DesignSystem/DesignTokens\.swift$|clients/android/app/src/main/kotlin/com/golfprogress/app/ui/theme/DesignTokens\.kt$|\.github/workflows/design\.yml$)'
 )
 
 # Changes to these run every area.

@@ -88,6 +88,7 @@ That check is the one to require before merging (#59).
 | Web (`web.yml`) | `clients/web/`, `api/openapi.json`, `design/` | ubuntu |
 | Android (`android.yml`) | `clients/android/`, `api/openapi.json`, `design/` | ubuntu |
 | iOS (`ios.yml`) | `clients/ios/`, `api/openapi.json`, `design/` | macOS |
+| Design (`design.yml`) | `design/` and the generated token files: contrast and drift check | ubuntu |
 
 Changing the CI setup itself, or `.gitattributes`, runs every area. Documentation-only
 changes run none, and still get a passing **CI result**.
