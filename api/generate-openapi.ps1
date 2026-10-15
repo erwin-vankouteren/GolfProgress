@@ -27,6 +27,9 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $output = Join-Path $root 'api/openapi.json'
 $assembly = Join-Path $root "src/GolfProgress.Api/bin/$Configuration/net8.0/GolfProgress.Api.dll"
+$clientCopies = @(
+    'clients/ios/Packages/GolfProgressAPI/Sources/GolfProgressAPI/openapi.json'
+)
 
 # The CLI starts the app's host (up to app.Run(), with a no-op server) to read the
 # document from it. Program.cs refuses to start without a connection string and a JWT
@@ -66,6 +69,14 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Generating the OpenAPI spec failed.' }
 
     Write-Host "Wrote $output"
+
+    # Clients whose generators must read the spec from inside their own folder get a
+    # copy (#64): SwiftPM build plugins are sandboxed to the package. CI checks the
+    # copies are identical to api/openapi.json.
+    foreach ($copy in $clientCopies) {
+        Copy-Item -LiteralPath $output -Destination (Join-Path $root $copy) -Force
+        Write-Host "Copied to $copy"
+    }
 }
 finally {
     foreach ($name in $placeholders.Keys) {

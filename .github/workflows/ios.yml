@@ -1,0 +1,62 @@
+name: iOS
+
+# Builds and tests the iOS client. macOS runners bill 10x Linux minutes, so this runs
+# only when something the iOS client depends on changes (#59, #64).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "clients/ios/**"
+      - "api/openapi.json"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "clients/ios/**"
+      - "api/openapi.json"
+      - ".github/workflows/ios.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  api-client:
+    name: API client package
+    runs-on: macos-15
+    # A cold build compiles the generator and its dependencies; later runs are cached.
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: clients/ios/Packages/GolfProgressAPI
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # The package generates from its own copy of the spec (SwiftPM plugins can't read
+      # outside the package). It must be identical to api/openapi.json.
+      - name: Check the spec copy matches api/openapi.json
+        run: |
+          if ! cmp -s Sources/GolfProgressAPI/openapi.json "$GITHUB_WORKSPACE/api/openapi.json"; then
+            echo "::error::clients/ios/.../openapi.json differs from api/openapi.json. Run ./api/generate-openapi.ps1 and commit the result."
+            exit 1
+          fi
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: clients/ios/Packages/GolfProgressAPI/.build
+          key: ${{ runner.os }}-spm-${{ hashFiles('clients/ios/Packages/GolfProgressAPI/Package.swift', 'clients/ios/Packages/GolfProgressAPI/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Build and test
+        run: swift test
