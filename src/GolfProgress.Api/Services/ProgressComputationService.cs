@@ -239,7 +239,12 @@ public sealed class ProgressComputationService
                 windowRounds = baseline.WindowRounds,
                 avgScore = baseline.AvgScore,
                 scoreStdDev = baseline.ScoreStdDev,
-                habits = new { roundsInWindow = habitSignals.RoundsInWindow, reflected = habitSignals.Reflected },
+                habits = new
+                {
+                    roundsInWindow = habitSignals.RoundsInWindow,
+                    practiceSessionsInWindow = habitSignals.PracticeSessionsInWindow,
+                    reflected = habitSignals.Reflected
+                },
                 pillars = new { execution, damage, consistency, habits }
             }),
             new JsonDocumentOptions()
@@ -313,7 +318,10 @@ public sealed class ProgressComputationService
     /// <summary>How many std devs worse than average a round must be to score 0 Consistency.</summary>
     internal const decimal ConsistencyZeroAtStdDevs = 2m;
 
-    /// <summary>Rounds in the habit window that earn the full frequency points: about one a week.</summary>
+    /// <summary>
+    /// Rounds plus practice sessions in the habit window that earn the full
+    /// frequency points: about one a week.
+    /// </summary>
     internal const int HabitRoundsForFullMarks = 4;
 
     internal const int HabitWindowDays = 28;
@@ -322,16 +330,20 @@ public sealed class ProgressComputationService
 
     /// <summary>
     /// Habits: the behaviours that drive improvement, rather than the result (#28).
-    /// Up to <see cref="HabitFrequencyMax"/> for playing and logging regularly, scaled
-    /// by rounds in the <see cref="HabitWindowDays"/> days up to the round, and
-    /// <see cref="HabitReflectionPoints"/> for reflecting on this round.
+    /// Up to <see cref="HabitFrequencyMax"/> for playing or practising regularly,
+    /// scaled by rounds and practice sessions in the <see cref="HabitWindowDays"/>
+    /// days up to the round (#19), and <see cref="HabitReflectionPoints"/> for
+    /// reflecting on this round.
     ///
-    /// Practice sessions would belong here too, but nothing can record them yet (#19).
+    /// Practice shares the frequency cap with rounds rather than adding points of
+    /// its own, so the pillar still tops out at 25 and a user who does not log
+    /// practice scores exactly as before.
     /// </summary>
     internal static short HabitsScore(HabitSignals signals)
     {
-        var rounds = Math.Clamp(signals.RoundsInWindow, 0, HabitRoundsForFullMarks);
-        var frequency = rounds * HabitFrequencyMax / HabitRoundsForFullMarks;
+        var activities = Math.Clamp(
+            signals.RoundsInWindow + signals.PracticeSessionsInWindow, 0, HabitRoundsForFullMarks);
+        var frequency = activities * HabitFrequencyMax / HabitRoundsForFullMarks;
 
         return (short)(frequency + (signals.Reflected ? HabitReflectionPoints : 0));
     }
@@ -349,9 +361,14 @@ public sealed class ProgressComputationService
             r.PlayedAt >= windowStart &&
             r.PlayedAt <= round.PlayedAt, ct);
 
+        var practiceInWindow = await _db.PracticeSessions.CountAsync(s =>
+            s.UserId == round.UserId &&
+            s.PracticedAt >= windowStart &&
+            s.PracticedAt <= round.PlayedAt, ct);
+
         var reflected = await _db.Reflections.AnyAsync(r => r.RoundId == round.RoundId, ct);
 
-        return new HabitSignals(roundsInWindow, reflected);
+        return new HabitSignals(roundsInWindow, reflected, practiceInWindow);
     }
 
     /// <summary>
@@ -402,7 +419,8 @@ public sealed class ProgressComputationService
 }
 
 /// <summary>
-/// Inputs to the Habits pillar: rounds played in the habit window up to and
-/// including the scored round, and whether that round has a reflection.
+/// Inputs to the Habits pillar: rounds and practice sessions in the habit window
+/// up to and including the scored round, and whether that round has a reflection.
 /// </summary>
-internal readonly record struct HabitSignals(int RoundsInWindow, bool Reflected);
+internal readonly record struct HabitSignals(
+    int RoundsInWindow, bool Reflected, int PracticeSessionsInWindow = 0);
