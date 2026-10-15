@@ -157,81 +157,77 @@ public sealed class ScoringTests
         Assert.Equal(12, consistency);
     }
 
+    /// <summary>
+    /// Issue #28: Consistency is continuous and one-sided. Full marks at or better
+    /// than average, tapering to 0 at two std devs worse.
+    /// </summary>
     [Theory]
-    [InlineData(90, 18)]   // dead on average, within 1 sd
-    [InlineData(93, 18)]   // exactly 1 sd away, boundary is inclusive
-    [InlineData(87, 18)]   // 1 sd below
-    [InlineData(94, 8)]    // outside 1 sd
-    [InlineData(80, 8)]    // well below average, still counted as outside
-    public void Consistency_RewardsStayingWithinOneStandardDeviation(int strokes, int expected)
+    // strokes vs a baseline of 90 with std dev 3
+    [InlineData(90, 25)]   // on average
+    [InlineData(80, 25)]   // much better than average is not "inconsistent"
+    [InlineData(91, 21)]   // 1/3 sd worse: 25 * (1 - 1/6) = 20.8
+    [InlineData(93, 13)]   // 1 sd worse: halfway, 12.5 rounds away from zero
+    [InlineData(94, 8)]    // 4/3 sd worse: 25 * (1/3) = 8.3
+    [InlineData(96, 0)]    // 2 sd worse
+    [InlineData(110, 0)]   // clamps rather than going negative
+    public void Consistency_TapersOnlyForRoundsWorseThanAverage_Issue28(int strokes, int expected)
     {
         var (_, _, consistency, _) = ProgressComputationService.ComputePillars(
             RoundWith(totalStrokes: strokes), BaselineWith(avgScore: 90, stdDev: 3));
 
-        // Note: the comparison is on absolute distance, so an unusually GOOD round
-        // is penalised for inconsistency exactly as an unusually bad one is.
-        // Arguably intended for a "consistency" pillar, but worth being explicit.
         Assert.Equal(expected, consistency);
+    }
+
+    [Fact]
+    public void Consistency_CoversTheFullZeroTo25Range_Issue28()
+    {
+        var observed = Enumerable.Range(60, 60)
+            .Select(strokes => ProgressComputationService.ComputePillars(
+                RoundWith(totalStrokes: strokes), BaselineWith(avgScore: 90, stdDev: 3)).consistency)
+            .ToArray();
+
+        Assert.Equal(0, observed.Min());
+        Assert.Equal(25, observed.Max());
     }
 
     // ---------- Habits and total
 
-    [Fact]
-    public void Habits_IsAlwaysTheSamePlaceholderValue()
+    [Theory]
+    // rounds in the 28-day window, reflected, expected
+    [InlineData(0, false, 0)]
+    [InlineData(1, false, 3)]     // 1 * 15 / 4
+    [InlineData(2, false, 7)]
+    [InlineData(3, false, 11)]
+    [InlineData(4, false, 15)]    // about weekly: full frequency marks
+    [InlineData(9, false, 15)]    // capped
+    [InlineData(1, true, 13)]     // 3 + 10 for reflecting
+    [InlineData(4, true, 25)]
+    public void Habits_RewardsRegularRoundsAndReflection_Issue28(int rounds, bool reflected, int expected)
     {
-        var (_, _, _, greatRound) = ProgressComputationService.ComputePillars(
-            RoundWith(totalStrokes: 70, penalties: 0, blowUps: 0), BaselineWith(avgScore: 90, stdDev: 3));
+        var (_, _, _, habits) = ProgressComputationService.ComputePillars(
+            RoundWith(), BaselineWith(), new HabitSignals(rounds, reflected));
 
-        var (_, _, _, poorRound) = ProgressComputationService.ComputePillars(
-            RoundWith(totalStrokes: 120, penalties: 6, blowUps: 8), BaselineWith(avgScore: 90, stdDev: 3));
-
-        Assert.Equal(10, greatRound);
-        Assert.Equal(10, poorRound);
+        Assert.Equal(expected, habits);
     }
 
     /// <summary>
-    /// Documents the real ceiling on ScoreTotal. See issue #28.
-    ///
-    /// ScoreTotal is clamped to 0..100 and FitnessScore documents each pillar as
-    /// 0..25, but the maximum attainable total is 78:
-    ///   execution 25 + damage 25 + consistency 18 + habits 10
-    /// because Consistency only ever returns 8, 12 or 18, and Habits is fixed at 10.
-    ///
-    /// Reaching even 78 requires a baseline std dev of at least 13, since Execution
-    /// peaks when the round is far below the baseline average while Consistency
-    /// requires it to stay within one std dev of it. Those two pull against each
-    /// other, so a narrow baseline lowers the ceiling further.
+    /// Regression guard for issue #28. The total used to be capped at 78, because
+    /// Consistency topped out at 18 (and fought Execution) and Habits was fixed at
+    /// 10. An excellent, clean, reflected round in a regular week now reaches 100.
     /// </summary>
     [Fact]
-    public void ScoreTotal_CeilingIs78NotOneHundred_Issue28()
+    public void ScoreTotal_ExcellentRound_Reaches100_Issue28()
     {
-        // Best case: 13 strokes under a baseline whose std dev is also 13, so
-        // Execution maxes out while the round still counts as consistent.
         var (execution, damage, consistency, habits) = ProgressComputationService.ComputePillars(
             RoundWith(totalStrokes: 77, penalties: 0, blowUps: 0),
-            BaselineWith(avgScore: 90, stdDev: 13));
+            BaselineWith(avgScore: 90, stdDev: 3),
+            new HabitSignals(RoundsInWindow: 4, Reflected: true));
 
         Assert.Equal(25, execution);
         Assert.Equal(25, damage);
-        Assert.Equal(18, consistency);
-        Assert.Equal(10, habits);
-        Assert.Equal(78, execution + damage + consistency + habits);
-    }
-
-    [Fact]
-    public void Consistency_NeverExceeds18_SoThePillarCannotReachItsDocumented25()
-    {
-        // Sweep a wide range of rounds against a fixed baseline; the pillar only
-        // ever takes the three discrete values 8, 12 and 18.
-        var observed = Enumerable.Range(60, 60)
-            .Select(strokes => ProgressComputationService.ComputePillars(
-                RoundWith(totalStrokes: strokes), BaselineWith(avgScore: 90, stdDev: 3)).consistency)
-            .Distinct()
-            .OrderBy(v => v)
-            .ToArray();
-
-        Assert.Equal(new short[] { 8, 18 }, observed);
-        Assert.True(observed.Max() < 25);
+        Assert.Equal(25, consistency);
+        Assert.Equal(25, habits);
+        Assert.Equal(100, execution + damage + consistency + habits);
     }
 
     // ---------- Hole-count normalisation
@@ -256,7 +252,7 @@ public sealed class ScoringTests
             RoundWith(totalStrokes: 45, holes: 9), BaselineWith(avgScore: 90, stdDev: 3));
 
         Assert.Equal(12, execution);
-        Assert.Equal(18, consistency);
+        Assert.Equal(25, consistency);
     }
 
     [Fact]

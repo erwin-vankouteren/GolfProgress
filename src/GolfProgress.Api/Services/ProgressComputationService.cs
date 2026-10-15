@@ -206,7 +206,8 @@ public sealed class ProgressComputationService
     {
         var existing = await _db.FitnessScores.FirstOrDefaultAsync(fs => fs.RoundId == round.RoundId, ct);
 
-        var (execution, damage, consistency, habits) = ComputePillars(round, baseline);
+        var habitSignals = await HabitSignalsForAsync(round, ct);
+        var (execution, damage, consistency, habits) = ComputePillars(round, baseline, habitSignals);
 
         var total = (short)Math.Clamp(execution + damage + consistency + habits, 0, 100);
 
@@ -238,6 +239,7 @@ public sealed class ProgressComputationService
                 windowRounds = baseline.WindowRounds,
                 avgScore = baseline.AvgScore,
                 scoreStdDev = baseline.ScoreStdDev,
+                habits = new { roundsInWindow = habitSignals.RoundsInWindow, reflected = habitSignals.Reflected },
                 pillars = new { execution, damage, consistency, habits }
             }),
             new JsonDocumentOptions()
@@ -246,9 +248,11 @@ public sealed class ProgressComputationService
         return existing;
     }
 
-    internal static (short execution, short damage, short consistency, short habits) ComputePillars(Round r, UserBaseline b)
+    internal static (short execution, short damage, short consistency, short habits) ComputePillars(
+        Round r, UserBaseline b, HabitSignals habitSignals = default)
     {
-        // Very simple v1 scoring (0..PillarMax each). Improve later.
+        // Scoring, 0..PillarMax per pillar. Each pillar can reach PillarMax, so a
+        // ScoreTotal of 100 is attainable (#28).
         //
         // The baseline is held in 18-hole equivalents, so the round is compared on
         // the same footing. Comparing a 9-hole total directly read as a ~45-stroke
@@ -282,18 +286,72 @@ public sealed class ProgressComputationService
             DamageCeiling(r) - (int)Math.Round(deductions),
             0, PillarMax);
 
-        // Consistency: reward staying within 1 std dev of baseline
+        // Consistency: avoiding rounds that fall apart, measured against your own
+        // spread. Full marks at or better than your average, tapering linearly to 0
+        // at ConsistencyZeroAtStdDevs standard deviations worse.
+        //
+        // It used to give 18 within one std dev either side and 8 outside, so it
+        // could never reach 25 and penalised an unusually GOOD round as
+        // "inconsistent" -- pulling against Execution, which rewards exactly that
+        // round. Together those capped ScoreTotal at 78 (#28). One-sided, the two
+        // pillars agree, and an excellent round can score full marks on both.
         short consistency = PillarNeutral;
         if (b.ScoreStdDev != null && b.AvgScore != null && b.ScoreStdDev.Value > 0)
         {
-            var within = Math.Abs(strokes - b.AvgScore.Value) <= b.ScoreStdDev.Value;
-            consistency = (short)(within ? 18 : 8);
+            var stdDevsWorse = Math.Max(0m, strokes - b.AvgScore.Value) / b.ScoreStdDev.Value;
+            var fraction = 1m - (stdDevsWorse / ConsistencyZeroAtStdDevs);
+
+            consistency = (short)Math.Clamp(
+                (int)Math.Round(PillarMax * fraction, MidpointRounding.AwayFromZero), 0, PillarMax);
         }
 
-        // Habits: placeholder v1 (we’ll make this based on frequency later)
-        short habits = 10;
+        short habits = HabitsScore(habitSignals);
 
         return (execution, damage, consistency, habits);
+    }
+
+    /// <summary>How many std devs worse than average a round must be to score 0 Consistency.</summary>
+    internal const decimal ConsistencyZeroAtStdDevs = 2m;
+
+    /// <summary>Rounds in the habit window that earn the full frequency points: about one a week.</summary>
+    internal const int HabitRoundsForFullMarks = 4;
+
+    internal const int HabitWindowDays = 28;
+    internal const short HabitFrequencyMax = 15;
+    internal const short HabitReflectionPoints = 10;
+
+    /// <summary>
+    /// Habits: the behaviours that drive improvement, rather than the result (#28).
+    /// Up to <see cref="HabitFrequencyMax"/> for playing and logging regularly, scaled
+    /// by rounds in the <see cref="HabitWindowDays"/> days up to the round, and
+    /// <see cref="HabitReflectionPoints"/> for reflecting on this round.
+    ///
+    /// Practice sessions would belong here too, but nothing can record them yet (#19).
+    /// </summary>
+    internal static short HabitsScore(HabitSignals signals)
+    {
+        var rounds = Math.Clamp(signals.RoundsInWindow, 0, HabitRoundsForFullMarks);
+        var frequency = rounds * HabitFrequencyMax / HabitRoundsForFullMarks;
+
+        return (short)(frequency + (signals.Reflected ? HabitReflectionPoints : 0));
+    }
+
+    /// <summary>
+    /// Reads the habit inputs for a round. Measured up to the round's own date rather
+    /// than today, so recomputing an old round gives the same answer.
+    /// </summary>
+    private async Task<HabitSignals> HabitSignalsForAsync(Round round, CancellationToken ct)
+    {
+        var windowStart = round.PlayedAt.AddDays(-(HabitWindowDays - 1));
+
+        var roundsInWindow = await _db.Rounds.CountAsync(r =>
+            r.UserId == round.UserId &&
+            r.PlayedAt >= windowStart &&
+            r.PlayedAt <= round.PlayedAt, ct);
+
+        var reflected = await _db.Reflections.AnyAsync(r => r.RoundId == round.RoundId, ct);
+
+        return new HabitSignals(roundsInWindow, reflected);
     }
 
     /// <summary>
@@ -342,3 +400,9 @@ public sealed class ProgressComputationService
         return (decimal)Math.Sqrt((double)variance);
     }
 }
+
+/// <summary>
+/// Inputs to the Habits pillar: rounds played in the habit window up to and
+/// including the scored round, and whether that round has a reflection.
+/// </summary>
+internal readonly record struct HabitSignals(int RoundsInWindow, bool Reflected);
