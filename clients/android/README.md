@@ -2,8 +2,8 @@
 
 The GolfProgress Android app.
 
-**Status:** the app shell exists (#77): navigation, theme and the minimum-version check,
-on top of the API client module (#65). Sign-in arrives in #71, and the features in M2.
+**Status:** the app shell (#77) and sign-in (#71), on top of the API client module (#65).
+The features arrive in M2.
 
 ## Stack
 
@@ -33,11 +33,13 @@ the module applies the Compose compiler plugin but not `kotlin-android`.
 
 | Path | What |
 |---|---|
-| `MainActivity.kt` | Entry point; `Root` shows **Update required** or the main screen |
+| `MainActivity.kt` | Entry point; `Root` shows **Update required**, or else the main screen when signed in and Welcome when not |
+| `auth/` | Welcome, Create account and Sign in. `AuthForm` checks fields locally, then shows the API's field messages, 401/409, and 429 with its `Retry-After` wait. Fields carry Autofill content types |
+| `session/` | `Session` (sign-in state for the UI), `TokenRefresher` and `EncryptedRefreshTokenStore` (below) |
 | `navigation/MainScreen.kt` | Bottom bar with Home, Rounds, **Log round** (centre), Practice and Progress; Profile from the avatar in the top bar, as in the wireframes |
 | `sections/` | Each section's empty state from the wireframes, until the features land |
 | `version/` | `VersionViewModel`: "Update required" when this build is older than `GET /client-config`'s minimum. It never blocks start-up, and if the check fails the app carries on |
-| `di/AppModule.kt` | Hilt: the API client, the app version, the minimum-version source |
+| `di/AppModule.kt` | Hilt: the API client, the session and its token store, the app version, the minimum-version source |
 | `ui/theme/Theme.kt` | The Material 3 theme, built only from `DesignTokens`; light or dark follows the system |
 | `ui/theme/DesignTokens.kt` | **Generated** from `design/tokens.json`; don't edit |
 | `res/values/strings.xml` | All user-facing text |
@@ -50,6 +52,21 @@ the module applies the Compose compiler plugin but not `kotlin-android`.
 
 **API URL:** `BuildConfig.API_BASE_URL`, which is `http://10.0.2.2:5068` in debug builds:
 the development machine, as seen from the emulator.
+
+**Session** (#71):
+- **Access token:** only in `TokenRefresher`'s memory.
+- **Refresh token:** encrypted with AES-GCM under a key generated in the Android Keystore
+  (`KeystoreTokenCipher`), then stored in DataStore (`files/datastore/session.preferences_pb`).
+  Without the key the stored value is unreadable. The file is excluded from backups and
+  device transfer (`res/xml/`). Each refresh rotates the token, and the new one replaces it.
+- **One refresh:** `TokenAuthenticator` serialises 401s, and `TokenRefresher` shares one
+  in-flight refresh among all callers.
+- **Launch:** `SessionViewModel` restores the session. If the API is unreachable, it
+  offers "Try again" and keeps the token. A token that can't be decrypted (the key is
+  gone) is dropped, and the user signs in again.
+- **Expiry:** if the API rejects the refresh token, it's deleted and the app returns to
+  Welcome. A 429 or 5xx on refresh leaves the session alone.
+- **Sign out:** clears the store, then calls `/auth/logout` to revoke the token.
 
 **Tests** run on the JVM with Robolectric, including Compose UI tests, so no emulator is
 needed: `./gradlew :app:testDebugUnitTest`.
@@ -85,10 +102,10 @@ try {
 - **Access token:** `AuthInterceptor` sends it on authenticated requests.
   `TokenAuthenticator` refreshes it once on a `401` and retries. Concurrent `401`s share
   one refresh, because each refresh rotates the refresh token. Sign-in requests never
-  carry a token or trigger a refresh. The `AccessTokenProvider` (refresh token encrypted
-  with an Android Keystore key) is #71.
+  carry a token or trigger a refresh. The app's `Session` is the `AccessTokenProvider`.
 - **Errors:** `unwrap()` returns the body or throws an `ApiProblem` (status, detail,
-  `traceId`, and `messagesFor(field)` for validation errors).
+  `traceId`, `messagesFor(field)` for validation errors, and `retryAfterSeconds` for a
+  429).
 - **Dates and ids:** the generated models use `java.time.OffsetDateTime` and
   `java.util.UUID`, read through the generator's own `Serializer`, which
   `GolfProgressApi` uses. `OffsetDateTime` keeps the seven fractional-second digits .NET

@@ -121,6 +121,20 @@ class GolfProgressApiTest {
         assertEquals("Request failed with status 502", problem.message)
     }
 
+    @Test
+    fun `a 429 carries the Retry-After wait`() = runBlocking {
+        server.enqueue(problem(429, """{"status":429,"title":"Too Many Requests"}""").setHeader("Retry-After", "42"))
+
+        val problem = assertThrows(ApiProblem::class.java) {
+            runBlocking {
+                api().service<AuthApi>().login(loginRequest = LoginRequest(email = "a@example.test", password = "secret")).unwrap()
+            }
+        }
+
+        assertEquals(429, problem.status)
+        assertEquals(42, problem.retryAfterSeconds)
+    }
+
     // Access token refresh
 
     @Test

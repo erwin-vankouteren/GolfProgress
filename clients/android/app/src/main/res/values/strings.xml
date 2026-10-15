@@ -22,4 +22,29 @@
 
     <string name="update_required_title">Update required</string>
     <string name="update_required_body">This version of GolfProgress is no longer supported. Update the app to keep using it.</string>
+
+    <!-- Sign-in (#71) -->
+    <string name="session_restoring">Signing you in…</string>
+    <string name="try_again">Try again</string>
+    <string name="welcome_body">See your progress beyond the score: every round scored on execution, damage control, consistency and habits.</string>
+    <string name="auth_create_account">Create account</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_sign_out">Sign out</string>
+    <string name="auth_name">Name</string>
+    <string name="auth_email">Email</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_working">Please wait…</string>
+    <string name="auth_have_account">Already have an account? Sign in</string>
+    <string name="auth_need_account">New here? Create an account</string>
+    <string name="auth_required">%1$s is required.</string>
+    <string name="auth_invalid_email">Enter a valid email address.</string>
+    <string name="auth_wrong_credentials">Email or password is wrong.</string>
+    <string name="auth_email_taken">An account with this email already exists. Sign in instead.</string>
+    <plurals name="auth_too_many_attempts">
+        <item quantity="one">Too many attempts. Try again in %d second.</item>
+        <item quantity="other">Too many attempts. Try again in %d seconds.</item>
+    </plurals>
+    <string name="auth_too_many_attempts_later">Too many attempts. Try again later.</string>
+    <string name="auth_something_went_wrong">Something went wrong. Please try again.</string>
+    <string name="auth_cant_connect">Couldn\'t reach GolfProgress. Check your connection and try again.</string>
 </resources>

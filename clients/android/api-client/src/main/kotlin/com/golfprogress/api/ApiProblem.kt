@@ -24,6 +24,8 @@ class ApiProblem(
     val traceId: String? = null,
     /** For 400s: validation messages keyed by field, to show next to that field. */
     val errors: Map<String, List<String>> = emptyMap(),
+    /** For 429s: seconds to wait before trying again, from the Retry-After header. */
+    val retryAfterSeconds: Int? = null,
 ) : RuntimeException(detail ?: title ?: "Request failed with status $status") {
 
     /**
@@ -36,10 +38,17 @@ class ApiProblem(
     companion object {
         private val json = Json { ignoreUnknownKeys = true }
 
-        /** Builds the problem from a response body; any body that isn't ProblemDetails still gives a status. */
-        fun from(status: Int, body: String?): ApiProblem {
+        /**
+         * Builds the problem from a response body; any body that isn't ProblemDetails still
+         * gives a status. [retryAfterSeconds] comes from the response's Retry-After header.
+         */
+        fun from(
+            status: Int,
+            body: String?,
+            retryAfterSeconds: Int? = null,
+        ): ApiProblem {
             val problem = body?.let { runCatching { json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
-                ?: return ApiProblem(status)
+                ?: return ApiProblem(status, retryAfterSeconds = retryAfterSeconds)
 
             fun string(key: String) = (problem[key] as? JsonPrimitive)?.contentOrNull
 
@@ -53,6 +62,7 @@ class ApiProblem(
                 detail = string("detail"),
                 traceId = string("traceId"),
                 errors = errors,
+                retryAfterSeconds = retryAfterSeconds,
             )
         }
     }
@@ -64,7 +74,10 @@ class ApiProblem(
  */
 @Suppress("UNCHECKED_CAST")
 fun <T> Response<T>.unwrap(): T {
-    if (!isSuccessful) throw ApiProblem.from(code(), errorBody()?.string())
+    if (!isSuccessful) {
+        // The API sends delta-seconds, never an HTTP date.
+        throw ApiProblem.from(code(), errorBody()?.string(), headers()["Retry-After"]?.trim()?.toIntOrNull())
+    }
     return (body() ?: Unit) as T
 }
 
