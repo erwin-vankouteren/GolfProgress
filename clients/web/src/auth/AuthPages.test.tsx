@@ -1,0 +1,264 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApiClient } from "../api";
+import { App } from "../app/App";
+import { routes } from "../app/routes";
+import { Session } from "../session/session";
+
+type Handler = (request: Request) => Response | Promise<Response>;
+
+const signedIn = {
+  userId: "3f2b8c1e-5d4a-4b6f-9e2d-1a7c8b9d0e1f",
+  token: "access-1",
+  refreshToken: null,
+  expiresAt: "2026-10-15T10:00:00Z",
+};
+
+const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": status >= 400 ? "application/problem+json" : "application/json", ...headers },
+  });
+
+/**
+ * A fake API: `/client-config` always passes, `/auth/refresh` fails unless overridden
+ * (no cookie), and the other routes answer from `handlers`, keyed by "METHOD /path".
+ */
+function fakeApi(handlers: Record<string, Handler> = {}) {
+  const requests: Request[] = [];
+  const all: Record<string, Handler> = {
+    "GET /client-config": () => json(200, { minimumVersions: { ios: "1.0.0", android: "1.0.0", web: "1.0.0" } }),
+    "POST /auth/refresh": () => json(401, { status: 401, title: "Unauthorized" }),
+    "POST /auth/logout": () => new Response(null, { status: 204 }),
+    ...handlers,
+  };
+  const fetch = vi.fn(async (request: Request) => {
+    requests.push(request);
+    const handler = all[`${request.method} ${new URL(request.url).pathname}`];
+    return handler ? handler(request) : json(404, { status: 404 });
+  });
+  return { requests, fetch };
+}
+
+/** Renders the whole app with a real Session over the fake API, restoring like main.tsx. */
+function renderApp(path: string, handlers: Record<string, Handler> = {}) {
+  const fake = fakeApi(handlers);
+  const session = new Session();
+  const api = createApiClient({
+    baseUrl: "https://api.example.test",
+    tokens: session,
+    fetch: fake.fetch,
+  });
+  session.attach(api);
+  void session.restore();
+
+  const router = createMemoryRouter(routes, { initialEntries: [path] });
+  render(
+    <App api={api} session={session} appVersion="1.0.0">
+      <RouterProvider router={router} />
+    </App>,
+  );
+  return { router, session, requests: fake.requests, user: userEvent.setup() };
+}
+
+const requestTo = (requests: Request[], path: string) => requests.find((r) => new URL(r.url).pathname === path);
+
+afterEach(() => {
+  localStorage.clear();
+  sessionStorage.clear();
+});
+
+describe("session restore", () => {
+  it("sends a signed-out visitor to Welcome", async () => {
+    const { router } = renderApp("/rounds");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "GolfProgress" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/welcome");
+    expect(screen.getByRole("link", { name: "Create account" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
+  });
+
+  it("signs straight back in from the refresh cookie", async () => {
+    const { router, requests } = renderApp("/rounds", { "POST /auth/refresh": () => json(200, signedIn) });
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Rounds" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/rounds");
+
+    const refresh = requestTo(requests, "/auth/refresh")!;
+    expect(refresh.headers.get("X-Refresh-Token-Mode")).toBe("cookie");
+    expect(refresh.credentials).toBe("include");
+  });
+
+  it("treats an unreachable API as signed out", async () => {
+    renderApp("/", {
+      "POST /auth/refresh": () => {
+        throw new TypeError("Failed to fetch");
+      },
+    });
+
+    expect(await screen.findByRole("link", { name: "Create account" })).toBeInTheDocument();
+  });
+});
+
+describe("sign in", () => {
+  it("signs in and returns to where the user was heading", async () => {
+    const { router, user, requests } = renderApp("/practice", { "POST /auth/login": () => json(200, signedIn) });
+
+    await user.click(await screen.findByRole("link", { name: "Sign in" }));
+    await user.type(screen.getByLabelText("Email"), "  erwin@example.test ");
+    await user.type(screen.getByLabelText("Password"), "correct horse");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Practice" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/practice");
+
+    const login = requestTo(requests, "/auth/login")!;
+    expect(login.headers.get("X-Refresh-Token-Mode")).toBe("cookie");
+    expect(login.credentials).toBe("include");
+    expect(await login.clone().json()).toEqual({ email: "erwin@example.test", password: "correct horse" });
+  });
+
+  it("keeps tokens out of browser storage", async () => {
+    const { user } = renderApp("/sign-in", { "POST /auth/login": () => json(200, signedIn) });
+
+    await user.type(await screen.findByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "correct horse");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await screen.findByRole("heading", { level: 1, name: "Home" });
+
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.length).toBe(0);
+  });
+
+  it("checks required fields and email shape before calling the API", async () => {
+    const { user, requests } = renderApp("/sign-in");
+
+    await user.click(await screen.findByRole("button", { name: "Sign in" }));
+
+    expect(screen.getByText("Email is required.")).toBeInTheDocument();
+    expect(screen.getByText("Password is required.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Email is required.");
+
+    await user.type(screen.getByLabelText("Email"), "not-an-email");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
+
+    expect(requestTo(requests, "/auth/login")).toBeUndefined();
+  });
+
+  it("says so when the email or password is wrong", async () => {
+    const { user } = renderApp("/sign-in", {
+      "POST /auth/login": () => json(401, { status: 401, title: "Unauthorized" }),
+    });
+
+    await user.type(await screen.findByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "wrong");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Email or password is wrong.");
+  });
+
+  it("shows how long to wait after too many attempts", async () => {
+    const { user } = renderApp("/sign-in", {
+      "POST /auth/login": () => json(429, { status: 429, title: "Too Many Requests" }, { "Retry-After": "42" }),
+    });
+
+    await user.type(await screen.findByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "whatever");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many attempts. Try again in 42 seconds.");
+  });
+
+  it("reports a connection problem", async () => {
+    const { user } = renderApp("/sign-in", {
+      "POST /auth/login": () => {
+        throw new TypeError("Failed to fetch");
+      },
+    });
+
+    await user.type(await screen.findByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "whatever");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't reach GolfProgress.");
+  });
+});
+
+describe("create account", () => {
+  it("creates the account and signs in", async () => {
+    const { user, requests } = renderApp("/create-account", { "POST /auth/register": () => json(200, signedIn) });
+
+    await user.type(await screen.findByLabelText("Name"), "Erwin");
+    await user.type(screen.getByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "correct horse battery");
+    await user.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Home" })).toBeInTheDocument();
+    expect(await requestTo(requests, "/auth/register")!.clone().json()).toEqual({
+      email: "erwin@example.test",
+      displayName: "Erwin",
+      password: "correct horse battery",
+    });
+  });
+
+  it("shows the API's validation messages next to their fields", async () => {
+    const { user } = renderApp("/create-account", {
+      "POST /auth/register": () =>
+        json(400, { status: 400, errors: { Password: ["Password must be at least 12 characters."] } }),
+    });
+
+    await user.type(await screen.findByLabelText("Name"), "Erwin");
+    await user.type(screen.getByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "short");
+    await user.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByText("Password must be at least 12 characters.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("explains when the email is already taken", async () => {
+    const { user } = renderApp("/create-account", {
+      "POST /auth/register": () => json(409, { status: 409, title: "Conflict" }),
+    });
+
+    await user.type(await screen.findByLabelText("Name"), "Erwin");
+    await user.type(screen.getByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "correct horse battery");
+    await user.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("An account with this email already exists.");
+  });
+});
+
+describe("sign out", () => {
+  it("revokes the cookie and returns to Welcome", async () => {
+    const { user, router, requests, session } = renderApp("/profile", {
+      "POST /auth/refresh": () => json(200, signedIn),
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Sign out" }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/welcome"));
+    expect(requestTo(requests, "/auth/logout")!.credentials).toBe("include");
+    expect(session.getState()).toEqual({ status: "signedOut" });
+    expect(session.accessToken()).toBeNull();
+  });
+
+  it("returns to Welcome when the session expires", async () => {
+    let cookieValid = true;
+    const { router, session } = renderApp("/rounds", {
+      "POST /auth/refresh": () => (cookieValid ? json(200, signedIn) : json(401, { status: 401 })),
+    });
+    await screen.findByRole("heading", { level: 1, name: "Rounds" });
+
+    // The refresh token was revoked elsewhere, so the next refresh (after a 401) fails.
+    cookieValid = false;
+    await session.refreshAccessToken();
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/welcome"));
+  });
+});

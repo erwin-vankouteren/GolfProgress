@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { createApiClient } from "../api";
+import { Session } from "../session/session";
 import { compareVersions } from "../version/compareVersions";
 import { App } from "./App";
 import { routes } from "./routes";
@@ -26,8 +27,11 @@ function fakeApi(minimumWeb: string | "error" = "1.0.0") {
 
 function renderApp({ path = "/", appVersion = "1.0.0", minimumWeb = "1.0.0" as string } = {}) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
+  const api = fakeApi(minimumWeb);
+  const session = new Session({ accessToken: "token", userId: "user-1" });
+  session.attach(api);
   render(
-    <App api={fakeApi(minimumWeb)} appVersion={appVersion}>
+    <App api={api} session={session} appVersion={appVersion}>
       <RouterProvider router={router} />
     </App>,
   );

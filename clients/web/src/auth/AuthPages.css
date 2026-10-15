@@ -1,0 +1,80 @@
+/* Sign-in screens (#69), from the design tokens only. */
+
+.auth-frame {
+  display: grid;
+  place-items: start center;
+  min-height: 100vh;
+  padding: var(--space-xxl) var(--space-lg);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 26rem;
+  display: grid;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.auth-card h1 {
+  margin: 0;
+}
+
+.auth-intro {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.auth-actions,
+.auth-card form {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.auth-field {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.auth-field label {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+}
+
+.auth-field input {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-md);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.auth-field input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.auth-field-error,
+.auth-form-error {
+  margin: 0;
+  color: var(--color-error);
+  font-size: var(--font-size-label);
+}
+
+.auth-submit {
+  margin-top: var(--space-sm);
+}
+
+.auth-submit:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.restoring {
+  margin: 30vh auto;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
