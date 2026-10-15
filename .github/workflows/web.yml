@@ -35,8 +35,18 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Test
         run: npm test
+
+      # Bundles the app for production, as a deployment would.
+      - name: Build
+        run: npx vite build

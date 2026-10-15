@@ -1,0 +1,5 @@
+# Generated files: formatting them would make them differ from their generator's output,
+# which CI checks (design tokens #73, API types #63).
+src/theme/tokens.css
+src/theme/tokens.ts
+src/api/schema.d.ts

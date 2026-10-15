@@ -2,16 +2,18 @@
 
 The GolfProgress web app.
 
-**Status:** the API client exists (#63). The React app itself is created in #75 (app
-shell, theme and navigation).
+**Status:** the app shell exists (#75): navigation, theme and the minimum-version check.
+Sign-in arrives in #69, and the features in M2.
 
 ## Stack
 
-TypeScript (strict). The app (#75) adds React 18, Vite, TanStack Query and React Router.
-Tests with Vitest; end-to-end tests with Playwright.
+React 19 + TypeScript (strict), built with Vite. TanStack Query for server state, React
+Router for navigation, react-intl for all text. ESLint (with `jsx-a11y` for
+accessibility) and Prettier. Tests with Vitest and Testing Library.
 
 Full details: [`docs/architecture.md`](../../docs/architecture.md) → "Client architecture".
-Screens: [`docs/clients/ux-design.md`](../../docs/clients/ux-design.md).
+Screens: [`docs/clients/ux-design.md`](../../docs/clients/ux-design.md) and
+[`wireframes.md`](../../docs/clients/wireframes.md).
 
 ## Getting started
 
@@ -20,9 +22,34 @@ Needs Node.js (version in [`.nvmrc`](.nvmrc)).
 ```bash
 cd clients/web
 npm install          # also generates the API types
-npm run typecheck
+npm run dev          # http://localhost:5173, against the API at http://localhost:5068
 npm test
+npm run lint
+npm run build        # typecheck + production bundle in dist/
 ```
+
+Point it at another API with `VITE_API_BASE_URL`, e.g. in a `.env.local` file (not committed).
+
+## Structure
+
+| Path | What |
+|---|---|
+| `src/main.tsx` | Entry point: API client, providers, router |
+| `src/app/` | `App` (providers), `routes.tsx`, `ApiContext` |
+| `src/layout/` | The app frame: header with **Log round**, sidebar that becomes a menu below 900 px, skip link |
+| `src/pages/` | One page per section; empty states from the wireframes until the features land |
+| `src/version/` | `UpdateGate`: shows "Update required" when this build is older than `GET /client-config`'s minimum. It never blocks start-up, and if the check fails the app carries on |
+| `src/i18n/messages.ts` | Every user-facing string, through react-intl |
+| `src/theme/` | `tokens.css` / `tokens.ts` (**generated** from `design/tokens.json`; don't edit) and `global.css` |
+| `src/api/` | The generated, typed API client (below) |
+
+**Conventions:**
+- **Styling:** colours, spacing and type only through the token CSS variables
+  (`var(--color-primary)`), never literal values.
+- **Text:** all of it through `messages.ts`.
+- **Interactive elements:** at least `var(--touch-target)` tall, with a visible focus ring.
+- **Generated files** (`tokens.*`, `schema.d.ts`) are excluded from Prettier, so they stay
+  identical to their generators' output.
 
 ## API client: `src/api`
 
@@ -56,9 +83,13 @@ try {
 - **Errors:** `unwrap` returns the data or throws an `ApiProblem` (status, detail,
   `traceId`, and `messagesFor(field)` for validation errors), so components never inspect
   status codes.
-- **TypeScript version:** pinned to 5.x. `openapi-typescript` supports `^5.x`, not the
-  native TypeScript 7 compiler.
 - **Open enums** (#134): `sessionType`, micro-win `category` and round `source` are plain
   strings in responses, because the API may add values at any time. Read them through
   `sessionTypeOf`, `microWinCategoryOf` and `roundSourceOf` (`src/api/knownValues.ts`),
   which return `"unknown"` for a value this build doesn't know.
+
+## Versions to keep
+
+- **TypeScript 5.x:** `openapi-typescript` supports `^5.x`, not the native TypeScript 7
+  compiler.
+- **ESLint 9:** `eslint-plugin-jsx-a11y` doesn't support ESLint 10 yet.
