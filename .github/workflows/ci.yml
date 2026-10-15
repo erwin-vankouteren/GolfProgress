@@ -23,13 +23,17 @@ jobs:
   build-and-test:
     name: Build and test
     # Linux is the 1x minute multiplier; windows-latest bills 2x and macos-latest
-    # 10x. Nothing here is platform-specific -- the tests substitute EF InMemory
-    # for SQL Server, so no database, connection string or secret is needed.
+    # 10x. Most tests substitute EF InMemory for SQL Server. The persistence tests
+    # (tests/.../Persistence) start a real SQL Server in a container with
+    # Testcontainers, using the runner's built-in Docker (#33) -- still no external
+    # database, connection string or secret. GitHub sets CI=true, which makes those
+    # tests mandatory here; locally they skip when Docker is unavailable.
     runs-on: ubuntu-latest
 
-    # The suite finishes well inside two minutes. This cap exists so that a hung
-    # job cannot burn the default six-hour limit out of the Actions quota.
-    timeout-minutes: 10
+    # Pulling and starting the SQL Server image adds roughly a minute. This cap
+    # exists so that a hung job cannot burn the default six-hour limit out of the
+    # Actions quota.
+    timeout-minutes: 15
 
     steps:
       - name: Check out
