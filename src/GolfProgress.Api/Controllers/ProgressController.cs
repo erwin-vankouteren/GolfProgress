@@ -1,3 +1,4 @@
+using GolfProgress.Api.Configuration;
 using GolfProgress.Api.Contracts.Progress;
 using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
@@ -5,6 +6,7 @@ using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -14,11 +16,13 @@ public sealed class ProgressController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
     private readonly ProgressComputationService _svc;
+    private readonly ProgressOptions _options;
 
-    public ProgressController(GolfProgressDbContext db, ProgressComputationService svc)
+    public ProgressController(GolfProgressDbContext db, ProgressComputationService svc, IOptions<ProgressOptions> options)
     {
         _db = db;
         _svc = svc;
+        _options = options.Value;
     }
 
     // POST /rounds/{roundId}/compute
@@ -28,7 +32,7 @@ public sealed class ProgressController : ControllerBase
         var userId = User.GetUserId();
         if (!await _db.OwnsRoundAsync(roundId, userId, ct)) return NotFound();
 
-        await _svc.ComputeForRoundAsync(roundId, userId, windowN: 5, ct);
+        await _svc.ComputeForRoundAsync(roundId, userId, windowN: _options.BaselineWindowRounds, ct);
         return NoContent();
     }
 

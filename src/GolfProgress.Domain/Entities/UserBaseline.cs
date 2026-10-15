@@ -5,7 +5,8 @@ public class UserBaseline
     public Guid UserId { get; set; }
     public User User { get; set; } = default!;
 
-    public short WindowRounds { get; set; } = 5;
+    /// <summary>Set from configuration (Progress:BaselineWindowRounds) when computed.</summary>
+    public short WindowRounds { get; set; }
 
     public decimal? AvgScore { get; set; }
     public decimal? ScoreStdDev { get; set; }
