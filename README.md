@@ -54,6 +54,7 @@ dotnet test                                    # the full test suite
 
 - Work is tracked in [GitHub issues](https://github.com/erwin-vankouteren/GolfProgress/issues),
   grouped into epics and milestones (M1 Foundation → M4 Launch), with an `area:` label per part.
-- Every change goes through a pull request from a branch. CI must pass before merging,
+- Every change goes through a pull request from a branch. The **CI result** check must
+  pass before merging (CI runs only the areas a change touches; see `docs/architecture.md`),
   and pull requests are merged with **rebase and merge**.
 - Line endings are LF everywhere ([`.gitattributes`](.gitattributes), [`.editorconfig`](.editorconfig)).
