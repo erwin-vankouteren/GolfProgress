@@ -1,9 +1,11 @@
-﻿namespace GolfProgress.Api.Contracts.Reflections
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GolfProgress.Api.Contracts.Reflections
 {
     public sealed class CreateReflectionRequest
     {
-        public short? FocusRating { get; init; }            // 1..5
-        public short? MoodRating { get; init; }             // 1..5
+        [Range(1, 5)] public short? FocusRating { get; init; }
+        [Range(1, 5)] public short? MoodRating { get; init; }
         public bool? FrustrationSpillover { get; init; }
 
         public string? WhatWorked { get; init; }

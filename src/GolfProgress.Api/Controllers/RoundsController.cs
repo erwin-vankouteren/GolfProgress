@@ -23,10 +23,8 @@ public sealed class RoundsController : ControllerBase
     public async Task<ActionResult<RoundResponse>> Create([FromBody] CreateRoundRequest request, CancellationToken ct)
     {
         var userId = User.GetUserId();
-        // Minimal validation
-        if (request.TotalStrokes <= 0) return BadRequest("TotalStrokes must be > 0.");
-        if (request.Holes is not (9 or 18)) return BadRequest("Holes must be 9 or 18.");
-
+        // Ranges and hole-count bounds are validated on CreateRoundRequest before
+        // this runs; [ApiController] answers 400 for anything invalid.
         if (!DateOnly.TryParse(request.PlayedAt, out var playedAt))
             return BadRequest("PlayedAt must be ISO date format: yyyy-MM-dd");
 
