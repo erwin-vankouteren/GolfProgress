@@ -7,6 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using GolfProgress.Domain.Entities;
+using GolfProgress.Api.Security;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +33,11 @@ builder.Services.AddOptions<JwtOptions>()
 
 builder.Services.AddOptions<RefreshTokenOptions>()
     .Bind(builder.Configuration.GetSection(RefreshTokenOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<AuthRateLimitOptions>()
+    .Bind(builder.Configuration.GetSection(AuthRateLimitOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
@@ -63,6 +71,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+// Rate limiting for the anonymous /auth/* endpoints (#6). Per client IP here; per
+// email for login in LoginThrottle, since this middleware cannot see the body.
+//
+// Behind a reverse proxy RemoteIpAddress is the proxy's, which would put every
+// caller in one partition. Enable forwarded headers for the trusted proxy there
+// (on App Service: ASPNETCORE_FORWARDEDHEADERS_ENABLED=true).
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(RateLimitPolicies.Auth, context =>
+    {
+        var o = context.RequestServices.GetRequiredService<IOptions<AuthRateLimitOptions>>().Value;
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = o.PerIpPermitLimit,
+                Window = TimeSpan.FromSeconds(o.PerIpWindowSeconds),
+                QueueLimit = 0
+            });
+    });
+
+    options.OnRejected = (context, _) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter =
+                ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+
+        return ValueTask.CompletedTask;
+    };
+});
+builder.Services.AddSingleton<LoginThrottle>();
+
 builder.Services.AddDbContext<GolfProgressDbContext>(options =>
     options.UseSqlServer(connectionString,
     sqloptions =>
@@ -84,6 +127,7 @@ builder.Services.AddScoped<GolfProgress.Api.Services.RefreshTokenService>();
 builder.Services.AddMemoryCache();
 
 var app = builder.Build();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
