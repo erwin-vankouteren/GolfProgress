@@ -82,6 +82,20 @@ builder.Services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions
             .AllowAnyMethod()
             .WithExposedHeaders(ClientCorsOptions.ExposedHeaders)));
 
+builder.Services.AddOptions<ClientConfigOptions>()
+    .Bind(builder.Configuration.GetSection(ClientConfigOptions.SectionName))
+    .ValidateDataAnnotations()
+    .Validate(
+        o => new[] { o.MinimumVersions.Ios, o.MinimumVersions.Android, o.MinimumVersions.Web }
+            .All(v => System.Text.RegularExpressions.Regex.IsMatch(v ?? "", MinimumVersionOptions.Pattern)),
+        "ClientConfig:MinimumVersions:Ios, :Android and :Web must each be a version such as 1.0.0 (major.minor.patch).")
+    .ValidateOnStart();
+
+builder.Services.AddOptions<AnonymousRateLimitOptions>()
+    .Bind(builder.Configuration.GetSection(AnonymousRateLimitOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddOptions<AuthRateLimitOptions>()
     .Bind(builder.Configuration.GetSection(AuthRateLimitOptions.SectionName))
     .ValidateDataAnnotations()
@@ -130,6 +144,20 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy(RateLimitPolicies.Auth, context =>
     {
         var o = context.RequestServices.GetRequiredService<IOptions<AuthRateLimitOptions>>().Value;
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = o.PerIpPermitLimit,
+                Window = TimeSpan.FromSeconds(o.PerIpWindowSeconds),
+                QueueLimit = 0
+            });
+    });
+
+    options.AddPolicy(RateLimitPolicies.Anonymous, context =>
+    {
+        var o = context.RequestServices.GetRequiredService<IOptions<AnonymousRateLimitOptions>>().Value;
 
         return RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",

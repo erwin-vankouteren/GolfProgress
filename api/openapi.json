@@ -297,6 +297,54 @@
         }
       }
     },
+    "/client-config": {
+      "get": {
+        "tags": [
+          "ClientConfig"
+        ],
+        "operationId": "getClientConfig",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientConfigResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Wait for Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/dashboard": {
       "get": {
         "tags": [
@@ -1735,6 +1783,18 @@
         },
         "additionalProperties": false
       },
+      "ClientConfigResponse": {
+        "required": [
+          "minimumVersions"
+        ],
+        "type": "object",
+        "properties": {
+          "minimumVersions": {
+            "$ref": "#/components/schemas/MinimumVersionsResponse"
+          }
+        },
+        "additionalProperties": false
+      },
       "CreatePracticeSessionRequest": {
         "required": [
           "practicedAt"
@@ -2205,6 +2265,26 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MinimumVersionsResponse": {
+        "required": [
+          "android",
+          "ios",
+          "web"
+        ],
+        "type": "object",
+        "properties": {
+          "ios": {
+            "type": "string"
+          },
+          "android": {
+            "type": "string"
+          },
+          "web": {
+            "type": "string"
           }
         },
         "additionalProperties": false

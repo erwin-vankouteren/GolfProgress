@@ -100,6 +100,8 @@ environment in the same way, e.g. `RateLimiting__Auth__PerIpPermitLimit=20`.
 | `Jwt__ExpiresMinutes` | 15 | Access-token lifetime |
 | `RefreshTokens__ExpiresDays` | 14 | Refresh-token lifetime |
 | `RateLimiting__Auth__*` | 10 per IP per minute; 5 logins per email per 5 minutes | Tighten or loosen `/auth/*` throttling |
+| `RateLimiting__Anonymous__*` | 60 per IP per minute | Throttling for other anonymous endpoints, such as `/client-config` |
+| `ClientConfig__MinimumVersions__Ios`, `__Android`, `__Web` | `1.0.0` | Raise to make older apps show "update required" (`GET /client-config`). Must be `major.minor.patch` |
 | `EventRetention__RetentionDays` | 365 | How long audit events are kept |
 | `Progress__BaselineWindowRounds` | 5 | Rounds in a baseline |
 
