@@ -58,6 +58,26 @@ builder.Services.AddOptions<EventRetentionOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<ClientCorsOptions>()
+    .Bind(builder.Configuration.GetSection(ClientCorsOptions.SectionName))
+    .Validate(
+        o => o.AllowedOrigins.All(ClientCorsOptions.IsValidOrigin),
+        "Cors:AllowedOrigins must be exact origins such as https://app.example.com " +
+        "(scheme and host, optional port; no '*', path or trailing slash).")
+    .ValidateOnStart();
+
+// CORS (#16): one default policy built from Cors:AllowedOrigins. With no origins
+// configured -- the default -- no CORS headers are sent and browsers stay blocked.
+// Bearer tokens travel in a header, not a cookie, so credentials are not allowed.
+builder.Services.AddCors();
+builder.Services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>()
+    .Configure<IOptions<ClientCorsOptions>>((cors, client) =>
+        cors.AddDefaultPolicy(policy => policy
+            .WithOrigins(client.Value.AllowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithExposedHeaders(ClientCorsOptions.ExposedHeaders)));
+
 builder.Services.AddOptions<AuthRateLimitOptions>()
     .Bind(builder.Configuration.GetSection(AuthRateLimitOptions.SectionName))
     .ValidateDataAnnotations()
@@ -161,6 +181,22 @@ var app = builder.Build();
 
 // First in the pipeline, so it catches exceptions from everything after it (#7).
 app.UseExceptionHandler();
+
+// HTTPS (#16). HSTS tells browsers to use HTTPS from then on; it is skipped in
+// Development and for localhost. Redirection sends plain-HTTP requests to HTTPS,
+// and does nothing when no HTTPS port is known (as under the test host).
+//
+// Behind a TLS-terminating proxy (App Service, a load balancer) the app sees plain
+// HTTP unless forwarded headers are applied, which would make every request
+// redirect. Enable them for the trusted proxy there
+// (on App Service: ASPNETCORE_FORWARDEDHEADERS_ENABLED=true).
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
+app.UseHttpsRedirection();
+
+// Before rate limiting and authentication, so CORS preflight requests are
+// answered without counting against the /auth limits or needing a token.
+app.UseCors();
 
 app.UseRateLimiter();
 app.UseAuthentication();
