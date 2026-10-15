@@ -73,20 +73,24 @@ public sealed class MicroWinsService
     private static MicroWin BuildStatWin(User user, Round round, UserBaseline? baseline, ConfidenceLevel confidence, DateTimeOffset now)
     {
         // Candidate metrics (lower is better)
+        //
+        // The baseline holds 18-hole equivalents, so round values are scaled the
+        // same way before comparing; otherwise a 9-hole round always looks like an
+        // improvement (#35).
         var candidates = new List<(string metric, decimal? roundValue, decimal? baseValue, decimal threshold, string titleImproved, string msgImproved, string titleStable, string msgStable)>();
 
         candidates.Add(("penalties",
-            round.Penalties, baseline?.AvgPenalties, 1m,
+            HoleScaling.Per18(round.Penalties, round), baseline?.AvgPenalties, 1m,
             "Fewer penalties", "You had fewer penalty strokes than your recent average — that’s immediate damage control.",
             "Penalties held steady", "Penalties stayed under control today — that’s a strong scoring foundation."));
 
         candidates.Add(("putts",
-            round.TotalPutts, baseline?.AvgPutts, 2m,
+            HoleScaling.Per18(round.TotalPutts, round), baseline?.AvgPutts, 2m,
             "Putting improved", "Your total putts were lower than your recent average — nice progress on the greens.",
             "Putting held steady", "Putting stayed consistent — stability here usually shows up in scores soon."));
 
         candidates.Add(("blow_up_holes",
-            round.BlowUpHoles, baseline?.AvgBlowUpHoles, 1m,
+            HoleScaling.Per18(round.BlowUpHoles, round), baseline?.AvgBlowUpHoles, 1m,
             "Fewer blow-up holes", "Your big-mistake holes were lower than usual — that’s real progress even if score didn’t show it.",
             "Big mistakes contained", "You kept big mistakes from spiraling — that’s a key improvement signal."));
 
@@ -159,7 +163,7 @@ public sealed class MicroWinsService
 
         if (metric == "putts" && round.TotalPutts.HasValue)
             return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.FocusArea, metric, MicroWinDirection.Stable,
-                baseline?.AvgPutts != null ? round.TotalPutts.Value - baseline.AvgPutts : null,
+                baseline?.AvgPutts != null ? HoleScaling.Per18(round.TotalPutts, round) - baseline.AvgPutts : null,
                 confidence,
                 "Focus-area check: putting",
                 "You’re prioritizing putting — tracking it consistently is step one to improving it.",
@@ -167,7 +171,7 @@ public sealed class MicroWinsService
 
         if (metric == "penalties" && round.Penalties.HasValue)
             return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.FocusArea, metric, MicroWinDirection.Stable,
-                baseline?.AvgPenalties != null ? round.Penalties.Value - baseline.AvgPenalties : null,
+                baseline?.AvgPenalties != null ? HoleScaling.Per18(round.Penalties, round) - baseline.AvgPenalties : null,
                 confidence,
                 "Focus-area check: penalties",
                 "You’re prioritizing penalties — keeping them in view is how they drop over time.",

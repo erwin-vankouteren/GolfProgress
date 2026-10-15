@@ -23,12 +23,16 @@ public sealed class NextLeverService
         // Build "opportunity" candidates (higher = bigger opportunity)
         var candidates = new List<(string key, string title, string rec, string rationale, decimal score)>();
 
+        // Counts are scaled to 18 holes before use, both to compare against the
+        // baseline (which holds 18-hole equivalents) and so the weights below mean
+        // the same thing for a 9-hole round (#35).
+
         // Penalties (lower is better)
-        if (round.Penalties.HasValue)
+        if (HoleScaling.Per18(round.Penalties, round) is decimal penalties)
         {
             var baseVal = baseline?.AvgPenalties;
-            var delta = baseVal.HasValue ? (decimal)round.Penalties.Value - baseVal.Value : 0m;
-            var score = baseVal.HasValue ? Math.Max(delta, 0m) * 3m : round.Penalties.Value * 1m;
+            var delta = baseVal.HasValue ? penalties - baseVal.Value : 0m;
+            var score = baseVal.HasValue ? Math.Max(delta, 0m) * 3m : penalties * 1m;
 
             candidates.Add((
                 "penalties",
@@ -40,11 +44,11 @@ public sealed class NextLeverService
         }
 
         // Three-putts
-        if (round.ThreePutts.HasValue)
+        if (HoleScaling.Per18(round.ThreePutts, round) is decimal threePutts)
         {
             var baseVal = baseline?.AvgThreePutts;
-            var delta = baseVal.HasValue ? (decimal)round.ThreePutts.Value - baseVal.Value : 0m;
-            var score = baseVal.HasValue ? Math.Max(delta, 0m) * 4m : round.ThreePutts.Value * 2m;
+            var delta = baseVal.HasValue ? threePutts - baseVal.Value : 0m;
+            var score = baseVal.HasValue ? Math.Max(delta, 0m) * 4m : threePutts * 2m;
 
             candidates.Add((
                 "three_putts",
@@ -56,11 +60,11 @@ public sealed class NextLeverService
         }
 
         // Blow-up holes
-        if (round.BlowUpHoles.HasValue)
+        if (HoleScaling.Per18(round.BlowUpHoles, round) is decimal blowUps)
         {
             var baseVal = baseline?.AvgBlowUpHoles;
-            var delta = baseVal.HasValue ? (decimal)round.BlowUpHoles.Value - baseVal.Value : 0m;
-            var score = baseVal.HasValue ? Math.Max(delta, 0m) * 2m : round.BlowUpHoles.Value * 1.5m;
+            var delta = baseVal.HasValue ? blowUps - baseVal.Value : 0m;
+            var score = baseVal.HasValue ? Math.Max(delta, 0m) * 2m : blowUps * 1.5m;
 
             candidates.Add((
                 "damage_control",
