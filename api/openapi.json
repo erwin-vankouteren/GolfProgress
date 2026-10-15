@@ -12,6 +12,15 @@
           "Auth"
         ],
         "operationId": "register",
+        "parameters": [
+          {
+            "name": "X-Refresh-Token-Mode",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -89,6 +98,15 @@
           "Auth"
         ],
         "operationId": "login",
+        "parameters": [
+          {
+            "name": "X-Refresh-Token-Mode",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -166,6 +184,15 @@
           "Auth"
         ],
         "operationId": "refreshToken",
+        "parameters": [
+          {
+            "name": "X-Refresh-Token-Mode",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -255,16 +282,6 @@
         "responses": {
           "204": {
             "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationProblemDetails"
-                }
-              }
-            }
           },
           "429": {
             "description": "Too many requests. Wait for Retry-After before retrying.",
@@ -1774,7 +1791,8 @@
             "type": "string"
           },
           "refreshToken": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "expiresAt": {
             "type": "string",
@@ -2607,14 +2625,11 @@
         "additionalProperties": false
       },
       "RefreshRequest": {
-        "required": [
-          "refreshToken"
-        ],
         "type": "object",
         "properties": {
           "refreshToken": {
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

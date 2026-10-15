@@ -171,6 +171,22 @@ The API issues a short-lived **access token** (JWT, 15 minutes) and a long-lived
 | iOS | In memory | Keychain (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`) |
 | Android | In memory | Encrypted with an Android Keystore key, stored in DataStore |
 
+**How the web app gets its cookie (#68).**
+- **Opting in:** the web client sends `X-Refresh-Token-Mode: cookie` on register, login and
+  refresh. The refresh token then arrives as the `gp_refresh` cookie (`HttpOnly`, `Secure`,
+  `SameSite=Strict`, `Path=/auth`), and the body's `refreshToken` is `null`.
+- **Using it:** `/auth/refresh` and `/auth/logout` read the cookie when the body has no
+  token, so the web client sends an empty body. Logout clears the cookie.
+- **Hosting:** the web app and the API are served from **the same site**, as sibling
+  subdomains (for example `app.example.com` and `api.example.com`). A `SameSite=Strict`
+  cookie therefore still reaches the API, while no other site can make a browser send it.
+- **CORS:** requests from the web app are still cross-origin, so they need CORS with
+  credentials. That's allowed **only on `/auth/*`**, and only for the origins in
+  `Cors:AllowedOrigins`. The rest of the API is authorised by the bearer token and never
+  accepts credentials.
+- **Calling the API:** the web client sends `/auth/*` requests with
+  `credentials: "include"`.
+
 Every client follows the same flow: send the access token as `Authorization: Bearer`; on
 a `401`, refresh once, retry the request, and go to the login screen if refreshing fails.
 Concurrent requests share one refresh rather than each starting their own.

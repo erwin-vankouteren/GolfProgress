@@ -96,7 +96,7 @@ environment in the same way, e.g. `RateLimiting__Auth__PerIpPermitLimit=20`.
 |---|---|---|
 | `ASPNETCORE_ENVIRONMENT` | `Production` | Never set `Development` in a deployed environment: it enables Swagger and turns off HSTS |
 | `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | not set | **Set to `true` behind a TLS-terminating proxy such as App Service.** Without it the app sees every request as plain HTTP from the proxy's address, so HTTPS redirection loops and all callers share one rate-limit bucket |
-| `Cors__AllowedOrigins__0`, `__1`, … | none | Only for browser-based clients: their exact origins, e.g. `https://app.example.com` |
+| `Cors__AllowedOrigins__0`, `__1`, … | none | Browser-based clients: their exact origins, e.g. `https://app.example.com`. **Required for the web app:** its refresh cookie needs CORS with credentials on `/auth/*` (#68), which is only allowed for these origins. Host the web app on the same site as the API (e.g. `app.` and `api.` of one domain) |
 | `Jwt__ExpiresMinutes` | 15 | Access-token lifetime |
 | `RefreshTokens__ExpiresDays` | 14 | Refresh-token lifetime |
 | `RateLimiting__Auth__*` | 10 per IP per minute; 5 logins per email per 5 minutes | Tighten or loosen `/auth/*` throttling |

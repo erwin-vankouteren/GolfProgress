@@ -76,11 +76,22 @@ builder.Services.AddOptions<ClientCorsOptions>()
 builder.Services.AddCors();
 builder.Services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>()
     .Configure<IOptions<ClientCorsOptions>>((cors, client) =>
+    {
         cors.AddDefaultPolicy(policy => policy
             .WithOrigins(client.Value.AllowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .WithExposedHeaders(ClientCorsOptions.ExposedHeaders)));
+            .WithExposedHeaders(ClientCorsOptions.ExposedHeaders));
+
+        // /auth/* only (#68): the same origins may also send credentials, so the web
+        // app's HttpOnly refresh cookie travels with its sign-in requests.
+        cors.AddPolicy(CorsPolicies.AuthWithCredentials, policy => policy
+            .WithOrigins(client.Value.AllowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .WithExposedHeaders(ClientCorsOptions.ExposedHeaders));
+    });
 
 builder.Services.AddOptions<ClientConfigOptions>()
     .Bind(builder.Configuration.GetSection(ClientConfigOptions.SectionName))

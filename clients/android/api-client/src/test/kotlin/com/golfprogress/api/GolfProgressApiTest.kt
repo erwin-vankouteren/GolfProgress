@@ -181,7 +181,7 @@ class GolfProgressApiTest {
         val tokens = FakeTokens()
         server.enqueue(problem(401, """{"status":401}"""))
 
-        val response = api(tokens).service<AuthApi>().login(LoginRequest(email = "a@example.test", password = "wrong"))
+        val response = api(tokens).service<AuthApi>().login(loginRequest = LoginRequest(email = "a@example.test", password = "wrong"))
 
         assertEquals(401, response.code())
         assertNull(server.takeRequest().getHeader("Authorization"))
