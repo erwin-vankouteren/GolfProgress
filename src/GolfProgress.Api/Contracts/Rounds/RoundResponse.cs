@@ -21,7 +21,7 @@ namespace GolfProgress.Api.Contracts.Rounds
         public short? ThreePutts { get; init; }
         public short? BlowUpHoles { get; init; }
 
-        [StringEnum(typeof(Enums.RoundSource))]
+        [StringEnum(typeof(Enums.RoundSource), Open = true)]
         public string Source { get; init; } = "Manual";
         public string? Notes { get; init; }
 

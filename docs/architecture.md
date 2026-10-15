@@ -117,9 +117,19 @@ its own, which is where token refresh, error mapping and paging live.
 
 Mobile users don't all update, so several app versions are live at once:
 
-- **Additive changes only:** new endpoints, new optional fields, new enum values handled
-  as "unknown" by clients. Removing or renaming fields, or changing their meaning, isn't
-  allowed.
+- **Additive changes only:** new endpoints and new optional fields. Removing or renaming
+  fields, or changing their meaning, isn't allowed.
+- **New values in response enums** depend on whether the field is open or closed (#134).
+  The generated iOS and Android clients turn a closed enum into a closed type, and fail
+  to read a whole response containing a value they don't know.
+  - **Open** fields may gain values at any time: `PracticeSessionResponse.sessionType`,
+    `MicroWinResponse.category` and `RoundResponse.source`. The spec publishes them as
+    plain strings, with the current values in `x-known-values`. Each client maps them to
+    its own type with an "unknown" fallback, which the UI shows as something generic.
+  - **Closed** fields are everything else (`units`, `trackingMode`, `confidenceLevel`,
+    micro-win `direction`, ...): stable sets, typed directly. Adding a value to one is a
+    breaking change. Raise the minimum app versions first, or add a new field.
+  - **Request** enums stay closed: an app only sends values it knows.
 - **Breaking change needed?** Add a new endpoint next to the old one, and remove the old
   one only once no supported app version uses it.
 - **Minimum version:** `GET /client-config` returns the minimum supported version per

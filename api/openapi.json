@@ -2221,15 +2221,16 @@
             "format": "uuid"
           },
           "category": {
-            "enum": [
+            "type": "string",
+            "description": "Known values: StatDelta, Behavior, Narrative, Habit, Recovery, FocusArea. New values may be added at any time; treat any other value as unknown.",
+            "x-known-values": [
               "StatDelta",
               "Behavior",
               "Narrative",
               "Habit",
               "Recovery",
               "FocusArea"
-            ],
-            "type": "string"
+            ]
           },
           "metric": {
             "type": "string",
@@ -2481,15 +2482,16 @@
             "nullable": true
           },
           "sessionType": {
-            "enum": [
+            "type": "string",
+            "description": "Known values: Range, Putting, ShortGame, Simulator, Lesson, Other. New values may be added at any time; treat any other value as unknown.",
+            "x-known-values": [
               "Range",
               "Putting",
               "ShortGame",
               "Simulator",
               "Lesson",
               "Other"
-            ],
-            "type": "string"
+            ]
           },
           "venueName": {
             "type": "string",
@@ -2720,13 +2722,14 @@
             "nullable": true
           },
           "source": {
-            "enum": [
+            "type": "string",
+            "description": "Known values: Manual, Import, Coach, Other. New values may be added at any time; treat any other value as unknown.",
+            "x-known-values": [
               "Manual",
               "Import",
               "Coach",
               "Other"
-            ],
-            "type": "string"
+            ]
           },
           "notes": {
             "type": "string",

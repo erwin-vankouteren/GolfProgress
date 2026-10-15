@@ -19,6 +19,9 @@ public static class OpenApiConfiguration
 {
     public const string BearerScheme = "Bearer";
 
+    /// <summary>Lists an open enum's current values in the spec (#134).</summary>
+    public const string KnownValuesExtension = "x-known-values";
+
     public static void Configure(SwaggerGenOptions options)
     {
         options.SwaggerDoc("v1", new OpenApiInfo
@@ -139,9 +142,22 @@ internal sealed class StringEnumSchemaFilter : ISchemaFilter
         var attribute = context.MemberInfo?.GetCustomAttribute<StringEnumAttribute>();
         if (attribute is null) return;
 
-        schema.Enum = Enum.GetNames(attribute.EnumType)
-            .Select(name => (IOpenApiAny)new OpenApiString(name))
-            .ToList();
+        var names = Enum.GetNames(attribute.EnumType);
+
+        if (!attribute.Open)
+        {
+            schema.Enum = names.Select(name => (IOpenApiAny)new OpenApiString(name)).ToList();
+            return;
+        }
+
+        // Open (#134): no `enum`, so generated clients keep a plain string and don't fail
+        // on a value added later. The current values stay discoverable for clients to map.
+        var known = new OpenApiArray();
+        known.AddRange(names.Select(name => (IOpenApiAny)new OpenApiString(name)));
+        schema.Extensions[OpenApiConfiguration.KnownValuesExtension] = known;
+        schema.Description =
+            $"Known values: {string.Join(", ", names)}. New values may be added at any time; " +
+            "treat any other value as unknown.";
     }
 }
 

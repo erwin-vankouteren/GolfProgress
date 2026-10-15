@@ -59,3 +59,7 @@ try {
   `java.util.UUID`, read through the generator's own `Serializer`, which
   `GolfProgressApi` uses. `OffsetDateTime` keeps the seven fractional-second digits .NET
   writes.
+- **Open enums** (#134): `sessionType`, micro-win `category` and round `source` are plain
+  strings in responses, because the API may add values at any time. Read them through
+  `knownSessionType`, `knownCategory` and `knownSource` (`KnownValues.kt`), which give
+  `Unknown` for a value this build doesn't know.

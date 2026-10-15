@@ -58,3 +58,7 @@ try {
   status codes.
 - **TypeScript version:** pinned to 5.x. `openapi-typescript` supports `^5.x`, not the
   native TypeScript 7 compiler.
+- **Open enums** (#134): `sessionType`, micro-win `category` and round `source` are plain
+  strings in responses, because the API may add values at any time. Read them through
+  `sessionTypeOf`, `microWinCategoryOf` and `roundSourceOf` (`src/api/knownValues.ts`),
+  which return `"unknown"` for a value this build doesn't know.
