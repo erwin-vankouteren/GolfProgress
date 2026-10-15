@@ -1,4 +1,6 @@
 ﻿using GolfProgress.Api.Contracts.MonthlyReviews;
+using GolfProgress.Api.Contracts;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
 using GolfProgress.Infrastructure.Persistence;
@@ -24,12 +26,15 @@ public sealed class MonthlyReviewsController : ControllerBase
 
 
     // POST /me/monthly-reviews/generate
-    [HttpPost("/me/monthly-reviews/generate")]
+    [HttpPost("/me/monthly-reviews/generate", Name = "generateMonthlyReview")]
+    [ProducesResponseType<MonthlyReviewResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MonthlyReviewResponse>> Generate([FromBody] GenerateMonthlyReviewRequest request, CancellationToken ct)
     {
         var userId = User.GetUserId();
-        if (!DateOnly.TryParse(request.MonthStart, out var monthStart))
-            return BadRequest("MonthStart must be ISO date: yyyy-MM-dd (first day of month).");
+        if (!IsoDate.TryParse(request.MonthStart, out var monthStart))
+            return this.FieldError(nameof(request.MonthStart), "MonthStart must be an ISO date, yyyy-MM-dd (the first day of the month).");
 
         var exists = await _db.Users.AnyAsync(u => u.UserId == userId, ct);
         if (!exists) return NotFound();
@@ -39,12 +44,15 @@ public sealed class MonthlyReviewsController : ControllerBase
     }
 
     // GET /me/monthly-reviews/{monthStart}
-    [HttpGet("/me/monthly-reviews/{monthStart}")]
+    [HttpGet("/me/monthly-reviews/{monthStart}", Name = "getMonthlyReview")]
+    [ProducesResponseType<MonthlyReviewResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MonthlyReviewResponse>> Get(string monthStart, CancellationToken ct)
     {
         var userId = User.GetUserId();
-        if (!DateOnly.TryParse(monthStart, out var m))
-            return BadRequest("monthStart must be ISO date: yyyy-MM-dd.");
+        if (!IsoDate.TryParse(monthStart, out var m))
+            return this.FieldError(nameof(monthStart), "monthStart must be an ISO date, yyyy-MM-dd.");
 
         var review = await _db.MonthlyReviews.AsNoTracking()
             .FirstOrDefaultAsync(r => r.UserId == userId && r.MonthStart == m, ct);

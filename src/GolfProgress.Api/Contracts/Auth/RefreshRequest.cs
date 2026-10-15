@@ -1,6 +1,8 @@
-﻿namespace GolfProgress.Api.Contracts.Auth;
+using System.ComponentModel.DataAnnotations;
+
+namespace GolfProgress.Api.Contracts.Auth;
 
 public sealed class RefreshRequest
 {
-    public string RefreshToken { get; init; } = "";
+    [Required] public string RefreshToken { get; init; } = "";
 }

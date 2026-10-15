@@ -1,3 +1,5 @@
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
 namespace GolfProgress.Api.Contracts.PracticeSessions;
 
 public sealed class PracticeSessionResponse
@@ -7,6 +9,7 @@ public sealed class PracticeSessionResponse
 
     public string PracticedAt { get; init; } = "";   // "2026-04-20"
     public short? DurationMinutes { get; init; }
+    [StringEnum(typeof(Enums.SessionType))]
     public string SessionType { get; init; } = "";
     public string? VenueName { get; init; }
     public List<string> Tags { get; init; } = new();

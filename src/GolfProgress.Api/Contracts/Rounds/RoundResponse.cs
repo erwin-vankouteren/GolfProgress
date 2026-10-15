@@ -1,4 +1,6 @@
-﻿namespace GolfProgress.Api.Contracts.Rounds
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
+namespace GolfProgress.Api.Contracts.Rounds
 {
     public sealed class RoundResponse
     {
@@ -19,6 +21,7 @@
         public short? ThreePutts { get; init; }
         public short? BlowUpHoles { get; init; }
 
+        [StringEnum(typeof(Enums.RoundSource))]
         public string Source { get; init; } = "Manual";
         public string? Notes { get; init; }
 

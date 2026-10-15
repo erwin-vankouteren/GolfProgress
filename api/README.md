@@ -31,6 +31,31 @@ The API workflow regenerates the spec from its own build and **fails if the comm
 file differs**, printing the difference. If that check fails on your pull request, run
 the script and commit `api/openapi.json`.
 
+## Documenting an endpoint
+
+Clients are only as typed as the spec, so every endpoint describes itself completely.
+`OpenApiContractTests` checks the rules below for every operation, and fails until a new
+endpoint follows them.
+
+- **A readable operation id**, as the route name: `[HttpGet("/me/rounds", Name = "listMyRounds")]`.
+  Generated method names come from it, so treat it as part of the contract.
+- **Every status the action returns**, with `[ProducesResponseType]`: the success type
+  (`200`/`201`, or `204` without a body), `400` as `ValidationProblemDetails`, and `404`/`409`
+  as `ProblemDetails`.
+- **Errors are ProblemDetails.** Use `this.FieldError(field, message)` for a check the
+  action makes itself, and `Problem(...)` otherwise, never a bare string.
+- **Headers** with `[ResponseHeader]`: `Location` on `201`, `X-Total-Count` on paged lists.
+- **Enum values in string fields** with `[StringEnum(typeof(...))]`, and required request
+  fields with `[Required]`.
+- **Dates** are `yyyy-MM-dd`, parsed with `IsoDate`, never `DateOnly.TryParse` (that
+  follows the server's culture).
+
+Documented automatically, by the filters in `src/GolfProgress.Api/OpenApi/`:
+- the bearer token and `401` on `[Authorize]`d endpoints;
+- `429` with `Retry-After` on rate-limited ones;
+- `500` everywhere;
+- every property of a response model as required.
+
 ## Changing the contract
 
 Installed mobile apps can't be forced to update, so changes must be **additive**: new

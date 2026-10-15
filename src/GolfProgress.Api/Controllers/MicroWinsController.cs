@@ -22,7 +22,9 @@ public sealed class MicroWinsController : ControllerBase
     }
 
     // POST /rounds/{roundId}/micro-wins/generate
-    [HttpPost("/rounds/{roundId:guid}/micro-wins/generate")]
+    [HttpPost("/rounds/{roundId:guid}/micro-wins/generate", Name = "generateMicroWins")]
+    [ProducesResponseType<GenerateMicroWinsResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GenerateMicroWinsResponse>> Generate(Guid roundId, CancellationToken ct)
     {
         var userId = User.GetUserId();
@@ -39,7 +41,9 @@ public sealed class MicroWinsController : ControllerBase
     }
 
     // GET /rounds/{roundId}/micro-wins
-    [HttpGet("/rounds/{roundId:guid}/micro-wins")]
+    [HttpGet("/rounds/{roundId:guid}/micro-wins", Name = "listMicroWins")]
+    [ProducesResponseType<List<MicroWinResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<MicroWinResponse>>> Get(Guid roundId, CancellationToken ct)
     {
         var userId = User.GetUserId();

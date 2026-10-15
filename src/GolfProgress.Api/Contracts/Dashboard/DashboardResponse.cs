@@ -1,4 +1,6 @@
-﻿using GolfProgress.Api.Contracts.MicroWins;
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
+using GolfProgress.Api.Contracts.MicroWins;
 using GolfProgress.Api.Contracts.Recommendations;
 
 namespace GolfProgress.Api.Contracts.Dashboard;
@@ -14,6 +16,7 @@ public sealed class DashboardResponse
     public NextLeverResponse? NextLever { get; init; }
 
     public decimal? BaselineAvgScore { get; init; }
+    [StringEnum(typeof(Enums.ConfidenceLevel))]
     public string? BaselineConfidence { get; init; }
 
     public decimal? MonthlyFitnessAvg { get; init; }

@@ -21,7 +21,9 @@ public sealed class DashboardController : ControllerBase
     }
 
     // GET /me/dashboard
-    [HttpGet("/me/dashboard")]
+    [HttpGet("/me/dashboard", Name = "getDashboard")]
+    [ProducesResponseType<DashboardResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     // A missing user surfaces as NotFoundException, which the global handler
     // turns into a 404 (#7).
     public async Task<ActionResult<DashboardResponse>> Get(CancellationToken ct)

@@ -1,7 +1,9 @@
-﻿namespace GolfProgress.Api.Contracts.Auth;
+using System.ComponentModel.DataAnnotations;
+
+namespace GolfProgress.Api.Contracts.Auth;
 
 public sealed class LoginRequest
 {
-    public string Email { get; init; } = "";
-    public string Password { get; init; } = "";
+    [Required] public string Email { get; init; } = "";
+    [Required] public string Password { get; init; } = "";
 }

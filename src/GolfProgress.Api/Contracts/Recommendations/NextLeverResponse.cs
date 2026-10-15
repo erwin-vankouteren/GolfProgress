@@ -1,4 +1,6 @@
-﻿namespace GolfProgress.Api.Contracts.Recommendations;
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
+namespace GolfProgress.Api.Contracts.Recommendations;
 
 public sealed class NextLeverResponse
 {
@@ -10,6 +12,7 @@ public sealed class NextLeverResponse
     public string Recommendation { get; init; } = "";// one actionable sentence
     public string Rationale { get; init; } = "";     // why this was chosen
 
+    [StringEnum(typeof(Enums.ConfidenceLevel))]
     public string ConfidenceLevel { get; init; } = "Low";
     public DateTimeOffset CreatedAt { get; init; }
 }

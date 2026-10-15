@@ -22,7 +22,9 @@ public sealed class UsersController : ControllerBase
     // while no role claim is ever issued, so it answered 403 to every caller
     // including the owner of the record. Callers only ever need their own profile,
     // and scoping the lookup to the token removes the need for a role at all.
-    [HttpGet("/me")]
+    [HttpGet("/me", Name = "getMe")]
+    [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserResponse>> GetCurrent(CancellationToken ct)
     {
         var userId = User.GetUserId();

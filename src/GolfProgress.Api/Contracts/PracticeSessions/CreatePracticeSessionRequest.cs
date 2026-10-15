@@ -1,3 +1,5 @@
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
 using GolfProgress.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
@@ -5,11 +7,12 @@ namespace GolfProgress.Api.Contracts.PracticeSessions;
 
 public sealed class CreatePracticeSessionRequest : IValidatableObject
 {
-    public string PracticedAt { get; init; } = "";       // "2026-04-20"
+    [Required] public string PracticedAt { get; init; } = "";   // "2026-04-20"
 
     [Range(1, 1440)]
     public short? DurationMinutes { get; init; }
 
+    [StringEnum(typeof(Enums.SessionType))]
     public string SessionType { get; init; } = nameof(Domain.Enums.SessionType.Range); // Range|Putting|ShortGame|Simulator|Lesson|Other
 
     [MaxLength(200)]
@@ -26,7 +29,7 @@ public sealed class CreatePracticeSessionRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (!DateOnly.TryParse(PracticedAt, out _))
+        if (!IsoDate.TryParse(PracticedAt, out _))
             yield return new ValidationResult(
                 "PracticedAt must be ISO date format: yyyy-MM-dd", new[] { nameof(PracticedAt) });
 

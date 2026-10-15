@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using GolfProgress.Api.OpenApi;
+using Enums = GolfProgress.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace GolfProgress.Api.Contracts.Rounds
 {
@@ -9,14 +11,13 @@ namespace GolfProgress.Api.Contracts.Rounds
     /// </summary>
     public sealed class CreateRoundRequest : IValidatableObject
     {
-        public Guid UserId { get; init; }                 // required
-        public string PlayedAt { get; init; } = "";       // "2026-04-20"
+        [Required] public string PlayedAt { get; init; } = "";   // "2026-04-20"
         public short Holes { get; init; } = 18;           // 9 or 18
 
         public string? CourseName { get; init; }
         public string? TeeName { get; init; }
 
-        [Range(1, short.MaxValue, ErrorMessage = "TotalStrokes must be > 0.")]
+        [Required, Range(1, short.MaxValue, ErrorMessage = "TotalStrokes must be > 0.")]
         public short TotalStrokes { get; init; }          // required
 
         // Optional stats (nullable)
@@ -27,6 +28,7 @@ namespace GolfProgress.Api.Contracts.Rounds
         [Range(0, short.MaxValue)] public short? ThreePutts { get; init; }
         [Range(0, short.MaxValue)] public short? BlowUpHoles { get; init; }
 
+        [StringEnum(typeof(Enums.RoundSource))]
         public string Source { get; init; } = "Manual";   // Manual|Import|Coach|Other
         public string? Notes { get; init; }
 

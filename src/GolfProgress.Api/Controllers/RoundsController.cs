@@ -1,4 +1,7 @@
 ﻿using GolfProgress.Api.Contracts.Rounds;
+using GolfProgress.Api.Contracts;
+using GolfProgress.Api.OpenApi;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Security;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
@@ -19,14 +22,17 @@ public sealed class RoundsController : ControllerBase
     public RoundsController(GolfProgressDbContext db) => _db = db;
 
     // POST /me/rounds
-    [HttpPost("/me/rounds")]
+    [HttpPost("/me/rounds", Name = "createRound")]
+    [ProducesResponseType<RoundResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ResponseHeader(StatusCodes.Status201Created, "Location", "string", "URL of the created round.")]
     public async Task<ActionResult<RoundResponse>> Create([FromBody] CreateRoundRequest request, CancellationToken ct)
     {
         var userId = User.GetUserId();
         // Ranges and hole-count bounds are validated on CreateRoundRequest before
         // this runs; [ApiController] answers 400 for anything invalid.
-        if (!DateOnly.TryParse(request.PlayedAt, out var playedAt))
-            return BadRequest("PlayedAt must be ISO date format: yyyy-MM-dd");
+        if (!IsoDate.TryParse(request.PlayedAt, out var playedAt))
+            return this.FieldError(nameof(request.PlayedAt), "PlayedAt must be an ISO date, yyyy-MM-dd.");
 
         var source = Enum.TryParse<RoundSource>(request.Source, ignoreCase: true, out var s)
             ? s
@@ -84,7 +90,9 @@ public sealed class RoundsController : ControllerBase
     }
 
     // GET /rounds/{id}
-    [HttpGet("/rounds/{id:guid}")]
+    [HttpGet("/rounds/{id:guid}", Name = "getRound")]
+    [ProducesResponseType<RoundResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RoundResponse>> GetById(Guid id, CancellationToken ct)
     {
         var userId = User.GetUserId();
@@ -103,7 +111,9 @@ public sealed class RoundsController : ControllerBase
     //
     // Paged, newest first (#13). take is clamped to 1..100 like /me/timeline; the
     // total is returned in X-Total-Count so a client knows when it has them all.
-    [HttpGet("/me/rounds")]
+    [HttpGet("/me/rounds", Name = "listMyRounds")]
+    [ProducesResponseType<List<RoundResponse>>(StatusCodes.Status200OK)]
+    [ResponseHeader(StatusCodes.Status200OK, TotalCountHeader, "integer", "Total number of the caller's rounds.")]
     public async Task<ActionResult<List<RoundResponse>>> GetRoundsForUser(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
