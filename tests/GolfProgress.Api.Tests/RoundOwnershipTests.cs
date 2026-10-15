@@ -1,14 +1,17 @@
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 
 namespace GolfProgress.Api.Tests;
 
 /// <summary>
 /// Pins the authorization fix: every endpoint keyed on a round id must refuse a
 /// caller who does not own that round. These are the regression guard for the IDOR
-/// vulnerability -- if a new round-keyed endpoint is added without an ownership
-/// check, <see cref="EveryRoundKeyedRoute_RejectsAnotherUsersRound"/> should be
-/// extended and will fail until the guard is in place.
+/// vulnerability. The probes below list routes by hand, so
+/// <see cref="EveryRoundKeyedRoute_IsProbedForOwnership"/> discovers the routes the
+/// app actually registers and fails when a new one is not probed (#2).
 /// </summary>
 public sealed class RoundOwnershipTests : IAsyncLifetime
 {
@@ -44,6 +47,54 @@ public sealed class RoundOwnershipTests : IAsyncLifetime
         "/rounds/{roundId}/micro-wins/generate",
         "/rounds/{roundId}/next-lever"
     };
+
+    /// <summary>
+    /// Round-keyed routes probed outside <see cref="ReadRoutes"/> and
+    /// <see cref="WriteRoutes"/>, because they need a request body.
+    /// </summary>
+    private static readonly string[] ProbedSeparately =
+    {
+        "POST /rounds/{roundId}/reflections" // PostReflection_ToAnotherUsersRound_Returns404AndWritesNothing
+    };
+
+    /// <summary>
+    /// Regression guard for issue #2. The probes above only cover the routes they
+    /// name, so a new round-keyed endpoint added without an ownership check would
+    /// otherwise pass every test. This reads the routes the app actually registers
+    /// and fails until each round-keyed one is probed.
+    /// </summary>
+    [Fact]
+    public void EveryRoundKeyedRoute_IsProbedForOwnership()
+    {
+        var registered = _factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? Array.Empty<string>())
+                .Select(method => $"{method} {NormaliseRoundRoute(e.RoutePattern.RawText)}"))
+            .Where(route => route.Contains("/rounds/{roundId}"))
+            .ToHashSet();
+
+        var probed = ReadRoutes().Select(row => $"GET {row[0]}")
+            .Concat(WriteRoutes().Select(row => $"POST {row[0]}"))
+            .Concat(ProbedSeparately)
+            .ToHashSet();
+
+        var unprobed = registered.Except(probed).OrderBy(r => r).ToList();
+
+        Assert.True(unprobed.Count == 0,
+            "Round-keyed routes with no ownership probe -- add them to ReadRoutes, WriteRoutes " +
+            "or a dedicated test: " + string.Join(", ", unprobed));
+
+        // Guards the discovery itself: if it silently found nothing, the check
+        // above would pass vacuously.
+        Assert.Subset(registered, probed);
+    }
+
+    /// <summary>
+    /// Writes a route's round parameter as <c>{roundId}</c>, whatever it is named or
+    /// constrained as, e.g. <c>rounds/{id:guid}</c> becomes <c>/rounds/{roundId}</c>.
+    /// </summary>
+    private static string NormaliseRoundRoute(string? rawText) =>
+        Regex.Replace("/" + (rawText ?? "").TrimStart('/'), @"^/rounds/\{[^}]+\}", "/rounds/{roundId}");
 
     [Theory]
     [MemberData(nameof(ReadRoutes))]
