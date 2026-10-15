@@ -1,0 +1,26 @@
+{
+  "name": "golfprogress-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "GolfProgress web app. For now: the API client generated from api/openapi.json (#63); the React app follows in #75.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "generate:api": "openapi-typescript ../../api/openapi.json --output src/api/schema.d.ts",
+    "postinstall": "npm run generate:api",
+    "pretypecheck": "npm run generate:api",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run generate:api",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.4"
+  }
+}
