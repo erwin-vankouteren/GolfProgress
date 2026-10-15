@@ -43,7 +43,6 @@ export const RoundsPage = () => (
 );
 export const PracticePage = () => <SectionPage title={messages.practice} empty={messages.practiceEmpty} />;
 export const ProgressPage = () => <SectionPage title={messages.progress} empty={messages.progressEmpty} />;
-export const ProfilePage = () => <SectionPage title={messages.profile} empty={messages.profileIntro} />;
 export const LogRoundPage = () => <SectionPage title={messages.logRound} empty={messages.logRoundIntro} />;
 
 export function NotFoundPage() {

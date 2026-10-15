@@ -5,18 +5,24 @@ import { RouterProvider } from "react-router/dom";
 import { createApiClient } from "./api";
 import { App } from "./app/App";
 import { routes } from "./app/routes";
+import { Session } from "./session/session";
 import "./theme/tokens.css";
 import "./theme/global.css";
 
+const session = new Session();
 const api = createApiClient({
   baseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5068",
-  // Signed out until the session layer arrives in #69.
-  tokens: { accessToken: () => null, refreshAccessToken: async () => null },
+  tokens: session,
 });
+session.attach(api);
+
+// Signs back in from the refresh cookie after a reload (#69). The app shows
+// "Signing you in…" until this settles.
+void session.restore();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App api={api} appVersion={__APP_VERSION__}>
+    <App api={api} session={session} appVersion={__APP_VERSION__}>
       <RouterProvider router={createBrowserRouter(routes)} />
     </App>
   </StrictMode>,

@@ -38,7 +38,10 @@ export type ApiClient = ReturnType<typeof createApiClient>;
  * Lets callers (and TanStack Query) treat every failure the same way.
  */
 export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
-  if (!result.response.ok) throw new ApiProblem(result.response.status, result.error);
+  if (!result.response.ok) {
+    const retryAfter = Number.parseInt(result.response.headers.get("Retry-After") ?? "", 10);
+    throw new ApiProblem(result.response.status, result.error, Number.isNaN(retryAfter) ? undefined : retryAfter);
+  }
   return result.data as T;
 }
 

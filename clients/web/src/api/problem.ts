@@ -14,8 +14,10 @@ export class ApiProblem extends Error {
   readonly traceId?: string;
   /** For 400s: validation messages keyed by field, to show next to that field. */
   readonly errors: Record<string, string[]>;
+  /** For 429s: seconds to wait before trying again, from the Retry-After header. */
+  readonly retryAfterSeconds?: number;
 
-  constructor(status: number, body?: unknown) {
+  constructor(status: number, body?: unknown, retryAfterSeconds?: number) {
     const problem = (typeof body === "object" && body !== null ? body : {}) as Record<string, unknown>;
     const title = typeof problem.title === "string" ? problem.title : undefined;
     const detail = typeof problem.detail === "string" ? problem.detail : undefined;
@@ -27,6 +29,7 @@ export class ApiProblem extends Error {
     this.detail = detail;
     this.traceId = typeof problem.traceId === "string" ? problem.traceId : undefined;
     this.errors = isErrorMap(problem.errors) ? problem.errors : {};
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 
   /**
