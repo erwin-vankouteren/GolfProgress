@@ -74,6 +74,7 @@ public struct BearerAuthMiddleware: ClientMiddleware {
 /// Turns every `application/problem+json` response into a thrown `APIProblem` (#64).
 public struct ProblemDetailsMiddleware: ClientMiddleware {
     static let maxProblemBytes = 64 * 1024
+    static let retryAfter = HTTPField.Name("Retry-After")!
 
     public init() {}
 
@@ -98,6 +99,8 @@ public struct ProblemDetailsMiddleware: ClientMiddleware {
             problem = decoded
             if problem.status == 0 { problem.status = response.status.code }
         }
+        // The API sends delta-seconds, never an HTTP date.
+        problem.retryAfterSeconds = response.headerFields[Self.retryAfter].flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         throw problem
     }
 }

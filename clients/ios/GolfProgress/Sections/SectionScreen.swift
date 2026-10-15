@@ -99,12 +99,23 @@ struct LogRoundView: View {
     }
 }
 
+/// Profile (#76); sign out (#70). Preferences and account settings arrive in M2.
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppEnvironment.self) private var environment
+    @State private var isSigningOut = false
 
     var body: some View {
         NavigationStack {
-            EmptyStateView(message: "Your profile and preferences will appear here.") { EmptyView() }
+            EmptyStateView(message: "Your profile and preferences will appear here.") {
+                Button("Sign out") {
+                    isSigningOut = true
+                    Task { await environment.session.signOut() }
+                }
+                .buttonStyle(.bordered)
+                .frame(minHeight: DesignTokens.touchTarget)
+                .disabled(isSigningOut)
+            }
                 .padding(DesignTokens.Spacing.lg)
                 .frame(maxHeight: .infinity, alignment: .top)
                 .background(DesignTokens.Colors.background)

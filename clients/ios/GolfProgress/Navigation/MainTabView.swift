@@ -65,15 +65,18 @@ struct MainTabView: View {
 // text size, in light and dark. Nothing may be cut off or overlap at the largest size.
 #Preview("Default") {
     MainTabView()
+        .environment(AppEnvironment.preview())
 }
 
 #Preview("Largest text") {
     MainTabView()
+        .environment(AppEnvironment.preview())
         .environment(\.dynamicTypeSize, .accessibility5)
 }
 
 #Preview("Largest text, dark") {
     MainTabView()
+        .environment(AppEnvironment.preview())
         .environment(\.dynamicTypeSize, .accessibility5)
         .preferredColorScheme(.dark)
 }

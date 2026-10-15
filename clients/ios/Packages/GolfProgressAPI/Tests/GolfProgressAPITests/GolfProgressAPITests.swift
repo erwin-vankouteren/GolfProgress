@@ -59,6 +59,24 @@ final class GolfProgressAPITests: XCTestCase {
         }
     }
 
+    func testA429CarriesTheRetryAfterWait() async throws {
+        let transport = FakeTransport { _, _ in
+            var response = FakeResponse.problem(429, #"{"status":429,"title":"Too Many Requests"}"#)
+            response.retryAfter = "42"
+            return response
+        }
+        let api = GolfProgressAPI.makeClient(serverURL: server, tokens: FakeTokens(), transport: transport)
+
+        do {
+            _ = try await api.login(body: .json(.init(email: "a@example.test", password: "secret")))
+            XCTFail("Expected an error")
+        } catch {
+            let problem = try XCTUnwrap(APIProblem.from(error))
+            XCTAssertEqual(problem.status, 429)
+            XCTAssertEqual(problem.retryAfterSeconds, 42)
+        }
+    }
+
     // MARK: Bearer token and refresh
 
     func testA401RefreshesOnceAndRetriesWithTheNewToken() async throws {
@@ -172,6 +190,7 @@ private struct FakeResponse {
     let status: Int
     let contentType: String
     let body: String
+    var retryAfter: String?
 
     static func json(_ status: Int, _ body: String) -> FakeResponse {
         .init(status: status, contentType: "application/json; charset=utf-8", body: body)
@@ -209,6 +228,7 @@ private final class FakeTransport: ClientTransport, @unchecked Sendable {
         let fake = respond(request, attempt)
         var response = HTTPResponse(status: .init(code: fake.status))
         response.headerFields[.contentType] = fake.contentType
+        if let retryAfter = fake.retryAfter { response.headerFields[HTTPField.Name("Retry-After")!] = retryAfter }
         return (response, HTTPBody(fake.body))
     }
 }

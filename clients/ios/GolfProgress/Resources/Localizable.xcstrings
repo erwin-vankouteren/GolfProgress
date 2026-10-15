@@ -1,20 +1,62 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ is required." : { },
+    "Already have an account? Sign in" : { },
+    "An account with this email already exists. Sign in instead." : { },
     "Close" : { },
+    "Couldn't reach GolfProgress. Check your connection and try again." : { },
+    "Create account" : { },
     "Done" : { },
+    "Email" : { },
+    "Email or password is wrong." : { },
+    "Enter a valid email address." : { },
+    "GolfProgress" : { },
     "Home" : { },
     "Log a few rounds to see your trends." : { },
     "Log round" : { },
     "Log your first round to see your fitness score." : { },
+    "Name" : { },
+    "New here? Create an account" : { },
     "No practice logged yet. Practice counts towards your Habits score." : { },
     "No rounds logged yet." : { },
+    "Password" : { },
+    "Please wait…" : { },
     "Practice" : { },
     "Profile" : { },
     "Progress" : { },
     "Rounds" : { },
+    "See your progress beyond the score: every round scored on execution, damage control, consistency and habits." : { },
+    "Sign in" : { },
+    "Sign out" : { },
+    "Signing you in…" : { },
+    "Something went wrong. Please try again." : { },
     "The round form comes next." : { },
     "This version of GolfProgress is no longer supported. Update the app to keep using it." : { },
+    "Too many attempts. Try again in %lld seconds." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Too many attempts. Try again in %lld second."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Too many attempts. Try again in %lld seconds."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Too many attempts. Try again later." : { },
+    "Try again" : { },
     "Update required" : { },
     "Your profile and preferences will appear here." : { }
   },
