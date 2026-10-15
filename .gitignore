@@ -482,3 +482,15 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+##
+## Client overrides (#58)
+##
+# The .NET template above ignores any folder named Debug, Release, x86 or Packages, at
+# any depth. Those names are normal in the clients: Android build-type source sets
+# (src/debug, src/release), Android native-library folders (jniLibs/x86), and local
+# Swift packages. Re-include them; each client's own .gitignore covers its tooling.
+!clients/android/**/src/[Dd]ebug/
+!clients/android/**/src/[Rr]elease/
+!clients/android/**/jniLibs/x86/
+!clients/ios/**/[Pp]ackages/*

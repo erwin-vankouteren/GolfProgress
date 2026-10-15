@@ -1,0 +1,26 @@
+# Xcode per-user state and build output
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Archives and symbols
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+
+# Signing material never belongs in the repository (CI gets it from secrets)
+*.p12
+*.mobileprovision
+*.cer
+
+# fastlane output
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
