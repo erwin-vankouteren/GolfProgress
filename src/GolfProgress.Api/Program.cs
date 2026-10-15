@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using GolfProgress.Domain.Entities;
+using GolfProgress.Api.Caching;
 using GolfProgress.Api.Security;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -111,7 +112,11 @@ builder.Services.AddRateLimiter(options =>
 });
 builder.Services.AddSingleton<LoginThrottle>();
 
-builder.Services.AddDbContext<GolfProgressDbContext>(options =>
+// Per-user response cache, invalidated on every save that touches a user's data (#14).
+builder.Services.AddSingleton<UserScopedCache>();
+builder.Services.AddSingleton<CacheInvalidationInterceptor>();
+
+builder.Services.AddDbContext<GolfProgressDbContext>((sp, options) =>
     options.UseSqlServer(connectionString,
     sqloptions =>
     {
@@ -119,7 +124,8 @@ builder.Services.AddDbContext<GolfProgressDbContext>(options =>
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(30),
             errorNumbersToAdd: null);
-    }));
+    })
+    .AddInterceptors(sp.GetRequiredService<CacheInvalidationInterceptor>()));
 
 builder.Services.AddScoped<GolfProgress.Api.Services.ProgressComputationService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.MicroWinsService>();

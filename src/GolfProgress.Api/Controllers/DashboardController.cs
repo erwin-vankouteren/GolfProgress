@@ -4,7 +4,6 @@ using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -13,9 +12,9 @@ namespace GolfProgress.Api.Controllers;
 public sealed class DashboardController : ControllerBase
 {
     private readonly DashboardService _svc;
-    private readonly IMemoryCache _cache;
+    private readonly UserScopedCache _cache;
 
-    public DashboardController(DashboardService svc, IMemoryCache cache)
+    public DashboardController(DashboardService svc, UserScopedCache cache)
     {
         _svc = svc;
         _cache = cache;
@@ -28,11 +27,8 @@ public sealed class DashboardController : ControllerBase
         try
         {
             var userId = User.GetUserId();
-            var cacheKey = $"dashboard:{userId}";
-            if (_cache.TryGetValue(cacheKey, out DashboardResponse? cached))
-                return Ok(cached);
-            var result = await _svc.BuildAsync(userId, ct);
-            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(2));
+            var result = await _cache.GetOrCreateAsync(
+                userId, CacheKeys.Dashboard(userId), () => _svc.BuildAsync(userId, ct));
             return Ok(result);
         }
         catch (InvalidOperationException)
