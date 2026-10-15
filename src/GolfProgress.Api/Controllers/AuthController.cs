@@ -1,4 +1,5 @@
 ﻿using GolfProgress.Api.Contracts.Auth;
+using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
@@ -6,24 +7,28 @@ using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace GolfProgress.Api.Controllers;
 
 [ApiController]
+[EnableRateLimiting(RateLimitPolicies.Auth)]
 public sealed class AuthController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
     private readonly IPasswordHasher<User> _hasher;
     private readonly JwtTokenService _jwt;
     private readonly RefreshTokenService _refresh;
+    private readonly LoginThrottle _loginThrottle;
 
-    public AuthController(GolfProgressDbContext db, IPasswordHasher<User> hasher, JwtTokenService jwt, RefreshTokenService refresh)
+    public AuthController(GolfProgressDbContext db, IPasswordHasher<User> hasher, JwtTokenService jwt, RefreshTokenService refresh, LoginThrottle loginThrottle)
     {
         _db = db;
         _hasher = hasher;
         _jwt = jwt;
         _refresh = refresh;
+        _loginThrottle = loginThrottle;
     }
 
     // POST /auth/register
@@ -81,6 +86,16 @@ public sealed class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Password)) return BadRequest("Password is required.");
 
         var email = request.Email.Trim().ToLowerInvariant();
+
+        // Checked before the account is looked up, so unknown and known emails are
+        // throttled alike and the limit reveals nothing about which accounts exist.
+        if (!_loginThrottle.TryAcquire(email, out var retryAfter))
+        {
+            if (retryAfter is { } wait)
+                Response.Headers.RetryAfter = ((int)Math.Ceiling(wait.TotalSeconds)).ToString();
+
+            return StatusCode(StatusCodes.Status429TooManyRequests);
+        }
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == email, ct);
         if (user is null) return Unauthorized();
