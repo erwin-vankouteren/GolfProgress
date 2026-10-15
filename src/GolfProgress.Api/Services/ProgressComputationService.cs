@@ -69,6 +69,12 @@ public sealed class ProgressComputationService
             CreatedAt = now
         });
 
+        // The only save in the compute path. The baseline, the fitness score and
+        // both events are written by one SaveChangesAsync, which EF runs as a single
+        // transaction, so a failure leaves none of them written rather than some (#8).
+        // A single save also stays compatible with the SQL Server retry strategy,
+        // which would otherwise require an explicit transaction to run inside
+        // IExecutionStrategy.ExecuteAsync.
         await _db.SaveChangesAsync(ct);
 
         return (baseline, fitness);
@@ -158,7 +164,10 @@ public sealed class ProgressComputationService
         };
     }
 
-    /// <summary>Writes the user's single current baseline row.</summary>
+    /// <summary>
+    /// Stages the user's single current baseline row. Nothing is saved here; see
+    /// <see cref="ComputeForRoundAsync"/>.
+    /// </summary>
     private async Task<UserBaseline> UpsertCurrentBaselineAsync(
         UserBaseline computed, CancellationToken ct)
     {
@@ -168,7 +177,6 @@ public sealed class ProgressComputationService
         if (existing is null)
         {
             _db.UserBaselines.Add(computed);
-            await _db.SaveChangesAsync(ct);
             return computed;
         }
 
@@ -187,10 +195,13 @@ public sealed class ProgressComputationService
         existing.ConfidenceLevel = computed.ConfidenceLevel;
         existing.ComputedAt = computed.ComputedAt;
 
-        await _db.SaveChangesAsync(ct);
         return existing;
     }
 
+    /// <summary>
+    /// Stages the round's fitness score. Nothing is saved here; see
+    /// <see cref="ComputeForRoundAsync"/>.
+    /// </summary>
     private async Task<FitnessScore> UpsertFitnessScoreAsync(Round round, UserBaseline baseline, ConfidenceLevel confidence, CancellationToken ct)
     {
         var existing = await _db.FitnessScores.FirstOrDefaultAsync(fs => fs.RoundId == round.RoundId, ct);
@@ -232,7 +243,6 @@ public sealed class ProgressComputationService
             new JsonDocumentOptions()
         );
 
-        await _db.SaveChangesAsync(ct);
         return existing;
     }
 
