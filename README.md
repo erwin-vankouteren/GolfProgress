@@ -14,7 +14,7 @@ clients. How the parts fit together is described in
 |---|---|---|
 | [`src/`](src/) | The API: ASP.NET Core 8 (`GolfProgress.Api`, `.Domain`, `.Infrastructure`) | In use |
 | [`tests/`](tests/) | API tests | In use |
-| [`api/`](api/) | The OpenAPI spec all clients are generated from | Being set up (#61) |
+| [`api/`](api/) | The OpenAPI spec all clients are generated from | In use |
 | [`clients/web/`](clients/web/) | Web app: React + TypeScript | Not started (#75) |
 | [`clients/ios/`](clients/ios/) | iOS app: Swift + SwiftUI | Not started (#76) |
 | [`clients/android/`](clients/android/) | Android app: Kotlin + Jetpack Compose | Not started (#77) |

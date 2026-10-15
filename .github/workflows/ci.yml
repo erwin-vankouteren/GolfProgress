@@ -62,5 +62,17 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
+      # api/openapi.json is the contract the clients are generated from, so it must
+      # match the code (#61). Regenerate it from the build above and fail if the
+      # committed file differs, showing the difference.
+      - name: Check the OpenAPI spec is up to date
+        shell: pwsh
+        run: |
+          ./api/generate-openapi.ps1 -NoBuild
+          if (git status --porcelain -- api/openapi.json) {
+            git --no-pager diff -- api/openapi.json
+            Write-Error "api/openapi.json is out of date. Run ./api/generate-openapi.ps1 and commit the result."
+          }
+
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
