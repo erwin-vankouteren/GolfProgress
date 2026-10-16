@@ -1769,6 +1769,78 @@
             "Bearer": [ ]
           }
         ]
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "updateMe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The access token is missing, invalid or expired. Refresh it and retry once.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
       }
     }
   },
@@ -2849,6 +2921,66 @@
             "items": {
               "$ref": "#/components/schemas/RoundTimelinePointResponse"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateMeRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "timezone": {
+            "maxLength": 64,
+            "type": "string",
+            "nullable": true
+          },
+          "units": {
+            "enum": [
+              "Metric",
+              "Imperial"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "trackingMode": {
+            "enum": [
+              "Minimal",
+              "Balanced",
+              "Detailed"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "goalFocus": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "Putting",
+                "Penalties",
+                "TeeShots",
+                "Consistency"
+              ],
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "handicapIndex": {
+            "maximum": 54,
+            "minimum": -10,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "typical18Score": {
+            "maximum": 200,
+            "minimum": 18,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false

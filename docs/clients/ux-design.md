@@ -55,7 +55,7 @@ tracked as API issues.
 | Update required | Shown when the app is older than the minimum supported version | **new** `GET /client-config` |
 
 After creating an account, a short onboarding asks for units, tracking mode and up to
-three goal focus areas (`PATCH /me`, **new**), then opens Log round.
+three goal focus areas (`PATCH /me`), then opens Log round.
 
 ### Home: dashboard
 
@@ -107,8 +107,8 @@ Every chart has a text alternative (a summary sentence or a table) for screen re
 
 | Screen | Content | Endpoints |
 |---|---|---|
-| Profile | Display name, email, handicap, typical 18-hole score | `GET /me`, **new** `PATCH /me` |
-| Preferences | Units, tracking mode, goal focus areas | **new** `PATCH /me` |
+| Profile | Display name, email, handicap, typical 18-hole score | `GET /me`, `PATCH /me` |
+| Preferences | Units, tracking mode, goal focus areas | `PATCH /me` |
 | Change password | Current and new password | **new** `POST /me/password` |
 | Sign out | Ends this session | `POST /auth/logout` |
 | Delete account | Explains what is deleted, asks for the password, then deletes everything | **new** `DELETE /me` |

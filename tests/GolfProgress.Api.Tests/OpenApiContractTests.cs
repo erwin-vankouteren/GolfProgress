@@ -180,12 +180,32 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
     [InlineData("MicroWinResponse", "direction", new[] { "Improved", "Stable", "Declined" })]
     [InlineData("FitnessScoreResponse", "confidenceLevel", new[] { "Low", "Medium", "High" })]
     [InlineData("CreateRoundRequest", "source", new[] { "Manual", "Import", "Coach", "Other" })]
+    [InlineData("UpdateMeRequest", "units", new[] { "Metric", "Imperial" })]
+    [InlineData("UpdateMeRequest", "trackingMode", new[] { "Minimal", "Balanced", "Detailed" })]
     public void EnumValuedStrings_ListTheirValues(string schema, string property, string[] expected)
     {
         var values = _spec.Components.Schemas[schema].Properties[property].Enum
             .Cast<OpenApiString>().Select(v => v.Value);
 
         Assert.Equal(expected, values);
+    }
+
+    /// <summary>
+    /// The goal focus areas apps may send (#82). The response's goalFocus stays a plain
+    /// list of strings, so an area added later can't break an installed app.
+    /// </summary>
+    [Fact]
+    public void GoalFocus_ListsItsAreasOnTheRequest_AndStaysPlainStringsOnTheResponse()
+    {
+        var request = _spec.Components.Schemas["UpdateMeRequest"].Properties["goalFocus"];
+        Assert.Equal("array", request.Type);
+        Assert.Equal(
+            new[] { "Putting", "Penalties", "TeeShots", "Consistency" },
+            request.Items.Enum.Cast<OpenApiString>().Select(v => v.Value));
+
+        var response = _spec.Components.Schemas["UserResponse"].Properties["goalFocus"];
+        Assert.Empty(response.Items.Enum);
+        Assert.Equal("string", response.Items.Type);
     }
 
     /// <summary>
