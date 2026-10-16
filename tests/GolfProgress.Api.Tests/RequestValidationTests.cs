@@ -106,5 +106,46 @@ public sealed class RequestValidationTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>#99: a reflection needs at least one field; blank text doesn't count.</summary>
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("""{ "whatWorked": "   ", "oneChangeNext": "" }""")]
+    public async Task CreateReflection_WithNothingInIt_IsRejected(string body)
+    {
+        var response = await Client().PostAsync($"/rounds/{_owner.RoundId}/reflections",
+            new StringContent(body, System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.Contains("Reflection", problem!.Errors.Keys);
+        _factory.WithDb(db => Assert.Empty(db.Reflections.Where(r => r.RoundId == _owner.RoundId)));
+    }
+
+    [Fact]
+    public async Task CreateReflection_TextLongerThanTheLimit_IsRejected()
+    {
+        var response = await Client().PostAsJsonAsync($"/rounds/{_owner.RoundId}/reflections",
+            new { whatWorked = new string('x', 1001) });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.Contains(problem!.Errors.Keys, k => string.Equals(k, "WhatWorked", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CreateReflection_StoresTextTrimmed_AndBlankAsNothing()
+    {
+        var response = await Client().PostAsJsonAsync($"/rounds/{_owner.RoundId}/reflections",
+            new { whatWorked = "  Kept the driver in play  ", whatToRepeat = "  " });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        _factory.WithDb(db =>
+        {
+            var stored = db.Reflections.Single(r => r.RoundId == _owner.RoundId);
+            Assert.Equal("Kept the driver in play", stored.WhatWorked);
+            Assert.Null(stored.WhatToRepeat);
+        });
+    }
+
     private HttpClient Client() => TestWorld.ClientFor(_factory, _owner.UserId);
 }

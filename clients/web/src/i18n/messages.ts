@@ -140,6 +140,33 @@ export const plainMessages = defineMessages({
   whatWorked: { id: "reflection.whatWorked", defaultMessage: "What worked" },
   whatToRepeat: { id: "reflection.whatToRepeat", defaultMessage: "What to repeat" },
   oneChangeNext: { id: "reflection.oneChange", defaultMessage: "One change for next time" },
+  addReflection: { id: "reflection.add", defaultMessage: "Add reflection" },
+  addAnotherReflection: { id: "reflection.addAnother", defaultMessage: "Add another reflection" },
+  saveReflection: { id: "reflection.save", defaultMessage: "Save reflection" },
+  reflectionSaved: { id: "reflection.saved", defaultMessage: "Reflection saved." },
+  reflectionHabitsHint: {
+    id: "reflection.habitsHint",
+    defaultMessage:
+      "Reflecting counts towards the Habits part of your fitness score. This round's score includes it the next time the round is scored, for example when you edit it.",
+  },
+  reflectionNeedsSomething: {
+    id: "reflection.needsSomething",
+    defaultMessage: "Fill in at least one thing to save a reflection.",
+  },
+  frustrationQuestion: {
+    id: "reflection.frustrationQuestion",
+    defaultMessage: "Did frustration carry over between holes?",
+  },
+  clearRating: { id: "reflection.clear", defaultMessage: "Clear" },
+  reflectionSaveFailed: {
+    id: "reflection.saveFailed",
+    defaultMessage: "Couldn't save the reflection. Please try again.",
+  },
+  reflectionLoadError: { id: "reflection.loadError", defaultMessage: "Couldn't load the reflection." },
+  offlineCantSaveReflection: {
+    id: "reflection.offline",
+    defaultMessage: "You're offline. Connect to save this reflection.",
+  },
   deleteRound: { id: "round.delete", defaultMessage: "Delete round" },
   deleteRoundTitle: { id: "round.deleteTitle", defaultMessage: "Delete this round?" },
   deleteRoundBody: {
@@ -265,6 +292,12 @@ export const messagesWithValues = {
       "{rounds, plural, one {# round} other {# rounds}} and {practice, plural, one {# practice session} other {# practice sessions}} in the 28 days up to this round; four or more earns full points.",
   }),
   outOfFive: defineMessage<{ value: number }>({ id: "reflection.outOfFive", defaultMessage: "{value} of 5" }),
+  clearNamedRating: defineMessage<{ field: string }>({ id: "reflection.clearNamed", defaultMessage: "Clear {field}" }),
+  atMostCharacters: defineMessage<{ max: number }>({
+    id: "reflection.atMostCharacters",
+    defaultMessage: "Use at most {max, number} characters.",
+  }),
+  reflectedOn: defineMessage<{ date: string }>({ id: "reflection.reflectedOn", defaultMessage: "Added {date}" }),
   upOnLastMonth: defineMessage<{ change: string }>({
     id: "dashboard.upOnLastMonth",
     defaultMessage: "Up {change} on last month",
