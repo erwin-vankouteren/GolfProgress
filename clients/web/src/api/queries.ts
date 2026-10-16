@@ -17,6 +17,9 @@ export const queryKeys = {
   microWins: (roundId: string) => ["rounds", roundId, "micro-wins"] as const,
   nextLever: (roundId: string) => ["rounds", roundId, "next-lever"] as const,
   reflections: (roundId: string) => ["rounds", roundId, "reflections"] as const,
+  practice: ["practice"] as const,
+  practiceList: ["practice", "list"] as const,
+  practiceSession: (id: string) => ["practice", id] as const,
 };
 
 /** The signed-in user's profile and preferences, e.g. the tracking mode. */
@@ -121,5 +124,36 @@ export function useReflections(roundId: string) {
   return useQuery({
     queryKey: queryKeys.reflections(roundId),
     queryFn: async () => unwrap(await api.GET("/rounds/{roundId}/reflections", { params: { path: { roundId } } })),
+  });
+}
+
+/** Practice sessions per page of the practice list. */
+export const practicePageSize = 20;
+
+/** The user's practice sessions, newest first, a page at a time (#103). */
+export function usePracticeList() {
+  const api = useApi();
+  return useInfiniteQuery({
+    queryKey: queryKeys.practiceList,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const result = await api.GET("/me/practice-sessions", {
+        params: { query: { skip: pageParam, take: practicePageSize } },
+      });
+      return { sessions: unwrap(result), total: totalCount(result.response) };
+    },
+    getNextPageParam: (lastPage, pages) => {
+      const loaded = pages.reduce((count, page) => count + page.sessions.length, 0);
+      const total = lastPage.total ?? loaded;
+      return loaded < total && lastPage.sessions.length > 0 ? loaded : undefined;
+    },
+  });
+}
+
+export function usePracticeSession(id: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.practiceSession(id),
+    queryFn: async () => unwrap(await api.GET("/me/practice-sessions/{id}", { params: { path: { id } } })),
   });
 }

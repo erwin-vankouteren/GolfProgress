@@ -201,6 +201,49 @@ export const plainMessages = defineMessages({
   reflected: { id: "explain.reflected", defaultMessage: "You reflected on this round." },
   notReflected: { id: "explain.notReflected", defaultMessage: "Adding a reflection would add to this." },
 
+  // Practice (#103)
+  logPractice: { id: "practice.log", defaultMessage: "Log practice" },
+  practiceHabitsHint: { id: "practice.habitsHint", defaultMessage: "Practice counts towards your Habits score." },
+  practiceLoadError: { id: "practice.loadError", defaultMessage: "Couldn't load your practice." },
+  practiceSessionLoadError: { id: "practice.sessionLoadError", defaultMessage: "Couldn't load this session." },
+  practiceNoLongerExists: {
+    id: "practice.noLongerExists",
+    defaultMessage: "This session no longer exists. It may have been deleted on another device.",
+  },
+  showMorePractice: { id: "practice.showMore", defaultMessage: "Show more sessions" },
+  backToPractice: { id: "practice.back", defaultMessage: "Back to practice" },
+  sessionType: { id: "practice.type", defaultMessage: "Type" },
+  duration: { id: "practice.duration", defaultMessage: "Duration" },
+  minutesUnit: { id: "practice.minutesUnit", defaultMessage: "minutes" },
+  venue: { id: "practice.venue", defaultMessage: "Venue" },
+  goal: { id: "practice.goal", defaultMessage: "Goal" },
+  tags: { id: "practice.tags", defaultMessage: "Tags" },
+  addTag: { id: "practice.addTag", defaultMessage: "Add tag" },
+  tagsHint: { id: "practice.tagsHint", defaultMessage: "Press Enter or comma to add a tag." },
+  tagDuplicate: { id: "practice.tagDuplicate", defaultMessage: "That tag is already there." },
+  sessionRange: { id: "sessionType.range", defaultMessage: "Range" },
+  sessionPutting: { id: "sessionType.putting", defaultMessage: "Putting" },
+  sessionShortGame: { id: "sessionType.shortGame", defaultMessage: "Short game" },
+  sessionSimulator: { id: "sessionType.simulator", defaultMessage: "Simulator" },
+  sessionLesson: { id: "sessionType.lesson", defaultMessage: "Lesson" },
+  sessionOther: { id: "sessionType.other", defaultMessage: "Other" },
+  sessionUnknown: { id: "sessionType.unknown", defaultMessage: "Practice" },
+  practiceSaveFailed: { id: "practice.saveFailed", defaultMessage: "Couldn't save the session. Please try again." },
+  offlineCantSavePractice: {
+    id: "practice.offline",
+    defaultMessage: "You're offline. Connect to save this session.",
+  },
+  deletePractice: { id: "practice.delete", defaultMessage: "Delete session" },
+  deletePracticeTitle: { id: "practice.deleteTitle", defaultMessage: "Delete this practice session?" },
+  deletePracticeBody: {
+    id: "practice.deleteBody",
+    defaultMessage: "It no longer counts towards your Habits score. This can't be undone.",
+  },
+  deletePracticeFailed: {
+    id: "practice.deleteFailed",
+    defaultMessage: "Couldn't delete the session. Please try again.",
+  },
+
   // Dashboard (#88)
   dashboardLoadError: { id: "dashboard.loadError", defaultMessage: "Couldn't load your dashboard." },
   logFirstRound: { id: "dashboard.logFirstRound", defaultMessage: "Log your first round" },
@@ -297,6 +340,23 @@ export const messagesWithValues = {
     id: "reflection.atMostCharacters",
     defaultMessage: "Use at most {max, number} characters.",
   }),
+  durationMinutes: defineMessage<{ minutes: number }>({
+    id: "practice.durationMinutes",
+    defaultMessage: "{minutes, number} min",
+  }),
+  durationRange: defineMessage<{ max: number }>({
+    id: "practice.error.durationRange",
+    defaultMessage: "Enter between 1 and {max, number} minutes.",
+  }),
+  tooManyTags: defineMessage<{ max: number }>({
+    id: "practice.error.tooManyTags",
+    defaultMessage: "Use at most {max} tags.",
+  }),
+  tagTooLong: defineMessage<{ max: number }>({
+    id: "practice.error.tagTooLong",
+    defaultMessage: "A tag can be at most {max} characters.",
+  }),
+  removeTag: defineMessage<{ tag: string }>({ id: "practice.removeTag", defaultMessage: "Remove tag {tag}" }),
   reflectedOn: defineMessage<{ date: string }>({ id: "reflection.reflectedOn", defaultMessage: "Added {date}" }),
   upOnLastMonth: defineMessage<{ change: string }>({
     id: "dashboard.upOnLastMonth",

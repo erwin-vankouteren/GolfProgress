@@ -41,7 +41,8 @@
   gap: var(--space-lg);
 }
 
-.log-round-page {
+/* Two classes, to win over .page from global.css, which loads after this file. */
+.page.log-round-page {
   max-width: 32rem;
 }
 
@@ -176,6 +177,7 @@
 .back-link {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-xs);
   min-height: var(--touch-target);
   margin-bottom: var(--space-sm);
 }
