@@ -528,3 +528,99 @@
   justify-content: flex-end;
   gap: var(--space-sm);
 }
+
+/* ---------------------------------------------------------------- Reflections (#99) */
+
+.saved-reflection {
+  display: grid;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reflection-form {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.rating,
+.choice-group {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.rating legend,
+.choice-group legend {
+  padding: 0;
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+}
+
+.rating-options,
+.choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Each rating is a round target of the minimum touch size, its number inside. */
+.rating-option {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-label);
+  cursor: pointer;
+}
+
+.rating-option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.rating-option:has(input:checked) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.rating-option:has(input:focus-visible) {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.rating-clear {
+  min-height: var(--touch-target);
+}
+
+.choice-group .choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-lg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.choice-group .choice:has(input:checked) {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary-container);
+}
+
+.reflection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}

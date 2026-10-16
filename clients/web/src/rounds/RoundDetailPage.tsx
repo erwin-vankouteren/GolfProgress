@@ -2,11 +2,12 @@ import type { ReactNode } from "react";
 import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiProblem, type Schemas } from "../api";
-import { useFitnessScore, useMicroWins, useNextLever, useReflections, useRound } from "../api/queries";
+import { useFitnessScore, useMicroWins, useNextLever, useRound } from "../api/queries";
 import { LoadError, Skeleton } from "../common/states";
 import { useMediaQuery, wideScreen } from "../common/media";
 import { messages, type PlainMessage } from "../i18n/messages";
 import { LogRoundForm } from "./LogRoundForm";
+import { ReflectionSection } from "./ReflectionSection";
 import { explainPillars, trackedStats, type Sentence } from "./roundDetail";
 import type { StatField } from "./roundForm";
 import { usePaneHeadingLevel } from "./paneHeading";
@@ -69,7 +70,7 @@ export function RoundDetailPage() {
       <MicroWinsCard roundId={round.data.roundId} Heading={Section} />
       <NextFocusCard roundId={round.data.roundId} Heading={Section} />
       <StatsCard round={round.data} Heading={Section} />
-      <ReflectionCard roundId={round.data.roundId} Heading={Section} />
+      <ReflectionSection roundId={round.data.roundId} Heading={Section} />
     </section>
   );
 }
@@ -311,56 +312,6 @@ function StatsCard({ round, Heading }: { round: Schemas["RoundResponse"]; Headin
         </dl>
       )}
     </Card>
-  );
-}
-
-function ReflectionCard({ roundId, Heading }: { roundId: string; Heading: HeadingTag }) {
-  const reflections = useReflections(roundId);
-  // The latest one; adding reflections arrives with #99.
-  const latest = reflections.data?.at(-1);
-
-  return (
-    <Card title={messages.reflection} Heading={Heading}>
-      {reflections.isPending ? (
-        <Skeleton blocks={1} />
-      ) : !latest ? (
-        <p>
-          <FormattedMessage {...messages.noReflection} />
-        </p>
-      ) : (
-        <dl className="stat-list">
-          {latest.focusRating !== null && (
-            <Entry label={messages.focus}>
-              <FormattedMessage {...messages.outOfFive} values={{ value: latest.focusRating }} />
-            </Entry>
-          )}
-          {latest.moodRating !== null && (
-            <Entry label={messages.mood}>
-              <FormattedMessage {...messages.outOfFive} values={{ value: latest.moodRating }} />
-            </Entry>
-          )}
-          {latest.frustrationSpillover !== null && (
-            <Entry label={messages.frustrationCarriedOver}>
-              <FormattedMessage {...(latest.frustrationSpillover ? messages.yes : messages.no)} />
-            </Entry>
-          )}
-          {latest.whatWorked && <Entry label={messages.whatWorked}>{latest.whatWorked}</Entry>}
-          {latest.whatToRepeat && <Entry label={messages.whatToRepeat}>{latest.whatToRepeat}</Entry>}
-          {latest.oneChangeNext && <Entry label={messages.oneChangeNext}>{latest.oneChangeNext}</Entry>}
-        </dl>
-      )}
-    </Card>
-  );
-}
-
-function Entry({ label, children }: { label: PlainMessage; children: ReactNode }) {
-  return (
-    <div className="stat-list-wide">
-      <dt>
-        <FormattedMessage {...label} />
-      </dt>
-      <dd>{children}</dd>
-    </div>
   );
 }
 

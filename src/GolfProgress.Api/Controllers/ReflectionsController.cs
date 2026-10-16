@@ -39,9 +39,9 @@ public sealed class ReflectionsController : ControllerBase
             FocusRating = request.FocusRating,
             MoodRating = request.MoodRating,
             FrustrationSpillover = request.FrustrationSpillover,
-            WhatWorked = request.WhatWorked,
-            WhatToRepeat = request.WhatToRepeat,
-            OneChangeNext = request.OneChangeNext,
+            WhatWorked = Text(request.WhatWorked),
+            WhatToRepeat = Text(request.WhatToRepeat),
+            OneChangeNext = Text(request.OneChangeNext),
             CreatedAt = now
         };
 
@@ -61,6 +61,9 @@ public sealed class ReflectionsController : ControllerBase
 
         return Ok(ToResponse(reflection));
     }
+
+    /// <summary>Trimmed, with blank stored as nothing rather than as spaces.</summary>
+    private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     // GET /rounds/{roundId}/reflections
     [HttpGet("/rounds/{roundId:guid}/reflections", Name = "listReflections")]

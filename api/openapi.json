@@ -2330,14 +2330,17 @@
             "nullable": true
           },
           "whatWorked": {
+            "maxLength": 1000,
             "type": "string",
             "nullable": true
           },
           "whatToRepeat": {
+            "maxLength": 1000,
             "type": "string",
             "nullable": true
           },
           "oneChangeNext": {
+            "maxLength": 1000,
             "type": "string",
             "nullable": true
           }
