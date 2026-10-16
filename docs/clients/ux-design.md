@@ -76,7 +76,7 @@ Empty state, before any rounds: an explanation and a "Log your first round" butt
 | Round list | Newest first, paged on scroll: date, course, strokes, fitness score | `GET /me/rounds` |
 | Log round | Date, 9 or 18 holes, course, tee, strokes, notes, plus stats by tracking mode: **Minimal** strokes only; **Balanced** adds putts and penalties; **Detailed** also adds fairways, greens in regulation, three-putts and blow-up holes. Validated as you type, with the same rules as the API | `POST /me/rounds` (scores it) |
 | Round detail | Fitness score with its four pillars, each expandable to its explanation; micro-wins; next lever; the round's stats; reflection | `GET /rounds/{id}`, `/fitness-score`, `/micro-wins`, `/reflections` |
-| Edit round | As Log round, prefilled; delete with confirmation | **new** `PUT` / `DELETE /rounds/{id}` |
+| Edit round | As Log round, prefilled; delete with confirmation | `PUT` / `DELETE /rounds/{id}` |
 | Add reflection | Focus and mood (1–5), frustration spill-over, what worked, what to repeat, one change for next time | `POST /rounds/{id}/reflections` |
 
 After a round is logged, the app goes straight to its detail screen and shows the new

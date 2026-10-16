@@ -160,6 +160,29 @@ needs:
 | `GET /client-config` | Minimum supported app versions |
 | Review per-IP rate limits | Mobile carriers put many users behind one IP (carrier-grade NAT); 10 auth requests per minute per IP may block real users |
 
+## When scores are computed
+
+A round's fitness score reads two windows of the user's other rounds: the **scoring
+baseline**, the 5 rounds played before it (`Progress:BaselineWindowRounds`), and
+**Habits**, the rounds and practice sessions in the 28 days up to it. The **current
+baseline** (`GET /me/baseline`) is the user's 5 most recent rounds.
+
+| Change | Rescored, in the same save as the change |
+|---|---|
+| Log a round (`POST /me/rounds`, #80) | The round, its micro-wins and the current baseline |
+| Edit a round (`PUT /rounds/{id}`, #81) | The round and its micro-wins; every round whose windows held it on its old or new date; the current baseline |
+| Delete a round (`DELETE /rounds/{id}`, #81) | Every round whose windows held it; the current baseline, removed if no rounds are left |
+
+"Whose windows held it" means, for a round on day *d*: the rounds played from *d* to
+*d* + 27 days, and the first 5 rounds after *d* (with any tied on the day of the fifth).
+Any later round has 5 rounds newer than *d* in its scoring window, so its score can't
+change, and an edit to an old round rescores a handful of rounds rather than all since.
+Tests check the result equals scoring every round from scratch.
+
+Micro-wins are a snapshot of the moment they were generated, so only the edited round's
+are regenerated. `POST /rounds/{id}/compute` and `/micro-wins/generate` still recompute one
+round on request.
+
 ## Authentication
 
 The API issues a short-lived **access token** (JWT, 15 minutes) and a long-lived

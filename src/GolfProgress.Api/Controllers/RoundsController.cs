@@ -56,55 +56,19 @@ public sealed class RoundsController : ControllerBase
         if (!IsoDate.TryParse(request.PlayedAt, out var playedAt))
             return this.FieldError(nameof(request.PlayedAt), "PlayedAt must be an ISO date, yyyy-MM-dd.");
 
-        var source = Enum.TryParse<RoundSource>(request.Source, ignoreCase: true, out var s)
-            ? s
-            : RoundSource.Manual;
-
         var now = DateTimeOffset.UtcNow;
 
         var round = new Round
         {
             RoundId = Guid.NewGuid(),
             UserId = userId,
-            PlayedAt = playedAt,
-            Holes = request.Holes,
-            CourseName = request.CourseName,
-            TeeName = request.TeeName,
-            TotalStrokes = request.TotalStrokes,
-            TotalPutts = request.TotalPutts,
-            Penalties = request.Penalties,
-            FairwaysHit = request.FairwaysHit,
-            Gir = request.Gir,
-            ThreePutts = request.ThreePutts,
-            BlowUpHoles = request.BlowUpHoles,
-            Source = source,
-            Notes = request.Notes,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
-
-        // Event log (RoundLogged) — core to event-based model
-        var evt = new EventLog
-        {
-            EventLogId = Guid.NewGuid(),
-            UserId = userId,
-            EventType = "RoundLogged",
-            RelatedId = round.RoundId,
-            PayloadJson = JsonDocument.Parse(
-                JsonSerializer.Serialize(new
-                {
-                    roundId = round.RoundId,
-                    userId = round.UserId,
-                    playedAt = round.PlayedAt.ToString("yyyy-MM-dd"),
-                    holes = round.Holes,
-                    totalStrokes = round.TotalStrokes
-                })
-            ),
             CreatedAt = now
         };
+        Apply(request, playedAt, round, now);
 
         _db.Rounds.Add(round);
-        _db.Events.Add(evt);
+        // Event log (RoundLogged) — core to event-based model
+        _db.Events.Add(RoundEvent("RoundLogged", round, now));
 
         var (baseline, _) = await _progress.StageForRoundAsync(round, _options.BaselineWindowRounds, ct);
         await _microWins.StageForRoundAsync(round, baseline, ct);
@@ -129,6 +93,72 @@ public sealed class RoundsController : ControllerBase
         if (round is null) return NotFound();
 
         return Ok(ToResponse(round));
+    }
+
+    // PUT /rounds/{id}
+    //
+    // Replaces the round's details (#81), validated as when logging one. Its score,
+    // its micro-wins and the current baseline are recomputed, and so are the scores of
+    // the other rounds it was or now is an input to: see
+    // ProgressComputationService.RoundsAffectedBy. All of it is one save.
+    [HttpPut("/rounds/{id:guid}", Name = "updateRound")]
+    [ProducesResponseType<RoundResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RoundResponse>> Update(Guid id, [FromBody] CreateRoundRequest request, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+
+        var round = await _db.FindOwnedRoundAsync(id, userId, ct);
+        if (round is null) return NotFound();
+
+        if (!IsoDate.TryParse(request.PlayedAt, out var playedAt))
+            return this.FieldError(nameof(request.PlayedAt), "PlayedAt must be an ISO date, yyyy-MM-dd.");
+
+        var now = DateTimeOffset.UtcNow;
+        var playedBefore = round.PlayedAt;
+
+        Apply(request, playedAt, round, now);
+        _db.Events.Add(RoundEvent("RoundUpdated", round, now));
+
+        var baseline = await _progress.StageAfterRoundChangeAsync(
+            userId, round.RoundId, round, new[] { playedBefore, round.PlayedAt }, _options.BaselineWindowRounds, ct);
+        await _microWins.StageForRoundAsync(round, baseline, ct);
+
+        await _db.SaveChangesAsync(ct);
+
+        return Ok(ToResponse(round));
+    }
+
+    // DELETE /rounds/{id}
+    //
+    // Deletes the round with its fitness score, micro-wins and reflections (#81), then
+    // rescores the rounds it was an input to and the current baseline, in one save.
+    [HttpDelete("/rounds/{id:guid}", Name = "deleteRound")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+
+        var round = await _db.FindOwnedRoundAsync(id, userId, ct);
+        if (round is null) return NotFound();
+
+        // SQL Server cascades these from the round. Removing them explicitly as well
+        // keeps the change tracker, and providers without the cascade, in step.
+        _db.FitnessScores.RemoveRange(await _db.FitnessScores.Where(x => x.RoundId == id).ToListAsync(ct));
+        _db.MicroWins.RemoveRange(await _db.MicroWins.Where(x => x.RoundId == id).ToListAsync(ct));
+        _db.Reflections.RemoveRange(await _db.Reflections.Where(x => x.RoundId == id).ToListAsync(ct));
+        _db.Rounds.Remove(round);
+
+        _db.Events.Add(RoundEvent("RoundDeleted", round, DateTimeOffset.UtcNow));
+
+        await _progress.StageAfterRoundChangeAsync(
+            userId, round.RoundId, changed: null, new[] { round.PlayedAt }, _options.BaselineWindowRounds, ct);
+
+        await _db.SaveChangesAsync(ct);
+
+        return NoContent();
     }
 
     /// <summary>Response header carrying the total number of the caller's rounds.</summary>
@@ -167,6 +197,46 @@ public sealed class RoundsController : ControllerBase
 
         return Ok(rounds);
     }
+
+    /// <summary>Copies a validated create or update request onto the round.</summary>
+    private static void Apply(CreateRoundRequest request, DateOnly playedAt, Round round, DateTimeOffset now)
+    {
+        round.PlayedAt = playedAt;
+        round.Holes = request.Holes;
+        round.CourseName = request.CourseName;
+        round.TeeName = request.TeeName;
+        round.TotalStrokes = request.TotalStrokes;
+        round.TotalPutts = request.TotalPutts;
+        round.Penalties = request.Penalties;
+        round.FairwaysHit = request.FairwaysHit;
+        round.Gir = request.Gir;
+        round.ThreePutts = request.ThreePutts;
+        round.BlowUpHoles = request.BlowUpHoles;
+        round.Source = Enum.TryParse<RoundSource>(request.Source, ignoreCase: true, out var source)
+            ? source
+            : RoundSource.Manual;
+        round.Notes = request.Notes;
+        round.UpdatedAt = now;
+    }
+
+    private static EventLog RoundEvent(string eventType, Round round, DateTimeOffset now) => new()
+    {
+        EventLogId = Guid.NewGuid(),
+        UserId = round.UserId,
+        EventType = eventType,
+        RelatedId = round.RoundId,
+        PayloadJson = JsonDocument.Parse(
+            JsonSerializer.Serialize(new
+            {
+                roundId = round.RoundId,
+                userId = round.UserId,
+                playedAt = round.PlayedAt.ToString("yyyy-MM-dd"),
+                holes = round.Holes,
+                totalStrokes = round.TotalStrokes
+            })
+        ),
+        CreatedAt = now
+    };
 
     private static RoundResponse ToResponse(Round r) => new()
     {
