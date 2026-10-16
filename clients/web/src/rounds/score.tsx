@@ -1,4 +1,4 @@
-import { FormattedDate, FormattedMessage, useIntl } from "react-intl";
+import { FormattedDate, FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import type { Schemas } from "../api";
 import { messages } from "../i18n/messages";
 import "./rounds.css";
@@ -79,16 +79,20 @@ export function PillarBars({ score }: { score: Schemas["FitnessScoreResponse"] }
  * A date the API sends as yyyy-MM-dd, e.g. "3 May 2026" in the user's locale. Read as UTC
  * and shown in UTC, so it never shifts a day in a time zone behind or ahead of UTC.
  */
-export function PlayedDate({ value, withYear = true }: { value: string; withYear?: boolean }) {
+export function PlayedDate({ value }: { value: string }) {
   return (
-    <FormattedDate
-      value={new Date(`${value}T00:00:00Z`)}
-      timeZone="UTC"
-      day="numeric"
-      month="short"
-      year={withYear ? "numeric" : undefined}
-    />
+    <FormattedDate value={new Date(`${value}T00:00:00Z`)} timeZone="UTC" day="numeric" month="short" year="numeric" />
   );
+}
+
+/** As <PlayedDate>, as a string for use inside a message. */
+export function formatPlayedDate(intl: IntlShape, value: string): string {
+  return intl.formatDate(new Date(`${value}T00:00:00Z`), {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 /** "Hilversum · 18 holes · 88 strokes", or without the course when there's none. */

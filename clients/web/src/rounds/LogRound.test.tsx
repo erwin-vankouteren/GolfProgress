@@ -1,22 +1,8 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApiClient } from "../api";
-import { App } from "../app/App";
-import { routes } from "../app/routes";
-import { Session } from "../session/session";
-
-type Handler = (request: Request) => Response | Promise<Response>;
+import { json, renderSignedIn, testUserId as userId, type Handler } from "../test/fakeApi";
 
 const roundId = "6a1f0c2e-1b2d-4c3e-8f9a-0b1c2d3e4f5a";
-const userId = "3f2b8c1e-5d4a-4b6f-9e2d-1a7c8b9d0e1f";
-
-const json = (status: number, body: unknown) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": status >= 400 ? "application/problem+json" : "application/json" },
-  });
 
 const me = (trackingMode: "Minimal" | "Balanced" | "Detailed", typical18Score: number | null = 92) => ({
   userId,
@@ -73,7 +59,6 @@ function renderLogRound({
   const posted: Record<string, unknown>[] = [];
   let lastRound: Record<string, unknown> = {};
   const all: Record<string, Handler> = {
-    "GET /client-config": () => json(200, { minimumVersions: { ios: "1.0.0", android: "1.0.0", web: "1.0.0" } }),
     "GET /me": () => json(200, me(trackingMode)),
     "POST /me/rounds": async (request) => {
       const body = (await request.json()) as Record<string, unknown>;
@@ -102,24 +87,8 @@ function renderLogRound({
     ...handlers,
   };
 
-  const api = createApiClient({
-    baseUrl: "https://api.example.test",
-    tokens: { accessToken: () => "token", refreshAccessToken: async () => null },
-    fetch: vi.fn(async (request: Request) => {
-      const handler = all[`${request.method} ${new URL(request.url).pathname}`];
-      return handler ? handler(request) : json(404, { status: 404 });
-    }),
-  });
-  const session = new Session({ accessToken: "token", userId });
-  session.attach(api);
-  const router = createMemoryRouter(routes, { initialEntries: ["/rounds/new"] });
-
-  render(
-    <App api={api} session={session} appVersion="1.0.0">
-      <RouterProvider router={router} />
-    </App>,
-  );
-  return { router, posted, user: userEvent.setup() };
+  const { router, user } = renderSignedIn("/rounds/new", all);
+  return { router, posted, user };
 }
 
 afterEach(() => vi.unstubAllGlobals());

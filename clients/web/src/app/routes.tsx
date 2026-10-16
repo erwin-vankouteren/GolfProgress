@@ -1,7 +1,8 @@
 import type { RouteObject } from "react-router";
 import { CreateAccountPage, SignInPage, WelcomePage } from "../auth/AuthPages";
 import { AppLayout } from "../layout/AppLayout";
-import { HomePage, NotFoundPage, PracticePage, ProgressPage, RoundsPage } from "../pages/SectionPage";
+import { DashboardPage } from "../dashboard/DashboardPage";
+import { NotFoundPage, PracticePage, ProgressPage, RoundsPage } from "../pages/SectionPage";
 import { ProfilePage } from "../pages/ProfilePage";
 import { LogRoundPage } from "../rounds/LogRound";
 import { RoundDetailPage } from "../rounds/RoundDetailPage";
@@ -26,7 +27,7 @@ export const routes: RouteObject[] = [
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <HomePage /> },
+          { index: true, element: <DashboardPage /> },
           { path: "rounds", element: <RoundsPage /> },
           { path: "rounds/new", element: <LogRoundPage /> },
           { path: "rounds/:roundId", element: <RoundDetailPage /> },
