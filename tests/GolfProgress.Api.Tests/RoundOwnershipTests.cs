@@ -54,7 +54,9 @@ public sealed class RoundOwnershipTests : IAsyncLifetime
     /// </summary>
     private static readonly string[] ProbedSeparately =
     {
-        "POST /rounds/{roundId}/reflections" // PostReflection_ToAnotherUsersRound_Returns404AndWritesNothing
+        "POST /rounds/{roundId}/reflections", // PostReflection_ToAnotherUsersRound_Returns404AndWritesNothing
+        "PUT /rounds/{roundId}",              // PutRound_ToAnotherUsersRound_Returns404AndChangesNothing
+        "DELETE /rounds/{roundId}"            // DeleteRound_ToAnotherUsersRound_Returns404AndDeletesNothing
     };
 
     /// <summary>
@@ -167,6 +169,38 @@ public sealed class RoundOwnershipTests : IAsyncLifetime
         {
             Assert.Empty(db.Reflections.Where(r => r.RoundId == _bob.RoundId));
             Assert.Empty(db.Reflections.Where(r => r.UserId == _bob.UserId));
+        });
+    }
+
+    [Fact]
+    public async Task PutRound_ToAnotherUsersRound_Returns404AndChangesNothing()
+    {
+        var client = TestWorld.ClientFor(_factory, _alice.UserId);
+
+        var response = await client.PutAsJsonAsync(
+            $"/rounds/{_bob.RoundId}",
+            new { playedAt = "2026-05-01", holes = 18, totalStrokes = 60 });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        _factory.WithDb(db =>
+        {
+            Assert.Equal(90, db.Rounds.Single(r => r.RoundId == _bob.RoundId).TotalStrokes);
+            Assert.Empty(db.Events.Where(e => e.UserId == _bob.UserId));
+        });
+    }
+
+    [Fact]
+    public async Task DeleteRound_ToAnotherUsersRound_Returns404AndDeletesNothing()
+    {
+        var client = TestWorld.ClientFor(_factory, _alice.UserId);
+
+        var response = await client.DeleteAsync($"/rounds/{_bob.RoundId}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        _factory.WithDb(db =>
+        {
+            Assert.Single(db.Rounds.Where(r => r.RoundId == _bob.RoundId));
+            Assert.Empty(db.Events.Where(e => e.UserId == _bob.UserId));
         });
     }
 
