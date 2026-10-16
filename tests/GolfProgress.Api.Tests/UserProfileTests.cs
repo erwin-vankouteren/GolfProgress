@@ -73,15 +73,16 @@ public sealed class UserProfileTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GetMe_ForATokenWhoseUserNoLongerExists_Returns404()
+    public async Task GetMe_ForATokenWhoseUserNoLongerExists_Returns401()
     {
-        // A structurally valid token for a user that was never seeded. The route
-        // must not fall over, and must not leak anyone else's record.
+        // A structurally valid token for a user that doesn't exist, as after the account
+        // was deleted (#84). It must not reach the endpoint, and must not leak anyone
+        // else's record. 401 sends the app to refresh, which fails, so it signs out.
         var client = TestWorld.ClientFor(_factory, Guid.NewGuid());
 
         var response = await client.GetAsync("/me");
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     /// <summary>

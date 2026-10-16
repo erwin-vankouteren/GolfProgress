@@ -1,7 +1,12 @@
+using GolfProgress.Api.ErrorHandling;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace GolfProgress.Api.Tests;
 
@@ -22,22 +27,31 @@ public sealed class ExceptionHandlingTests : IDisposable
     public void Dispose() => _factory.Dispose();
 
     /// <summary>
-    /// A valid token for a user who does not exist. The dashboard used to catch this
-    /// locally; it is now the global handler's 404.
+    /// A service throws NotFoundException when its record disappears mid-request, e.g. a
+    /// round deleted between the ownership check and the service call. That can't be
+    /// staged over HTTP (a token for a missing user now stops at authentication, #84),
+    /// so this runs the handler the app registers, with the app's services.
     /// </summary>
     [Fact]
     public async Task NotFoundException_IsA404ProblemDetails()
     {
-        var client = TestWorld.ClientFor(_factory, Guid.NewGuid());
+        using var scope = _factory.Services.CreateScope();
+        var handler = scope.ServiceProvider.GetServices<IExceptionHandler>()
+            .OfType<ProblemDetailsExceptionHandler>().Single();
+        var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        context.Response.Body = new MemoryStream();
 
-        var response = await client.GetAsync("/me/dashboard");
+        var handled = await handler.TryHandleAsync(context, new NotFoundException("Round not found."), default);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.True(handled);
+        Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
+        Assert.Equal("application/problem+json", context.Response.ContentType);
 
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        context.Response.Body.Position = 0;
+        var problem = await JsonSerializer.DeserializeAsync<ProblemDetails>(
+            context.Response.Body, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.Equal(404, problem!.Status);
-        Assert.Equal("User not found.", problem.Detail);
+        Assert.Equal("Round not found.", problem.Detail);
         Assert.True(problem.Extensions.ContainsKey("traceId"));
     }
 

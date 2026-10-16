@@ -1,9 +1,13 @@
 using GolfProgress.Api.Contracts.Users;
+using GolfProgress.Api.ErrorHandling;
+using GolfProgress.Api.OpenApi;
 using GolfProgress.Api.Security;
+using GolfProgress.Api.Services;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +18,24 @@ namespace GolfProgress.Api.Controllers;
 public sealed class UsersController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
+    private readonly IPasswordHasher<User> _hasher;
+    private readonly LoginThrottle _passwordThrottle;
+    private readonly AccountDeletionService _accountDeletion;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(GolfProgressDbContext db) => _db = db;
+    public UsersController(
+        GolfProgressDbContext db,
+        IPasswordHasher<User> hasher,
+        LoginThrottle passwordThrottle,
+        AccountDeletionService accountDeletion,
+        ILogger<UsersController> logger)
+    {
+        _db = db;
+        _hasher = hasher;
+        _passwordThrottle = passwordThrottle;
+        _accountDeletion = accountDeletion;
+        _logger = logger;
+    }
 
     // GET /me
     //
@@ -102,6 +122,48 @@ public sealed class UsersController : ControllerBase
         }
 
         return Ok(ToResponse(user));
+    }
+
+    // DELETE /me
+    //
+    // Deletes the account and everything in it (#84), confirmed with the password. The
+    // App Store and Google Play require it. Every device is signed out: the refresh
+    // tokens are deleted, and ActiveUserCheck rejects the access tokens still in use.
+    // A wrong password is a 400 rather than a 401, so the app doesn't sign the user out.
+    // The web app then calls POST /auth/logout, which clears its refresh cookie.
+    [HttpDelete("/me", Name = "deleteMe")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
+    [ResponseHeader(StatusCodes.Status429TooManyRequests, "Retry-After", "integer", "Seconds to wait before retrying.")]
+    public async Task<IActionResult> DeleteCurrent([FromBody] DeleteAccountRequest request, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+
+        if (!_passwordThrottle.TryAcquireForUser(userId, out var retryAfter))
+        {
+            if (retryAfter is { } wait)
+                Response.Headers.RetryAfter = ((int)Math.Ceiling(wait.TotalSeconds)).ToString();
+
+            return StatusCode(StatusCodes.Status429TooManyRequests);
+        }
+
+        // ActiveUserCheck has already confirmed the user exists.
+        var user = await _db.Users.AsNoTracking().FirstAsync(u => u.UserId == userId, ct);
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash) ||
+            _hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
+        {
+            return this.FieldError(nameof(request.Password), "The password is incorrect.");
+        }
+
+        await _accountDeletion.DeleteAsync(userId, ct);
+
+        // The only record left that the account existed. The id is a random GUID,
+        // with nothing personal left to link it to.
+        _logger.LogInformation("Account {UserId} deleted at the user's request.", userId);
+
+        return NoContent();
     }
 
     private static bool Update<T>(T current, T value, Action<T> set)

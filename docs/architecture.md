@@ -276,6 +276,38 @@ localisation system from the start, English first.
   privacy labels, Google Play data safety form). The app stores golf statistics and an
   email address, has no ads, and does no tracking.
 
+### Deleting an account
+
+Users delete their account in the app (Profile → Delete account), as both stores require.
+`DELETE /me` (#84) asks for the password and then, in one transaction, deletes:
+
+| Data | Table |
+|---|---|
+| The account: email, display name, password hash, preferences, handicap | `Users` |
+| Rounds, and each round's fitness score and micro-wins | `Rounds`, `FitnessScores`, `MicroWins` |
+| Reflections | `Reflections` |
+| Practice sessions | `PracticeSessions` |
+| Baseline and monthly reviews | `UserBaselines`, `MonthlyReviews` |
+| The activity log (rounds logged, scores computed, and so on) | `Events` |
+| Sign-in sessions on every device | `RefreshTokens` |
+
+Nothing is kept: no row in any table references the user afterwards, which a SQL Server
+test checks for every table with a `UserId` column. The API's log keeps one line,
+"Account {id} deleted", whose id is a random GUID with nothing left to link it to.
+Database backups follow the hosting's retention and are not edited.
+
+**Signing out.** Every device is signed out at once:
+- the refresh tokens are deleted, so no device can refresh;
+- access tokens still within their 15 minutes are refused with `401`, because every
+  request checks that its user still exists.
+
+The app then clears its session. The web app also calls `POST /auth/logout`, which clears
+its refresh cookie; `DELETE /me` can't, because only `/auth/*` requests carry the cookie.
+
+**Mistakes.** A wrong password is a `400`, so the app stays signed in. Password attempts
+are limited per user like login (5 per 5 minutes), so a stolen access token can't be used
+to guess the password.
+
 ## Delivery phases
 
 The GitHub milestones follow these phases:

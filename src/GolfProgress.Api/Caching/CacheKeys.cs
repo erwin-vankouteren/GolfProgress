@@ -6,6 +6,10 @@
 /// </summary>
 public static class CacheKeys
 {
+    /// <summary>Whether the user still exists, checked on every authenticated request (#84).</summary>
+    public static string UserExists(Guid userId)
+        => $"user-exists:{userId}";
+
     public static string Dashboard(Guid userId)
         => $"dashboard:{userId}";
 
