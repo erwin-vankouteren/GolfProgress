@@ -31,7 +31,6 @@ function SectionPage({
   );
 }
 
-export const PracticePage = () => <SectionPage title={messages.practice} empty={messages.practiceEmpty} />;
 export const ProgressPage = () => <SectionPage title={messages.progress} empty={messages.progressEmpty} />;
 
 export function NotFoundPage() {

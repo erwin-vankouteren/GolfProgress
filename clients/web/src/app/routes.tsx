@@ -2,7 +2,8 @@ import type { RouteObject } from "react-router";
 import { CreateAccountPage, SignInPage, WelcomePage } from "../auth/AuthPages";
 import { AppLayout } from "../layout/AppLayout";
 import { DashboardPage } from "../dashboard/DashboardPage";
-import { NotFoundPage, PracticePage, ProgressPage } from "../pages/SectionPage";
+import { NotFoundPage, ProgressPage } from "../pages/SectionPage";
+import { LogPracticePage, PracticeDetailPage, PracticePage } from "../practice/PracticePages";
 import { ProfilePage } from "../pages/ProfilePage";
 import { LogRoundPage } from "../rounds/LogRound";
 import { EditRoundPage, RoundDetailPage } from "../rounds/RoundDetailPage";
@@ -39,6 +40,8 @@ export const routes: RouteObject[] = [
             ],
           },
           { path: "practice", element: <PracticePage /> },
+          { path: "practice/new", element: <LogPracticePage /> },
+          { path: "practice/:sessionId", element: <PracticeDetailPage /> },
           { path: "progress", element: <ProgressPage /> },
           { path: "profile", element: <ProfilePage /> },
           { path: "*", element: <NotFoundPage /> },

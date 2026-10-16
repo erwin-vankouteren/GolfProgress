@@ -1,0 +1,94 @@
+/* Practice (#103). Shares the round list and form styles; tokens only. */
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.section-header h1 {
+  margin: 0;
+}
+
+.practice .hint {
+  margin-bottom: var(--space-md);
+}
+
+.practice-row {
+  grid-template-columns: 1fr auto;
+}
+
+.field select {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-md);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.field-with-suffix {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.duration-input {
+  width: 6rem;
+}
+
+.tag-entry {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.tag-entry input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+  padding: var(--space-xxs) var(--space-xxs) var(--space-xxs) var(--space-md);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-label);
+}
+
+/* A chip shown read-only, in the session detail, has no remove button to pad for. */
+dd .tag-chip {
+  padding-right: var(--space-md);
+}
+
+.tag-remove {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  margin: calc(-1 * var(--space-sm)) 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  color: inherit;
+  cursor: pointer;
+}
+
+.practice-detail .card {
+  margin-top: var(--space-md);
+}
