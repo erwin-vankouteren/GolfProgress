@@ -214,6 +214,36 @@ Every client follows the same flow: send the access token as `Authorization: Bea
 a `401`, refresh once, retry the request, and go to the login screen if refreshing fails.
 Concurrent requests share one refresh rather than each starting their own.
 
+### Rate limits
+
+`/auth/*` is anonymous, so it's throttled to make guessing passwords slow (#6). Mobile
+carriers put many users behind one public IP address (carrier-grade NAT), and so does a
+golf club's Wi-Fi, so per-IP limits are sized for many real users per address (#85):
+
+| Limit | Applies to | Default | Why |
+|---|---|---|---|
+| Per email | `login` | 5 per 5 minutes | Protects each account, from whatever IPs the guesses come |
+| Per user | Password-confirmed actions, such as `DELETE /me` | 5 per 5 minutes | A stolen access token can't be used to guess the password |
+| Per IP, sign-in | `login`, `register` | A burst of 30, refilling at 10 a minute | Slows guessing across many accounts from one address, while a group signing up together gets through |
+| Per IP, session | `refresh`, `logout` | 300 a minute | Every signed-in device refreshes every 15 minutes: an IP shared by 1,000 active users makes about 67 refreshes a minute. Refresh tokens are random 512-bit values, so there's nothing to guess |
+
+Choices considered for #85, and why they weren't taken:
+- **One shared per-IP limit, raised:** refreshes from many devices would still use up the
+  allowance for signing in, and a limit high enough for them would let one address guess
+  freely.
+- **Counting only failed attempts:** the limiter admits a request before its outcome is
+  known, so this would need its own bookkeeping in each action. The per-email limit
+  already counts every attempt on an account.
+
+**Behind a proxy**, the limits key on the client's address, which App Service passes in
+`X-Forwarded-For`. `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` (see
+[deployment](deployment.md)) applies it, taking the **last** address in the header: the
+one App Service appends. Addresses a client puts in the header itself come before it and
+are ignored, so a client can't claim a fresh allowance; a test checks this. If another
+proxy (Front Door, Application Gateway) is added in front of App Service, the last
+address becomes that proxy's, and the forwarded-headers setup must be configured to
+trust it before these limits work per client again.
+
 ## Client architecture
 
 All three clients use the same layering, so a feature looks alike on every platform:
