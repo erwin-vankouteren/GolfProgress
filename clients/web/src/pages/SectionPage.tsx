@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { FormattedMessage, type MessageDescriptor } from "react-intl";
 import { Link } from "react-router";
 import { messages } from "../i18n/messages";
+import { LogRoundLink } from "../rounds/LogRound";
 
 /**
  * A section's page in the app shell (#75): its heading and the empty state from the
@@ -32,9 +33,9 @@ function SectionPage({
 }
 
 const logRoundAction = (
-  <Link to="/rounds/new" className="button button--primary">
+  <LogRoundLink className="button button--primary">
     <FormattedMessage {...messages.logRound} />
-  </Link>
+  </LogRoundLink>
 );
 
 export const HomePage = () => <SectionPage title={messages.home} empty={messages.homeEmpty} action={logRoundAction} />;
@@ -43,7 +44,6 @@ export const RoundsPage = () => (
 );
 export const PracticePage = () => <SectionPage title={messages.practice} empty={messages.practiceEmpty} />;
 export const ProgressPage = () => <SectionPage title={messages.progress} empty={messages.progressEmpty} />;
-export const LogRoundPage = () => <SectionPage title={messages.logRound} empty={messages.logRoundIntro} />;
 
 export function NotFoundPage() {
   return (

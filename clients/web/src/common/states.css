@@ -1,0 +1,42 @@
+/* Shared screen states, from the design tokens only. */
+
+.offline-banner {
+  margin: 0;
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-surface-variant);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-label);
+}
+
+.load-error {
+  display: grid;
+  gap: var(--space-md);
+  justify-items: start;
+  padding: var(--space-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.load-error p {
+  margin: 0;
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.skeleton-block {
+  min-height: 7rem;
+  background: var(--color-surface-variant);
+  border-radius: var(--radius-lg);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.6;
+  }
+}

@@ -23,7 +23,6 @@ const plainMessages = defineMessages({
   },
   progressEmpty: { id: "progress.empty", defaultMessage: "Log a few rounds to see your trends." },
   profileIntro: { id: "profile.intro", defaultMessage: "Your profile and preferences will appear here." },
-  logRoundIntro: { id: "logRound.intro", defaultMessage: "The round form comes next." },
 
   notFoundTitle: { id: "notFound.title", defaultMessage: "Page not found" },
   notFoundBody: { id: "notFound.body", defaultMessage: "This page doesn't exist." },
@@ -62,6 +61,60 @@ const plainMessages = defineMessages({
     id: "auth.offline",
     defaultMessage: "Couldn't reach GolfProgress. Check your connection and try again.",
   },
+
+  // Shared states (docs/clients/ux-design.md → "States every screen handles")
+  offline: {
+    id: "common.offline",
+    defaultMessage: "You're offline. You can look around, but changes need a connection.",
+  },
+  loading: { id: "common.loading", defaultMessage: "Loading…" },
+  tryAgain: { id: "common.tryAgain", defaultMessage: "Try again" },
+  close: { id: "common.close", defaultMessage: "Close" },
+  save: { id: "common.save", defaultMessage: "Save" },
+  saving: { id: "common.saving", defaultMessage: "Saving…" },
+
+  // Log round (#92)
+  date: { id: "round.date", defaultMessage: "Date" },
+  holes: { id: "round.holes", defaultMessage: "Holes" },
+  course: { id: "round.course", defaultMessage: "Course" },
+  tee: { id: "round.tee", defaultMessage: "Tee" },
+  strokes: { id: "round.strokes", defaultMessage: "Strokes" },
+  putts: { id: "round.putts", defaultMessage: "Putts" },
+  penalties: { id: "round.penalties", defaultMessage: "Penalties" },
+  fairways: { id: "round.fairways", defaultMessage: "Fairways hit" },
+  greens: { id: "round.greens", defaultMessage: "Greens in regulation" },
+  threePutts: { id: "round.threePutts", defaultMessage: "Three-putts" },
+  blowUpHoles: { id: "round.blowUpHoles", defaultMessage: "Blow-up holes" },
+  notes: { id: "round.notes", defaultMessage: "Notes" },
+  moreStatsHint: { id: "logRound.moreStats", defaultMessage: "More stats? Change your tracking mode in Profile." },
+  offlineCantSave: { id: "logRound.offline", defaultMessage: "You're offline. Connect to save this round." },
+  preferencesLoadError: { id: "logRound.loadError", defaultMessage: "Couldn't load your preferences." },
+  dateRequired: { id: "logRound.error.date", defaultMessage: "Choose the date you played." },
+  strokesRequired: { id: "logRound.error.strokesRequired", defaultMessage: "Enter your strokes." },
+  wholeNumber: { id: "logRound.error.wholeNumber", defaultMessage: "Enter a whole number." },
+  strokesPositive: { id: "logRound.error.strokesPositive", defaultMessage: "Strokes must be more than 0." },
+  notNegative: { id: "logRound.error.notNegative", defaultMessage: "Can't be less than 0." },
+  roundSaveFailed: { id: "logRound.error.save", defaultMessage: "Couldn't save the round. Please try again." },
+
+  // Round detail
+  backToRounds: { id: "round.backToRounds", defaultMessage: "Back to rounds" },
+  roundLoadError: { id: "round.loadError", defaultMessage: "Couldn't load this round." },
+  roundNotFound: { id: "round.notFound", defaultMessage: "This round doesn't exist, or was deleted." },
+  fitnessScore: { id: "score.title", defaultMessage: "Fitness score" },
+  notScoredYet: { id: "score.notYet", defaultMessage: "This round hasn't been scored yet." },
+  execution: { id: "pillar.execution", defaultMessage: "Execution" },
+  damageControl: { id: "pillar.damageControl", defaultMessage: "Damage control" },
+  consistency: { id: "pillar.consistency", defaultMessage: "Consistency" },
+  habits: { id: "pillar.habits", defaultMessage: "Habits" },
+  microWins: { id: "score.microWins", defaultMessage: "Micro-wins" },
+  confidenceLow: { id: "confidence.low", defaultMessage: "Low" },
+  confidenceMedium: { id: "confidence.medium", defaultMessage: "Medium" },
+  confidenceHigh: { id: "confidence.high", defaultMessage: "High" },
+  confidencePrefix: { id: "confidence.prefix", defaultMessage: "Confidence:" },
+  lowConfidenceExplanation: {
+    id: "confidence.lowExplanation",
+    defaultMessage: "Based on only a few rounds so far: early days.",
+  },
 });
 
 /** Any message that takes no values, for components that are handed one. */
@@ -76,6 +129,31 @@ const messagesWithValues = {
   tooManyAttempts: defineMessage<{ seconds: number }>({
     id: "auth.tooManyAttempts",
     defaultMessage: "Too many attempts. Try again in {seconds, plural, one {# second} other {# seconds}}.",
+  }),
+
+  holesOption: defineMessage<{ count: number }>({ id: "round.holesOption", defaultMessage: "{count} holes" }),
+  atMostHoles: defineMessage<{ max: number }>({
+    id: "logRound.error.atMostHoles",
+    defaultMessage: "Can't be more than {max}, the number of holes.",
+  }),
+  atMostStrokes: defineMessage<{ max: number }>({
+    id: "logRound.error.atMostStrokes",
+    defaultMessage: "Can't be more than your strokes ({max}).",
+  }),
+  outOf: defineMessage<{ max: number }>({ id: "logRound.outOf", defaultMessage: "out of {max}" }),
+  increase: defineMessage<{ field: string }>({ id: "logRound.increase", defaultMessage: "Increase {field}" }),
+  decrease: defineMessage<{ field: string }>({ id: "logRound.decrease", defaultMessage: "Decrease {field}" }),
+  pillarScore: defineMessage<{ score: number; max: number }>({
+    id: "pillar.score",
+    defaultMessage: "{score} / {max}",
+  }),
+  roundSummary: defineMessage<{ holes: number; strokes: number }>({
+    id: "round.summary",
+    defaultMessage: "{holes} holes · {strokes, plural, one {# stroke} other {# strokes}}",
+  }),
+  roundSummaryWithCourse: defineMessage<{ course: string; holes: number; strokes: number }>({
+    id: "round.summaryWithCourse",
+    defaultMessage: "{course} · {holes} holes · {strokes, plural, one {# stroke} other {# strokes}}",
   }),
 };
 
