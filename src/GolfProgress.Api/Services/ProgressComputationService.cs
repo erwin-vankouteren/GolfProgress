@@ -3,6 +3,7 @@ using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace GolfProgress.Api.Services;
@@ -27,6 +28,30 @@ public sealed class ProgressComputationService
     {
         var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
             ?? throw new NotFoundException($"Round {roundId} not found.");
+
+        var result = await StageForRoundAsync(round, windowN, ct);
+
+        // The only save in the compute path. The baseline, the fitness score and
+        // both events are written by one SaveChangesAsync, which EF runs as a single
+        // transaction, so a failure leaves none of them written rather than some (#8).
+        // A single save also stays compatible with the SQL Server retry strategy,
+        // which would otherwise require an explicit transaction to run inside
+        // IExecutionStrategy.ExecuteAsync.
+        await _db.SaveChangesAsync(ct);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Stages the round's fitness score, the user's current baseline and their events,
+    /// without saving, so a caller can write them in the same save as other changes.
+    /// The round may be one the context is still adding: logging a round scores it in
+    /// the same save that creates it (#80).
+    /// </summary>
+    public async Task<(UserBaseline baseline, FitnessScore fitness)> StageForRoundAsync(
+        Round round, short windowN, CancellationToken ct)
+    {
+        var roundId = round.RoundId;
 
         // Two different baselines, for two different jobs.
         //
@@ -70,14 +95,6 @@ public sealed class ProgressComputationService
             CreatedAt = now
         });
 
-        // The only save in the compute path. The baseline, the fitness score and
-        // both events are written by one SaveChangesAsync, which EF runs as a single
-        // transaction, so a failure leaves none of them written rather than some (#8).
-        // A single save also stays compatible with the SQL Server retry strategy,
-        // which would otherwise require an explicit transaction to run inside
-        // IExecutionStrategy.ExecuteAsync.
-        await _db.SaveChangesAsync(ct);
-
         return (baseline, fitness);
     }
 
@@ -114,19 +131,23 @@ public sealed class ProgressComputationService
     /// When <paramref name="before"/> is supplied, only rounds played before it are
     /// considered -- same-day rounds count as prior, matching the original window.
     /// </summary>
-    private Task<List<Round>> RecentRoundsAsync(
+    private async Task<List<Round>> RecentRoundsAsync(
         Guid userId, short windowN, Round? before, CancellationToken ct)
     {
         var query = _db.Rounds.AsNoTracking().Where(r => r.UserId == userId);
+        var pending = PendingRounds(userId);
 
         if (before is not null)
         {
-            query = query.Where(r =>
+            Expression<Func<Round, bool>> playedBefore = r =>
                 r.PlayedAt < before.PlayedAt ||
-                (r.PlayedAt == before.PlayedAt && r.RoundId != before.RoundId));
+                (r.PlayedAt == before.PlayedAt && r.RoundId != before.RoundId);
+
+            query = query.Where(playedBefore);
+            pending = pending.Where(playedBefore.Compile());
         }
 
-        return query
+        var saved = await query
             .OrderByDescending(r => r.PlayedAt)
             // PlayedAt is a date, so rounds on the same day tie. Without a
             // tiebreaker the window was whatever order SQL Server happened to
@@ -134,7 +155,24 @@ public sealed class ProgressComputationService
             .ThenByDescending(r => r.CreatedAt)
             .Take(windowN)
             .ToListAsync(ct);
+
+        // A round being logged isn't in the database yet, but belongs in the window.
+        return saved.Concat(pending)
+            .OrderByDescending(r => r.PlayedAt)
+            .ThenByDescending(r => r.CreatedAt)
+            .Take(windowN)
+            .ToList();
     }
+
+    /// <summary>
+    /// The user's rounds that the context is adding but hasn't saved, which queries
+    /// against the database can't see: the round being logged (#80).
+    /// </summary>
+    private IEnumerable<Round> PendingRounds(Guid userId) =>
+        _db.ChangeTracker.Entries<Round>()
+            .Where(e => e.State == EntityState.Added && e.Entity.UserId == userId)
+            .Select(e => e.Entity)
+            .ToList();
 
     /// <summary>
     /// Computes baseline statistics from a set of rounds. Pure: nothing is read
@@ -167,7 +205,7 @@ public sealed class ProgressComputationService
 
     /// <summary>
     /// Stages the user's single current baseline row. Nothing is saved here; see
-    /// <see cref="ComputeForRoundAsync"/>.
+    /// <see cref="StageForRoundAsync"/>.
     /// </summary>
     private async Task<UserBaseline> UpsertCurrentBaselineAsync(
         UserBaseline computed, CancellationToken ct)
@@ -201,7 +239,7 @@ public sealed class ProgressComputationService
 
     /// <summary>
     /// Stages the round's fitness score. Nothing is saved here; see
-    /// <see cref="ComputeForRoundAsync"/>.
+    /// <see cref="StageForRoundAsync"/>.
     /// </summary>
     private async Task<FitnessScore> UpsertFitnessScoreAsync(Round round, UserBaseline baseline, ConfidenceLevel confidence, CancellationToken ct)
     {
@@ -360,7 +398,10 @@ public sealed class ProgressComputationService
         var roundsInWindow = await _db.Rounds.CountAsync(r =>
             r.UserId == round.UserId &&
             r.PlayedAt >= windowStart &&
-            r.PlayedAt <= round.PlayedAt, ct);
+            r.PlayedAt <= round.PlayedAt, ct)
+            + PendingRounds(round.UserId).Count(r =>
+                r.PlayedAt >= windowStart &&
+                r.PlayedAt <= round.PlayedAt);
 
         var practiceInWindow = await _db.PracticeSessions.CountAsync(s =>
             s.UserId == round.UserId &&

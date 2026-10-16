@@ -18,11 +18,27 @@ public sealed class MicroWinsService
         var round = await _db.Rounds.FirstOrDefaultAsync(r => r.RoundId == roundId && r.UserId == userId, ct)
             ?? throw new NotFoundException($"Round {roundId} not found.");
 
-        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == round.UserId, ct)
-            ?? throw new NotFoundException($"User {round.UserId} not found.");
-
         var baseline = await _db.UserBaselines.AsNoTracking()
             .FirstOrDefaultAsync(b => b.UserId == round.UserId, ct);
+
+        var wins = await StageForRoundAsync(round, baseline, ct);
+
+        await _db.SaveChangesAsync(ct);
+
+        return wins;
+    }
+
+    /// <summary>
+    /// Stages the round's micro-wins and their event, without saving, judged against
+    /// <paramref name="baseline"/>. Logging a round passes the baseline it has just
+    /// staged, so the round and its micro-wins are written in one save (#80).
+    /// </summary>
+    public async Task<List<MicroWin>> StageForRoundAsync(Round round, UserBaseline? baseline, CancellationToken ct)
+    {
+        var roundId = round.RoundId;
+
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == round.UserId, ct)
+            ?? throw new NotFoundException($"User {round.UserId} not found.");
 
         // Latest reflection for this round (optional)
         var reflection = await _db.Reflections.AsNoTracking()
@@ -65,8 +81,6 @@ public sealed class MicroWinsService
             ),
             CreatedAt = now
         });
-
-        await _db.SaveChangesAsync(ct);
 
         return wins;
     }

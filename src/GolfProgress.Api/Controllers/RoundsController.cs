@@ -1,14 +1,17 @@
-﻿using GolfProgress.Api.Contracts.Rounds;
+﻿using GolfProgress.Api.Configuration;
+using GolfProgress.Api.Contracts.Rounds;
 using GolfProgress.Api.Contracts;
 using GolfProgress.Api.OpenApi;
 using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Security;
+using GolfProgress.Api.Services;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace GolfProgress.Api.Controllers;
@@ -18,10 +21,29 @@ namespace GolfProgress.Api.Controllers;
 public sealed class RoundsController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
+    private readonly ProgressComputationService _progress;
+    private readonly MicroWinsService _microWins;
+    private readonly ProgressOptions _options;
 
-    public RoundsController(GolfProgressDbContext db) => _db = db;
+    public RoundsController(
+        GolfProgressDbContext db,
+        ProgressComputationService progress,
+        MicroWinsService microWins,
+        IOptions<ProgressOptions> options)
+    {
+        _db = db;
+        _progress = progress;
+        _microWins = microWins;
+        _options = options.Value;
+    }
 
     // POST /me/rounds
+    //
+    // Creates the round and scores it: the fitness score, the current baseline and
+    // the micro-wins are written in the same save as the round, so a logged round is
+    // never left unscored (#80). The next lever stays on demand: it isn't stored,
+    // and GET /me/dashboard and POST /rounds/{id}/next-lever compute it from the
+    // round and the current baseline when asked.
     [HttpPost("/me/rounds", Name = "createRound")]
     [ProducesResponseType<RoundResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -84,6 +106,11 @@ public sealed class RoundsController : ControllerBase
         _db.Rounds.Add(round);
         _db.Events.Add(evt);
 
+        var (baseline, _) = await _progress.StageForRoundAsync(round, _options.BaselineWindowRounds, ct);
+        await _microWins.StageForRoundAsync(round, baseline, ct);
+
+        // One save, so one transaction: the round, its score, the baseline, the
+        // micro-wins and their events are all written, or none are (see #8).
         await _db.SaveChangesAsync(ct);
 
         return CreatedAtAction(nameof(GetById), new { id = round.RoundId }, ToResponse(round));
