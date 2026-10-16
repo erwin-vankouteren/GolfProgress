@@ -69,6 +69,9 @@ public sealed class AuthController : ControllerBase
     {
         var email = request.Email.Trim().ToLowerInvariant();
 
+        if (PasswordPolicy.Check(request.Password, email) is { } passwordProblem)
+            return this.FieldError(nameof(request.Password), passwordProblem);
+
         var exists = await _db.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == email, ct);
         if (exists) return Problem(statusCode: StatusCodes.Status409Conflict, title: "Email already registered.");
 
@@ -205,7 +208,7 @@ public sealed class AuthController : ControllerBase
         return new AuthResponse
         {
             UserId = user.UserId,
-            Token = _jwt.CreateToken(user),
+            Token = _jwt.CreateToken(user, sessionId: stored.RefreshTokenId),
             RefreshToken = cookie ? null : raw,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_jwt.ExpiresMinutes)
         };

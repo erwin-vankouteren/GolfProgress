@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -122,6 +123,77 @@ public sealed class UsersController : ControllerBase
         }
 
         return Ok(ToResponse(user));
+    }
+
+    // POST /me/password
+    //
+    // Changes the password (#83). The current one must be given; a wrong one is a 400
+    // rather than a 401, so the app doesn't sign the user out. Attempts share the
+    // per-user limit with DELETE /me. Every other session is ended: their refresh tokens
+    // are revoked, so those devices sign out at their next refresh, while this device's
+    // session (the "sid" its access token carries) is kept.
+    [HttpPost("/me/password", Name = "changePassword")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
+    [ResponseHeader(StatusCodes.Status429TooManyRequests, "Retry-After", "integer", "Seconds to wait before retrying.")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+
+        if (!_passwordThrottle.TryAcquireForUser(userId, out var retryAfter))
+        {
+            if (retryAfter is { } wait)
+                Response.Headers.RetryAfter = ((int)Math.Ceiling(wait.TotalSeconds)).ToString();
+
+            return StatusCode(StatusCodes.Status429TooManyRequests);
+        }
+
+        // ActiveUserCheck has already confirmed the user exists.
+        var user = await _db.Users.FirstAsync(u => u.UserId == userId, ct);
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash) ||
+            _hasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword) == PasswordVerificationResult.Failed)
+        {
+            return this.FieldError(nameof(request.CurrentPassword), "The current password is incorrect.");
+        }
+
+        if (PasswordPolicy.Check(request.NewPassword, user.Email) is { } problem)
+            return this.FieldError(nameof(request.NewPassword), problem);
+
+        if (request.NewPassword == request.CurrentPassword)
+            return this.FieldError(nameof(request.NewPassword), "Choose a password different from the current one.");
+
+        var now = DateTimeOffset.UtcNow;
+        user.PasswordHash = _hasher.HashPassword(user, request.NewPassword);
+        user.UpdatedAt = now;
+
+        // A token issued before sessions were recorded has no sid: every session ends,
+        // this one included, and the app signs in again at its next refresh.
+        var currentSession = User.GetSessionId();
+        var otherSessions = await _db.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null && t.RefreshTokenId != currentSession)
+            .ToListAsync(ct);
+
+        foreach (var token in otherSessions)
+        {
+            token.RevokedAt = now;
+            token.ReasonRevoked = "PasswordChanged";
+        }
+
+        _db.Events.Add(new EventLog
+        {
+            EventLogId = Guid.NewGuid(),
+            UserId = userId,
+            EventType = "PasswordChanged",
+            PayloadJson = JsonDocument.Parse(JsonSerializer.Serialize(new { sessionsEnded = otherSessions.Count })),
+            CreatedAt = now
+        });
+
+        // One save: the new password and the ended sessions take effect together.
+        await _db.SaveChangesAsync(ct);
+
+        return NoContent();
     }
 
     // DELETE /me
