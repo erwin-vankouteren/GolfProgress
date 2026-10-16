@@ -64,6 +64,9 @@ export function useDashboard() {
   const api = useApi();
   return useQuery({
     queryKey: queryKeys.dashboard,
+    // Every time the user comes back to the tab, not only once it's 30 seconds old: a
+    // round logged on the phone meanwhile should show (#88).
+    refetchOnWindowFocus: "always",
     queryFn: async (): Promise<Dashboard> => unwrap(await api.GET("/me/dashboard")),
   });
 }

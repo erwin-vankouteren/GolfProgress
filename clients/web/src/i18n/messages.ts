@@ -111,6 +111,17 @@ const plainMessages = defineMessages({
   confidenceMedium: { id: "confidence.medium", defaultMessage: "Medium" },
   confidenceHigh: { id: "confidence.high", defaultMessage: "High" },
   confidencePrefix: { id: "confidence.prefix", defaultMessage: "Confidence:" },
+
+  // Dashboard (#88)
+  dashboardLoadError: { id: "dashboard.loadError", defaultMessage: "Couldn't load your dashboard." },
+  logFirstRound: { id: "dashboard.logFirstRound", defaultMessage: "Log your first round" },
+  lastRound: { id: "dashboard.lastRound", defaultMessage: "Last round" },
+  nextFocus: { id: "dashboard.nextFocus", defaultMessage: "Your next focus" },
+  baseline: { id: "dashboard.baseline", defaultMessage: "Baseline" },
+  baselineAverage: { id: "dashboard.baselineAverage", defaultMessage: "Average score" },
+  thisMonth: { id: "dashboard.thisMonth", defaultMessage: "This month" },
+  monthAverage: { id: "dashboard.monthAverage", defaultMessage: "Average fitness score" },
+  sameAsLastMonth: { id: "dashboard.sameAsLastMonth", defaultMessage: "Same as last month" },
   lowConfidenceExplanation: {
     id: "confidence.lowExplanation",
     defaultMessage: "Based on only a few rounds so far: early days.",
@@ -150,6 +161,18 @@ const messagesWithValues = {
   roundSummary: defineMessage<{ holes: number; strokes: number }>({
     id: "round.summary",
     defaultMessage: "{holes} holes · {strokes, plural, one {# stroke} other {# strokes}}",
+  }),
+  upOnLastMonth: defineMessage<{ change: string }>({
+    id: "dashboard.upOnLastMonth",
+    defaultMessage: "Up {change} on last month",
+  }),
+  downOnLastMonth: defineMessage<{ change: string }>({
+    id: "dashboard.downOnLastMonth",
+    defaultMessage: "Down {change} on last month",
+  }),
+  lastRoundLink: defineMessage<{ date: string; strokes: number }>({
+    id: "dashboard.lastRoundLink",
+    defaultMessage: "{date} · {strokes, plural, one {# stroke} other {# strokes}}",
   }),
   roundSummaryWithCourse: defineMessage<{ course: string; holes: number; strokes: number }>({
     id: "round.summaryWithCourse",

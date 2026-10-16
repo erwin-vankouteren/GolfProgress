@@ -38,7 +38,6 @@ const logRoundAction = (
   </LogRoundLink>
 );
 
-export const HomePage = () => <SectionPage title={messages.home} empty={messages.homeEmpty} action={logRoundAction} />;
 export const RoundsPage = () => (
   <SectionPage title={messages.rounds} empty={messages.roundsEmpty} action={logRoundAction} />
 );

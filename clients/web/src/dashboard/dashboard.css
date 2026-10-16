@@ -1,0 +1,71 @@
+/* Home dashboard (#88). Cards stack on phones and form a grid on desktop. Tokens only. */
+
+.dashboard {
+  max-width: 72rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.dashboard-card {
+  margin-bottom: 0;
+}
+
+.dashboard-card p {
+  margin: 0;
+}
+
+/* The last round and the micro-wins take two columns where there are three or more. */
+@media (min-width: 60rem) {
+  .dashboard-card--wide {
+    grid-column: span 2;
+  }
+}
+
+.last-round-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  font-weight: var(--font-weight-label);
+}
+
+.next-focus-title {
+  font-weight: var(--font-weight-label);
+}
+
+.card-detail {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.stat {
+  display: grid;
+  gap: var(--space-xxs);
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.stat-value {
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-display);
+  font-weight: var(--font-weight-display);
+}
+
+.month-change {
+  font-weight: var(--font-weight-label);
+}
+
+.month-change--up {
+  color: var(--color-success);
+}
+
+.month-change--down {
+  color: var(--color-warning);
+}
