@@ -1,4 +1,5 @@
 using GolfProgress.Api.Configuration;
+using GolfProgress.Api.Security;
 using GolfProgress.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -16,7 +17,11 @@ public sealed class JwtTokenService
 
     public int ExpiresMinutes => _options.ExpiresMinutes;
 
-    public string CreateToken(User user)
+    /// <param name="sessionId">
+    /// The refresh token issued with this access token: the device's session. Changing the
+    /// password keeps that session and ends the others (#83).
+    /// </param>
+    public string CreateToken(User user, Guid sessionId)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -26,7 +31,8 @@ public sealed class JwtTokenService
             // canonical identity
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-            new Claim(ClaimTypes.Name, user.DisplayName ?? string.Empty)
+            new Claim(ClaimTypes.Name, user.DisplayName ?? string.Empty),
+            new Claim(ClaimsPrincipalExtensions.SessionIdClaim, sessionId.ToString())
         };
 
         var token = new JwtSecurityToken(

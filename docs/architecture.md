@@ -214,6 +214,28 @@ Every client follows the same flow: send the access token as `Authorization: Bea
 a `401`, refresh once, retry the request, and go to the login screen if refreshing fails.
 Concurrent requests share one refresh rather than each starting their own.
 
+### Passwords
+
+**Policy (#83)**, applied whenever a password is set, at registration and when it's
+changed, following NIST SP 800-63B:
+- 8 to 128 characters, counted as people see them (Unicode code points);
+- any characters, spaces and emoji included, so a passphrase works; no rules about
+  upper case, digits or symbols;
+- not only spaces, and not the account's email address.
+
+A password that breaks the policy is a `400` keyed by the field, with a message to show
+next to it. Passwords set before the policy keep working at login. Checking new passwords
+against lists of breached passwords would be the next step.
+
+**Changing it:** `POST /me/password` takes the current and the new password.
+- A wrong current password is a `400`, not a `401`, so the app stays signed in.
+- Attempts share the per-user limit with `DELETE /me` (see "Rate limits").
+- Every other session ends: their refresh tokens are revoked, so other devices sign out at
+  their next refresh. **This device stays signed in.** Each access token carries a `sid`
+  claim, the id of the refresh token issued with it, which tells the API which session to
+  keep. Access tokens from before `sid` existed don't have one; changing the password with
+  one of those ends every session, this one included.
+
 ### Rate limits
 
 `/auth/*` is anonymous, so it's throttled to make guessing passwords slow (#6). Mobile
@@ -223,7 +245,7 @@ golf club's Wi-Fi, so per-IP limits are sized for many real users per address (#
 | Limit | Applies to | Default | Why |
 |---|---|---|---|
 | Per email | `login` | 5 per 5 minutes | Protects each account, from whatever IPs the guesses come |
-| Per user | Password-confirmed actions, such as `DELETE /me` | 5 per 5 minutes | A stolen access token can't be used to guess the password |
+| Per user | Password-confirmed actions: `POST /me/password`, `DELETE /me` | 5 per 5 minutes | A stolen access token can't be used to guess the password |
 | Per IP, sign-in | `login`, `register` | A burst of 30, refilling at 10 a minute | Slows guessing across many accounts from one address, while a group signing up together gets through |
 | Per IP, session | `refresh`, `logout` | 300 a minute | Every signed-in device refreshes every 15 minutes: an IP shared by 1,000 active users makes about 67 refreshes a minute. Refresh tokens are random 512-bit values, so there's nothing to guess |
 
