@@ -52,7 +52,7 @@ tracked as API issues.
 | Create account | Email, display name, password | `POST /auth/register` |
 | Sign in | Email, password; "Forgot password?" | `POST /auth/login` |
 | Reset password | Request a reset email; set a new password from the email link | **new** |
-| Update required | Shown when the app is older than the minimum supported version | **new** `GET /client-config` |
+| Update required | Shown when the app is older than the minimum supported version | `GET /client-config` |
 
 After creating an account, a short onboarding asks for units, tracking mode and up to
 three goal focus areas (`PATCH /me`), then opens Log round.
