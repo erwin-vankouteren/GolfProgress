@@ -139,6 +139,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwt.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key))
         };
+        // A deleted account's tokens stop working at once, not when they expire (#84).
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = ActiveUserCheck.OnTokenValidated
+        };
     });
 builder.Services.AddAuthorization();
 
@@ -214,6 +219,7 @@ builder.Services.AddScoped<GolfProgress.Api.Services.TimelineService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.DashboardService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.JwtTokenService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.RefreshTokenService>();
+builder.Services.AddScoped<GolfProgress.Api.Services.AccountDeletionService>();
 builder.Services.AddMemoryCache();
 
 // Audit-event retention (#20): purges old Events rows on a timer.

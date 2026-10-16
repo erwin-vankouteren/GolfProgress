@@ -215,6 +215,86 @@ public sealed class SqlServerPersistenceTests
         }
     }
 
+    /// <summary>
+    /// Issue #84: deleting an account leaves no row referencing the user in any table,
+    /// despite the Restrict foreign keys from Users. Every table with a UserId column is
+    /// found from the model, so a table added later is checked without editing this.
+    /// </summary>
+    [SqlServerFact]
+    public async Task DeletingAnAccount_LeavesNoRowReferencingTheUser()
+    {
+        var userId = await SeedUserAsync();
+        var otherUserId = await SeedUserAsync();
+        var roundId = await SeedRoundAsync(userId);
+        var otherRoundId = await SeedRoundAsync(otherUserId);
+
+        await using (var db = _sql.CreateContext())
+        {
+            // Scores, the baseline, micro-wins and their events, as the API writes them.
+            await new ProgressComputationService(db).ComputeForRoundAsync(roundId, userId, windowN: 5, CancellationToken.None);
+            await new MicroWinsService(db).GenerateForRoundAsync(roundId, userId, CancellationToken.None);
+            await new MonthlyReviewService(db).GenerateAsync(userId, new DateOnly(2026, 5, 1), null, CancellationToken.None);
+            await new ProgressComputationService(db).ComputeForRoundAsync(otherRoundId, otherUserId, windowN: 5, CancellationToken.None);
+        }
+
+        await using (var db = _sql.CreateContext())
+        {
+            db.Reflections.AddRange(
+                new Reflection { ReflectionId = Guid.NewGuid(), UserId = userId, RoundId = roundId, CreatedAt = DateTimeOffset.UtcNow },
+                // A reflection need not belong to a round.
+                new Reflection { ReflectionId = Guid.NewGuid(), UserId = userId, RoundId = null, CreatedAt = DateTimeOffset.UtcNow });
+            db.PracticeSessions.Add(new PracticeSession
+            {
+                PracticeSessionId = Guid.NewGuid(), UserId = userId, PracticedAt = new DateOnly(2026, 5, 2),
+                SessionType = SessionType.Range, CreatedAt = DateTimeOffset.UtcNow
+            });
+            db.RefreshTokens.Add(new RefreshToken
+            {
+                RefreshTokenId = Guid.NewGuid(), UserId = userId, TokenHash = Guid.NewGuid().ToString("N"),
+                CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.AddDays(14)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var tables = await RowsPerTableAsync(userId);
+        // Every table holds something for the user, so the test can't pass vacuously.
+        Assert.All(tables, t => Assert.True(t.Value > 0, $"{t.Key} has no row for the user before deletion."));
+
+        await using (var db = _sql.CreateContext())
+            Assert.True(await new AccountDeletionService(db).DeleteAsync(userId, CancellationToken.None));
+
+        Assert.All(await RowsPerTableAsync(userId), t => Assert.Equal(0, t.Value));
+
+        // The other user keeps everything.
+        await using (var db = _sql.CreateContext())
+        {
+            Assert.True(await db.Users.AnyAsync(u => u.UserId == otherUserId));
+            Assert.True(await db.FitnessScores.AnyAsync(f => f.RoundId == otherRoundId));
+        }
+    }
+
+    /// <summary>Rows referencing <paramref name="userId"/>, in every table with a UserId column.</summary>
+    private async Task<Dictionary<string, int>> RowsPerTableAsync(Guid userId)
+    {
+        await using var db = _sql.CreateContext();
+        var counts = new Dictionary<string, int>();
+
+        foreach (var entity in db.Model.GetEntityTypes())
+        {
+            if (entity.FindProperty("UserId") is not { } property) continue;
+
+            var table = entity.GetTableName()!;
+            // Identifiers can't be parameters; these come from the EF model, not input.
+            var sql = $"SELECT COUNT(*) AS Value FROM [{table}] WHERE [{property.GetColumnName()}] = @userId";
+            counts[table] = await db.Database
+                .SqlQueryRaw<int>(sql, new SqlParameter("@userId", userId))
+                .SingleAsync();
+        }
+
+        Assert.Equal(10, counts.Count); // Users and the nine tables that reference it
+        return counts;
+    }
+
     private async Task<Guid> SeedUserAsync(string? email = "", List<string>? goalFocus = null)
     {
         var userId = Guid.NewGuid();

@@ -111,7 +111,7 @@ Every chart has a text alternative (a summary sentence or a table) for screen re
 | Preferences | Units, tracking mode, goal focus areas | `PATCH /me` |
 | Change password | Current and new password | **new** `POST /me/password` |
 | Sign out | Ends this session | `POST /auth/logout` |
-| Delete account | Explains what is deleted, asks for the password, then deletes everything | **new** `DELETE /me` |
+| Delete account | Explains what is deleted, asks for the password, then deletes everything | `DELETE /me` |
 | About | Version, privacy policy, terms | – |
 
 ## States every screen handles

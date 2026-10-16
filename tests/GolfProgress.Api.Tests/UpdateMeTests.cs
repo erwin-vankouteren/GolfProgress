@@ -170,12 +170,12 @@ public sealed class UpdateMeTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Patch_ForATokenWhoseUserNoLongerExists_Returns404()
+    public async Task Patch_ForATokenWhoseUserNoLongerExists_Returns401()
     {
         var response = await TestWorld.ClientFor(_factory, Guid.NewGuid())
             .PatchAsync("/me", Json("""{ "units": "Imperial" }"""));
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     /// <summary>The goal focus saved here is what micro-wins tie their focus-area win to.</summary>
