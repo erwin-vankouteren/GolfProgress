@@ -142,6 +142,9 @@ internal sealed class StringEnumSchemaFilter : ISchemaFilter
         var attribute = context.MemberInfo?.GetCustomAttribute<StringEnumAttribute>();
         if (attribute is null) return;
 
+        // On a list of strings, the values apply to its items.
+        if (schema.Type == "array" && schema.Items is not null) schema = schema.Items;
+
         var names = Enum.GetNames(attribute.EnumType);
 
         if (!attribute.Open)

@@ -157,8 +157,7 @@ public sealed class MicroWinsService
 
     private static MicroWin BuildFocusWin(User user, Round round, UserBaseline? baseline, ConfidenceLevel confidence, DateTimeOffset now)
     {
-        // Map focus → metric
-        // (Your goal_focus comes from User.GoalFocus list)
+        // Map the first focus area to a metric
         var focus = user.GoalFocus?.FirstOrDefault();
         if (string.IsNullOrWhiteSpace(focus))
         {
@@ -167,13 +166,27 @@ public sealed class MicroWinsService
                 new { reason = "no_focus_area" });
         }
 
-        var metric = focus.ToLowerInvariant() switch
+        // PATCH /me stores GoalFocusArea names (#82). Underscores are ignored so the
+        // earlier snake_case spellings (tee_shots) still map.
+        GoalFocusArea? area = Enum.TryParse<GoalFocusArea>(focus.Replace("_", ""), ignoreCase: true, out var parsed)
+            && Enum.IsDefined(parsed)
+                ? parsed
+                : null;
+
+        var metric = area switch
         {
-            "putting" => "putts",
-            "penalties" => "penalties",
-            "tee_shots" => "fairways_hit",
-            "consistency" => "blow_up_holes",
+            GoalFocusArea.Putting => "putts",
+            GoalFocusArea.Penalties => "penalties",
+            GoalFocusArea.TeeShots => "fairways_hit",
+            GoalFocusArea.Consistency => "blow_up_holes",
             _ => null
+        };
+
+        var label = area switch
+        {
+            GoalFocusArea.TeeShots => "tee shots",
+            GoalFocusArea a => a.ToString().ToLowerInvariant(),
+            null => focus
         };
 
         if (metric == "putts" && round.TotalPutts.HasValue)
@@ -194,7 +207,7 @@ public sealed class MicroWinsService
 
         return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.FocusArea, metric, MicroWinDirection.Stable,
             null, confidence,
-            $"Focus-area check: {focus}",
+            $"Focus-area check: {label}",
             "You set a focus area — we’ll tie more insights to it as you log more rounds.",
             now, new { focus, metric });
     }

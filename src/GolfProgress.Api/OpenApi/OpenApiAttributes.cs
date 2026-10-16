@@ -1,7 +1,8 @@
 namespace GolfProgress.Api.OpenApi;
 
 /// <summary>
-/// Documents a string property as taking one of an enum's names (#62). The contracts
+/// Documents a string property, or each item of a list of strings, as taking one of
+/// an enum's names (#62). The contracts
 /// carry these as strings, parsed case-insensitively. It has no effect at runtime.
 ///
 /// A <b>closed</b> enum (the default) lists its values as an OpenAPI <c>enum</c>, so
