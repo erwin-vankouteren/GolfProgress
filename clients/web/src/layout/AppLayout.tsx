@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { OfflineBanner } from "../common/states";
 import { messages } from "../i18n/messages";
+import { LogRoundLink, LogRoundProvider } from "../rounds/LogRound";
 import "./AppLayout.css";
 
 /** The five top-level sections (docs/clients/ux-design.md → "Navigation"). */
@@ -40,50 +42,53 @@ export function AppLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="app-layout">
-      <a className="skip-link" href="#main">
-        <FormattedMessage {...messages.skipToContent} />
-      </a>
+    <LogRoundProvider>
+      <div className="app-layout">
+        <a className="skip-link" href="#main">
+          <FormattedMessage {...messages.skipToContent} />
+        </a>
 
-      <header className="app-header">
-        <button
-          type="button"
-          className="menu-button"
-          aria-expanded={menuOpen}
-          aria-controls="main-navigation"
-          aria-label={intl.formatMessage(menuOpen ? messages.closeMenu : messages.openMenu)}
-          onClick={() => setMenuOpen((open) => !open)}
+        <header className="app-header">
+          <button
+            type="button"
+            className="menu-button"
+            aria-expanded={menuOpen}
+            aria-controls="main-navigation"
+            aria-label={intl.formatMessage(menuOpen ? messages.closeMenu : messages.openMenu)}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
+          <Link to="/" className="app-name">
+            <FormattedMessage {...messages.appName} />
+          </Link>
+          <LogRoundLink className="button button--primary">
+            <FormattedMessage {...messages.logRound} />
+          </LogRoundLink>
+        </header>
+
+        <nav
+          id="main-navigation"
+          className="app-nav"
+          data-open={menuOpen}
+          aria-label={intl.formatMessage(messages.mainNavigation)}
         >
-          <span aria-hidden="true">☰</span>
-        </button>
-        <Link to="/" className="app-name">
-          <FormattedMessage {...messages.appName} />
-        </Link>
-        <Link to="/rounds/new" className="button button--primary">
-          <FormattedMessage {...messages.logRound} />
-        </Link>
-      </header>
+          <ul>
+            {sections.map((section) => (
+              <li key={section.path}>
+                <NavLink to={section.path} end={section.end}>
+                  <FormattedMessage {...section.label} />
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      <nav
-        id="main-navigation"
-        className="app-nav"
-        data-open={menuOpen}
-        aria-label={intl.formatMessage(messages.mainNavigation)}
-      >
-        <ul>
-          {sections.map((section) => (
-            <li key={section.path}>
-              <NavLink to={section.path} end={section.end}>
-                <FormattedMessage {...section.label} />
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <main id="main" ref={main} tabIndex={-1} className="app-main">
-        <Outlet />
-      </main>
-    </div>
+        <main id="main" ref={main} tabIndex={-1} className="app-main">
+          <OfflineBanner />
+          <Outlet />
+        </main>
+      </div>
+    </LogRoundProvider>
   );
 }

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { IntlProvider } from "react-intl";
-import type { ApiClient } from "../api";
+import { ApiProblem, type ApiClient } from "../api";
 import type { Session } from "../session/session";
 import { SessionProvider } from "../session/SessionContext";
 import { UpdateGate } from "../version/UpdateGate";
@@ -24,7 +24,18 @@ export function App({
   children: ReactNode;
 }) {
   const [queryClient] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: true } } }),
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 30_000,
+            refetchOnWindowFocus: true,
+            // A 4xx won't change on retry, so it shows at once. A server or network error
+            // gets one retry, so the error state appears in about a second, not seven.
+            retry: (failureCount, error) => !(error instanceof ApiProblem && error.status < 500) && failureCount < 1,
+          },
+        },
+      }),
   );
 
   // Signing out drops everything cached for that user.

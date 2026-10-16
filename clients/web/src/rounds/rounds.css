@@ -1,0 +1,332 @@
+/* Log round (#92), round detail and the score pieces. Design tokens only. */
+
+/* ---------------------------------------------------------------- Log round */
+
+.log-round {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.log-round-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.log-round-header h1,
+.log-round-header h2 {
+  margin: 0;
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-title);
+  font-weight: var(--font-weight-title);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  background: none;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.log-round-form {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.log-round-page {
+  max-width: 32rem;
+}
+
+.log-round-dialog {
+  width: min(36rem, calc(100vw - 2 * var(--space-xl)));
+  max-height: calc(100vh - 2 * var(--space-xxl));
+  padding: var(--space-xl);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.log-round-dialog::backdrop {
+  /* A veil of the page colour: lighter in light mode, darker in dark mode. */
+  background: color-mix(in srgb, var(--color-background) 80%, transparent);
+}
+
+/* Save stays in reach of a thumb at the bottom of the screen on phones. */
+.log-round-footer {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+  background: var(--color-background);
+}
+
+.log-round-dialog .log-round-footer {
+  background: var(--color-surface);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.field label,
+.holes legend {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+}
+
+.field input,
+.field textarea {
+  min-height: var(--touch-target);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.field [aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.field-error,
+.form-error {
+  margin: 0;
+  color: var(--color-error);
+  font-size: var(--font-size-label);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.holes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.holes legend {
+  padding: 0;
+  margin-bottom: var(--space-xs);
+}
+
+.holes-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-lg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.holes-option:has(input:checked) {
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  border-color: var(--color-primary);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.stepper input {
+  width: 5rem;
+  text-align: center;
+}
+
+.stepper-button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-variant);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-headline);
+  cursor: pointer;
+}
+
+.stepper-max {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+/* ---------------------------------------------------------------- round detail */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  margin-bottom: var(--space-sm);
+}
+
+.round-summary {
+  margin: 0 0 var(--space-lg);
+  color: var(--color-text-secondary);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: var(--font-size-headline);
+  line-height: var(--line-height-headline);
+  font-weight: var(--font-weight-headline);
+}
+
+.score-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.score-total {
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-display);
+  font-weight: var(--font-weight-display);
+}
+
+.micro-wins {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.micro-wins li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-xs);
+}
+
+.micro-wins [aria-hidden="true"] {
+  color: var(--color-success);
+}
+
+.micro-win-message {
+  grid-column: 2;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+/* ---------------------------------------------------------------- score pieces */
+
+.confidence {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.confidence-badge {
+  font-weight: var(--font-weight-label);
+  font-size: var(--font-size-label);
+}
+
+.confidence-badge--low {
+  color: var(--color-confidence-low);
+}
+
+.confidence-badge--medium {
+  color: var(--color-confidence-medium);
+}
+
+.confidence-badge--high {
+  color: var(--color-confidence-high);
+}
+
+.confidence-explanation {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.pillars {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.pillar {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) 1fr;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.pillar dt {
+  font-size: var(--font-size-label);
+}
+
+.pillar dd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.pillar-value {
+  min-width: 4.5rem;
+  font-size: var(--font-size-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.pillar-track {
+  flex: 1;
+  height: var(--space-sm);
+  background: var(--color-surface-variant);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.pillar-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.pillar-fill--execution {
+  background: var(--color-pillar-execution);
+}
+
+.pillar-fill--damage-control {
+  background: var(--color-pillar-damage-control);
+}
+
+.pillar-fill--consistency {
+  background: var(--color-pillar-consistency);
+}
+
+.pillar-fill--habits {
+  background: var(--color-pillar-habits);
+}
