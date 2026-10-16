@@ -6,6 +6,10 @@ public class User
     public Guid UserId { get; set; }
     public string? Email { get; set; }
     public string? PasswordHash { get; set; }
+
+    /// <summary>Longest display name a user can set, at registration or with PATCH /me.</summary>
+    public const int DisplayNameMaxLength = 100;
+
     public string? DisplayName { get; set; }
     public string? Timezone { get; set; }
     public Units Units { get; set; } = Units.Metric;

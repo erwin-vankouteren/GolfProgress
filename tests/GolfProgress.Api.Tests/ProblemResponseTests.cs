@@ -42,6 +42,31 @@ public sealed class ProblemResponseTests : IAsyncLifetime
         await AssertValidationProblem(response, field);
     }
 
+    /// <summary>
+    /// Registration bounds the display name like PATCH /me does, so a name set here can
+    /// always be saved again from Profile.
+    /// </summary>
+    [Theory]
+    [InlineData(101, HttpStatusCode.BadRequest)]
+    [InlineData(100, HttpStatusCode.OK)]
+    public async Task RegistrationDisplayName_IsBounded(int length, HttpStatusCode expected)
+    {
+        var response = await _factory.CreateClient().PostAsJsonAsync("/auth/register",
+            new { email = $"long{length}@example.test", displayName = new string('x', length), password = "Passw0rd!" });
+
+        Assert.Equal(expected, response.StatusCode);
+        if (expected == HttpStatusCode.BadRequest) await AssertValidationProblem(response, "DisplayName");
+    }
+
+    [Fact]
+    public async Task RegistrationDisplayName_CantBeBlank()
+    {
+        var response = await _factory.CreateClient().PostAsJsonAsync("/auth/register",
+            new { email = "blank@example.test", displayName = "   ", password = "Passw0rd!" });
+
+        await AssertValidationProblem(response, "DisplayName");
+    }
+
     [Fact]
     public async Task DuplicateRegistration_IsA409Problem()
     {

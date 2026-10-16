@@ -1,4 +1,5 @@
 using GolfProgress.Api.OpenApi;
+using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using Enums = GolfProgress.Domain.Enums;
@@ -16,7 +17,6 @@ namespace GolfProgress.Api.Contracts.Users;
 /// </summary>
 public sealed class UpdateMeRequest : IValidatableObject
 {
-    public const int DisplayNameMaxLength = 100;
     public const int TimezoneMaxLength = 64;
     public const int MaxGoalFocusAreas = 3;
 
@@ -33,7 +33,7 @@ public sealed class UpdateMeRequest : IValidatableObject
     /// <summary>Whether the body included <paramref name="property"/>, even as null.</summary>
     public bool Sent(string property) => _sent.Contains(property);
 
-    [MaxLength(DisplayNameMaxLength)]
+    [MaxLength(User.DisplayNameMaxLength)]
     public string? DisplayName { get => _displayName; init => Set(ref _displayName, value); }
 
     /// <summary>An IANA time zone, e.g. Europe/Amsterdam.</summary>
