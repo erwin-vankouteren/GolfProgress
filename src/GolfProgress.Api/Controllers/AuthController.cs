@@ -133,6 +133,7 @@ public sealed class AuthController : ControllerBase
     /// came from the cookie is renewed in the cookie.
     /// </summary>
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.AuthSession)]
     [HttpPost("/auth/refresh", Name = "refreshToken")]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -161,6 +162,7 @@ public sealed class AuthController : ControllerBase
     /// succeeds.
     /// </summary>
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.AuthSession)]
     [HttpPost("/auth/logout", Name = "logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout(

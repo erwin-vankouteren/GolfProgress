@@ -99,7 +99,7 @@ environment in the same way, e.g. `RateLimiting__Auth__PerIpPermitLimit=20`.
 | `Cors__AllowedOrigins__0`, `__1`, … | none | Browser-based clients: their exact origins, e.g. `https://app.example.com`. **Required for the web app:** its refresh cookie needs CORS with credentials on `/auth/*` (#68), which is only allowed for these origins. Host the web app on the same site as the API (e.g. `app.` and `api.` of one domain) |
 | `Jwt__ExpiresMinutes` | 15 | Access-token lifetime |
 | `RefreshTokens__ExpiresDays` | 14 | Refresh-token lifetime |
-| `RateLimiting__Auth__*` | 10 per IP per minute; 5 logins per email per 5 minutes | Tighten or loosen `/auth/*` throttling |
+| `RateLimiting__Auth__*` | Sign-in per IP: a burst of 30 (`PerIpBurstLimit`), refilling at 10 per minute (`PerIpPermitLimit` per `PerIpWindowSeconds`); refresh and logout per IP: 300 per minute (`SessionPerIpPermitLimit` per `SessionPerIpWindowSeconds`); 5 logins per email per 5 minutes | Tighten or loosen `/auth/*` throttling. The reasoning is in [architecture](architecture.md) → "Rate limits" |
 | `RateLimiting__Anonymous__*` | 60 per IP per minute | Throttling for other anonymous endpoints, such as `/client-config` |
 | `ClientConfig__MinimumVersions__Ios`, `__Android`, `__Web` | `1.0.0` | Raise to make older apps show "update required" (`GET /client-config`). Must be `major.minor.patch` |
 | `EventRetention__RetentionDays` | 365 | How long audit events are kept |

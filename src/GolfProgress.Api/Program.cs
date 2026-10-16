@@ -148,7 +148,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // Rate limiting for the anonymous /auth/* endpoints (#6). Per client IP here; per
-// email for login in LoginThrottle, since this middleware cannot see the body.
+// email for login in LoginThrottle, since this middleware cannot see the body. Sized
+// for many real users behind one carrier or Wi-Fi IP (#85): see docs/architecture.md,
+// "Rate limits".
 //
 // Behind a reverse proxy RemoteIpAddress is the proxy's, which would put every
 // caller in one partition. Enable forwarded headers for the trusted proxy there
@@ -157,7 +159,26 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
+    // Signing in: a token bucket, so a burst gets through after a quiet spell while
+    // the sustained rate stays PerIpPermitLimit per window, refilled one at a time.
     options.AddPolicy(RateLimitPolicies.Auth, context =>
+    {
+        var o = context.RequestServices.GetRequiredService<IOptions<AuthRateLimitOptions>>().Value;
+
+        return RateLimitPartition.GetTokenBucketLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = o.PerIpBurstLimit,
+                TokensPerPeriod = 1,
+                ReplenishmentPeriod = TimeSpan.FromSeconds((double)o.PerIpWindowSeconds / o.PerIpPermitLimit),
+                AutoReplenishment = true,
+                QueueLimit = 0
+            });
+    });
+
+    // Keeping a session: refresh and logout, separately and far more generously.
+    options.AddPolicy(RateLimitPolicies.AuthSession, context =>
     {
         var o = context.RequestServices.GetRequiredService<IOptions<AuthRateLimitOptions>>().Value;
 
@@ -165,8 +186,8 @@ builder.Services.AddRateLimiter(options =>
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = o.PerIpPermitLimit,
-                Window = TimeSpan.FromSeconds(o.PerIpWindowSeconds),
+                PermitLimit = o.SessionPerIpPermitLimit,
+                Window = TimeSpan.FromSeconds(o.SessionPerIpWindowSeconds),
                 QueueLimit = 0
             });
     });
