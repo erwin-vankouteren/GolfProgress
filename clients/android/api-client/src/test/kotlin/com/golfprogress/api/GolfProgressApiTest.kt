@@ -268,7 +268,9 @@ class GolfProgressApiTest {
               "source": "Manual",
               "notes": null,
               "createdAt": "2026-05-01T09:30:00+00:00",
-              "updatedAt": "2026-05-01T09:30:00+00:00"
+              "updatedAt": "2026-05-01T09:30:00+00:00",
+              "fitnessScore": 72,
+              "fitnessConfidence": "Medium"
             }
         """
     }

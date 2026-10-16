@@ -27,6 +27,15 @@ namespace GolfProgress.Api.Contracts.Rounds
 
         public DateTimeOffset CreatedAt { get; init; }
         public DateTimeOffset UpdatedAt { get; init; }
+
+        /// <summary>
+        /// The round's fitness score, null while it has none. Included so a list of rounds
+        /// can show each score without a request per round (#95).
+        /// </summary>
+        public short? FitnessScore { get; init; }
+
+        [StringEnum(typeof(Enums.ConfidenceLevel))]
+        public string? FitnessConfidence { get; init; }
     }
 
 }

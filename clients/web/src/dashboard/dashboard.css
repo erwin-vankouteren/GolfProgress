@@ -33,15 +33,6 @@
   font-weight: var(--font-weight-label);
 }
 
-.next-focus-title {
-  font-weight: var(--font-weight-label);
-}
-
-.card-detail {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-label);
-}
-
 .stat {
   display: grid;
   gap: var(--space-xxs);

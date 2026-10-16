@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -90,7 +91,38 @@ public sealed class ProgressController : ControllerBase
             Consistency = fs.Consistency,
             Habits = fs.Habits,
             ConfidenceLevel = fs.ConfidenceLevel.ToString(),
-            ComputedAt = fs.ComputedAt
+            ComputedAt = fs.ComputedAt,
+            Explanation = Explain(fs.ExplanationJson)
         });
     }
+
+    /// <summary>
+    /// The stored explanation (ProgressComputationService.UpsertFitnessScoreAsync), read
+    /// leniently: scores computed before a field existed simply leave it null.
+    /// </summary>
+    internal static FitnessScoreExplanation Explain(JsonDocument json)
+    {
+        var root = json.RootElement;
+        root.TryGetProperty("habits", out var habits);
+
+        return new FitnessScoreExplanation
+        {
+            BaselineAvgScore = Number(root, "avgScore")?.GetDecimal(),
+            BaselineStdDev = Number(root, "scoreStdDev")?.GetDecimal(),
+            RoundsInHabitWindow = Number(habits, "roundsInWindow")?.GetInt32(),
+            PracticeSessionsInHabitWindow = Number(habits, "practiceSessionsInWindow")?.GetInt32(),
+            Reflected = habits.ValueKind == JsonValueKind.Object &&
+                        habits.TryGetProperty("reflected", out var r) &&
+                        r.ValueKind is JsonValueKind.True or JsonValueKind.False
+                ? r.GetBoolean()
+                : null
+        };
+    }
+
+    private static JsonElement? Number(JsonElement parent, string name) =>
+        parent.ValueKind == JsonValueKind.Object &&
+        parent.TryGetProperty(name, out var value) &&
+        value.ValueKind == JsonValueKind.Number
+            ? value
+            : null;
 }

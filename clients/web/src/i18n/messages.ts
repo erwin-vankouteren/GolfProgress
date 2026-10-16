@@ -1,7 +1,7 @@
 import { defineMessage, defineMessages } from "react-intl";
 
 /** Messages without values. English is the default and, for now, the only locale. */
-const plainMessages = defineMessages({
+export const plainMessages = defineMessages({
   appName: { id: "app.name", defaultMessage: "GolfProgress" },
   skipToContent: { id: "app.skipToContent", defaultMessage: "Skip to content" },
   mainNavigation: { id: "nav.label", defaultMessage: "Main" },
@@ -112,6 +112,68 @@ const plainMessages = defineMessages({
   confidenceHigh: { id: "confidence.high", defaultMessage: "High" },
   confidencePrefix: { id: "confidence.prefix", defaultMessage: "Confidence:" },
 
+  // Round list, detail and editing (#95)
+  roundsLoadError: { id: "rounds.loadError", defaultMessage: "Couldn't load your rounds." },
+  showMoreRounds: { id: "rounds.showMore", defaultMessage: "Show more rounds" },
+  selectRound: { id: "rounds.select", defaultMessage: "Choose a round to see its score." },
+  strokesUnit: { id: "rounds.strokesUnit", defaultMessage: "strokes" },
+  scoreUnit: { id: "rounds.scoreUnit", defaultMessage: "score" },
+  notScored: { id: "rounds.notScored", defaultMessage: "Not scored" },
+  roundNoLongerExists: {
+    id: "round.noLongerExists",
+    defaultMessage: "This round no longer exists. It may have been deleted on another device.",
+  },
+  edit: { id: "round.edit", defaultMessage: "Edit" },
+  editRound: { id: "round.editTitle", defaultMessage: "Edit round" },
+  stats: { id: "round.stats", defaultMessage: "Stats" },
+  noStatsTracked: { id: "round.noStats", defaultMessage: "Only strokes were tracked for this round." },
+  reflection: { id: "round.reflection", defaultMessage: "Reflection" },
+  noReflection: {
+    id: "round.noReflection",
+    defaultMessage: "No reflection yet. Reflecting on a round counts towards your Habits score.",
+  },
+  focus: { id: "reflection.focus", defaultMessage: "Focus" },
+  mood: { id: "reflection.mood", defaultMessage: "Mood" },
+  frustrationCarriedOver: { id: "reflection.frustration", defaultMessage: "Frustration carried over" },
+  yes: { id: "common.yes", defaultMessage: "Yes" },
+  no: { id: "common.no", defaultMessage: "No" },
+  whatWorked: { id: "reflection.whatWorked", defaultMessage: "What worked" },
+  whatToRepeat: { id: "reflection.whatToRepeat", defaultMessage: "What to repeat" },
+  oneChangeNext: { id: "reflection.oneChange", defaultMessage: "One change for next time" },
+  deleteRound: { id: "round.delete", defaultMessage: "Delete round" },
+  deleteRoundTitle: { id: "round.deleteTitle", defaultMessage: "Delete this round?" },
+  deleteRoundBody: {
+    id: "round.deleteBody",
+    defaultMessage:
+      "Its fitness score, micro-wins and reflection are deleted with it, and your other scores are updated. This can't be undone.",
+  },
+  delete: { id: "common.delete", defaultMessage: "Delete" },
+  deleting: { id: "common.deleting", defaultMessage: "Deleting…" },
+  cancel: { id: "common.cancel", defaultMessage: "Cancel" },
+  deleteFailed: { id: "round.deleteFailed", defaultMessage: "Couldn't delete the round. Please try again." },
+  firstRound: {
+    id: "explain.firstRound",
+    defaultMessage: "There are no earlier rounds to compare with yet, so this starts in the middle.",
+  },
+  damageNotTracked: {
+    id: "explain.damageNotTracked",
+    defaultMessage: "Penalties and blow-up holes weren't tracked, so this is a middle score rather than full marks.",
+  },
+  consistencyNeedsRounds: {
+    id: "explain.consistencyNeedsRounds",
+    defaultMessage: "Judging consistency needs a few earlier rounds, so this starts in the middle.",
+  },
+  consistencyAtOrBetter: {
+    id: "explain.consistencyAtOrBetter",
+    defaultMessage: "At or better than your recent average: full marks.",
+  },
+  habitsUnknown: {
+    id: "explain.habitsUnknown",
+    defaultMessage: "Habits reward playing or practising about once a week, and reflecting on your rounds.",
+  },
+  reflected: { id: "explain.reflected", defaultMessage: "You reflected on this round." },
+  notReflected: { id: "explain.notReflected", defaultMessage: "Adding a reflection would add to this." },
+
   // Dashboard (#88)
   dashboardLoadError: { id: "dashboard.loadError", defaultMessage: "Couldn't load your dashboard." },
   logFirstRound: { id: "dashboard.logFirstRound", defaultMessage: "Log your first round" },
@@ -135,7 +197,7 @@ export type PlainMessage = (typeof plainMessages)[keyof typeof plainMessages];
  * Messages with values. react-intl types each message's values, so these declare theirs
  * and every use is checked by TypeScript.
  */
-const messagesWithValues = {
+export const messagesWithValues = {
   required: defineMessage<{ field: string }>({ id: "auth.required", defaultMessage: "{field} is required." }),
   tooManyAttempts: defineMessage<{ seconds: number }>({
     id: "auth.tooManyAttempts",
@@ -162,6 +224,47 @@ const messagesWithValues = {
     id: "round.summary",
     defaultMessage: "{holes} holes · {strokes, plural, one {# stroke} other {# strokes}}",
   }),
+  betterThanAverage: defineMessage<{ strokes: number; average: string; amount: string }>({
+    id: "explain.betterThanAverage",
+    defaultMessage: "{strokes} strokes, {amount} better than your recent average of {average}.",
+  }),
+  worseThanAverage: defineMessage<{ strokes: number; average: string; amount: string }>({
+    id: "explain.worseThanAverage",
+    defaultMessage: "{strokes} strokes, {amount} worse than your recent average of {average}.",
+  }),
+  levelWithAverage: defineMessage<{ strokes: number; average: string }>({
+    id: "explain.levelWithAverage",
+    defaultMessage: "{strokes} strokes, level with your recent average of {average}.",
+  }),
+  nineHoleEquivalent: defineMessage<{ strokes: number; per18: number }>({
+    id: "explain.nineHoles",
+    defaultMessage: "Over 9 holes, your {strokes} counts as {per18} over 18.",
+  }),
+  damage: defineMessage<{ penalties: string; blowUps: string }>({
+    id: "explain.damage",
+    defaultMessage: "{penalties}, {blowUps}. Fewer of either scores higher.",
+  }),
+  penaltiesCount: defineMessage<{ count: number }>({
+    id: "explain.penalties",
+    defaultMessage: "{count, plural, =0 {No penalties} one {# penalty} other {# penalties}}",
+  }),
+  blowUpsCount: defineMessage<{ count: number }>({
+    id: "explain.blowUps",
+    defaultMessage: "{count, plural, =0 {no blow-up holes} one {# blow-up hole} other {# blow-up holes}}",
+  }),
+  penaltiesNotTracked: defineMessage({ id: "explain.penaltiesNotTracked", defaultMessage: "Penalties not tracked" }),
+  blowUpsNotTracked: defineMessage({ id: "explain.blowUpsNotTracked", defaultMessage: "blow-up holes not tracked" }),
+  consistencyWorse: defineMessage<{ worseBy: string; spread: string }>({
+    id: "explain.consistencyWorse",
+    defaultMessage:
+      "{worseBy} strokes worse than your recent average, where your rounds usually vary by about {spread}. Twice that scores nothing.",
+  }),
+  habitsExplanation: defineMessage<{ rounds: number; practice: number }>({
+    id: "explain.habits",
+    defaultMessage:
+      "{rounds, plural, one {# round} other {# rounds}} and {practice, plural, one {# practice session} other {# practice sessions}} in the 28 days up to this round; four or more earns full points.",
+  }),
+  outOfFive: defineMessage<{ value: number }>({ id: "reflection.outOfFive", defaultMessage: "{value} of 5" }),
   upOnLastMonth: defineMessage<{ change: string }>({
     id: "dashboard.upOnLastMonth",
     defaultMessage: "Up {change} on last month",

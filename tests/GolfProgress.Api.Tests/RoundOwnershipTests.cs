@@ -37,7 +37,8 @@ public sealed class RoundOwnershipTests : IAsyncLifetime
         "/rounds/{roundId}",
         "/rounds/{roundId}/fitness-score",
         "/rounds/{roundId}/micro-wins",
-        "/rounds/{roundId}/reflections"
+        "/rounds/{roundId}/reflections",
+        "/rounds/{roundId}/next-lever"
     };
 
     /// <summary>Every POST keyed on a round id, probed with the wrong user's token.</summary>

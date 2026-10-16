@@ -4,6 +4,7 @@ import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import { ApiProblem, unwrap, type Schemas } from "../api";
 import { queryKeys, useMe } from "../api/queries";
 import { useApi } from "../app/ApiContext";
+import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
 import { messages, type PlainMessage } from "../i18n/messages";
 import {
@@ -19,6 +20,7 @@ import {
   type RoundFormValues,
   type StatField,
 } from "./roundForm";
+import { formValuesFrom, statFieldsForEdit } from "./roundDetail";
 import "./rounds.css";
 
 const statLabels: Record<StatField, PlainMessage> = {
@@ -34,17 +36,24 @@ const statLabels: Record<StatField, PlainMessage> = {
  * The Log round form (#92), shown as a page on phones and in a dialog on desktop. It
  * shows the stats for the user's tracking mode, checks the API's rules as the user
  * types, and on Save logs the round, which the API scores in the same request (#80).
+ *
+ * Given a `round`, it edits that round instead (#95): prefilled, saved with PUT, and
+ * with Delete at the bottom, behind a confirmation.
  */
 export function LogRoundForm({
   headingLevel,
   titleId,
+  round,
   onSaved,
   onCancel,
+  onDeleted,
 }: {
   headingLevel: 1 | 2;
   titleId?: string;
+  round?: Schemas["RoundResponse"];
   onSaved: (roundId: string) => void;
   onCancel: () => void;
+  onDeleted?: () => void;
 }) {
   const me = useMe();
   const intl = useIntl();
@@ -54,7 +63,7 @@ export function LogRoundForm({
     <div className="log-round">
       <div className="log-round-header">
         <Heading id={titleId}>
-          <FormattedMessage {...messages.logRound} />
+          <FormattedMessage {...(round ? messages.editRound : messages.logRound)} />
         </Heading>
         <button
           type="button"
@@ -71,20 +80,31 @@ export function LogRoundForm({
       ) : me.isError ? (
         <LoadError message={messages.preferencesLoadError} onRetry={() => void me.refetch()} />
       ) : (
-        <RoundFields me={me.data} onSaved={onSaved} />
+        <RoundFields me={me.data} round={round} onSaved={onSaved} onDeleted={onDeleted} />
       )}
     </div>
   );
 }
 
-function RoundFields({ me, onSaved }: { me: Schemas["UserResponse"]; onSaved: (roundId: string) => void }) {
+function RoundFields({
+  me,
+  round,
+  onSaved,
+  onDeleted,
+}: {
+  me: Schemas["UserResponse"];
+  round?: Schemas["RoundResponse"];
+  onSaved: (roundId: string) => void;
+  onDeleted?: () => void;
+}) {
   const intl = useIntl();
   const api = useApi();
   const queryClient = useQueryClient();
   const online = useOnline();
-  const stats = statFieldsFor(me.trackingMode);
+  const stats = round ? statFieldsForEdit(me.trackingMode, round) : statFieldsFor(me.trackingMode);
 
-  const [values, setValues] = useState<RoundFormValues>(() => emptyRound());
+  const [values, setValues] = useState<RoundFormValues>(() => (round ? formValuesFrom(round) : emptyRound()));
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<RoundField, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
   const [apiErrors, setApiErrors] = useState<Partial<Record<RoundField, string>>>({});
@@ -96,12 +116,16 @@ function RoundFields({ me, onSaved }: { me: Schemas["UserResponse"]; onSaved: (r
   const sending = useRef(false);
 
   const save = useMutation({
-    mutationFn: async (body: Schemas["CreateRoundRequest"]) => unwrap(await api.POST("/me/rounds", { body })),
-    onSuccess: (round) => {
-      queryClient.setQueryData(queryKeys.round(round.roundId), round);
+    mutationFn: async (body: Schemas["CreateRoundRequest"]) =>
+      round
+        ? unwrap(await api.PUT("/rounds/{id}", { params: { path: { id: round.roundId } }, body }))
+        : unwrap(await api.POST("/me/rounds", { body })),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(queryKeys.round(saved.roundId), saved);
+      // An edit can rescore other rounds and the baseline too, so every round query is stale.
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       void queryClient.invalidateQueries({ queryKey: queryKeys.rounds });
-      onSaved(round.roundId);
+      onSaved(saved.roundId);
     },
     onError: (error) => {
       const { field, form } = describeSaveError(error, intl);
@@ -110,6 +134,17 @@ function RoundFields({ me, onSaved }: { me: Schemas["UserResponse"]; onSaved: (r
     },
     onSettled: () => {
       sending.current = false;
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: async (roundId: string) =>
+      unwrap(await api.DELETE("/rounds/{id}", { params: { path: { id: roundId } } })),
+    onSuccess: (_, roundId) => {
+      queryClient.removeQueries({ queryKey: queryKeys.round(roundId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.rounds });
+      onDeleted?.();
     },
   });
 
@@ -244,7 +279,29 @@ function RoundFields({ me, onSaved }: { me: Schemas["UserResponse"]; onSaved: (r
         >
           <FormattedMessage {...(save.isPending ? messages.saving : messages.save)} />
         </button>
+        {round && (
+          <button
+            type="button"
+            className="button button--danger-outline"
+            disabled={!online}
+            onClick={() => setConfirmingDelete(true)}
+          >
+            <FormattedMessage {...messages.deleteRound} />
+          </button>
+        )}
       </div>
+      {round && confirmingDelete && (
+        <ConfirmDialog
+          title={messages.deleteRoundTitle}
+          body={messages.deleteRoundBody}
+          confirm={messages.delete}
+          busyLabel={messages.deleting}
+          busy={remove.isPending}
+          error={remove.isError ? intl.formatMessage(messages.deleteFailed) : undefined}
+          onConfirm={() => remove.mutate(round.roundId)}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
     </form>
   );
 }

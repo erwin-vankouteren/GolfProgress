@@ -31,10 +31,33 @@ public sealed class RecommendationsController : ControllerBase
         var round = await _db.FindOwnedRoundReadOnlyAsync(roundId, userId, ct);
         if (round is null) return NotFound();
 
-        var (leverKey, title, rec, rationale, confidence) = await _svc.RecommendAsync(roundId, userId, ct);
-        await _svc.LogEventAsync(userId, roundId, leverKey, ct);
+        var response = await RecommendationFor(roundId, userId, ct);
+        await _svc.LogEventAsync(userId, roundId, response.LeverKey, ct);
 
-        return Ok(new NextLeverResponse
+        return Ok(response);
+    }
+
+    // GET /rounds/{roundId}/next-lever
+    //
+    // The same recommendation, read-only (#95): showing a round's detail shouldn't log a
+    // NextLeverRecommended event every time it's viewed. Nothing is stored, as on the
+    // dashboard, so it always reflects the current baseline.
+    [HttpGet("/rounds/{roundId:guid}/next-lever", Name = "getNextLever")]
+    [ProducesResponseType<NextLeverResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<NextLeverResponse>> Get(Guid roundId, CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+        if (!await _db.OwnsRoundAsync(roundId, userId, ct)) return NotFound();
+
+        return Ok(await RecommendationFor(roundId, userId, ct));
+    }
+
+    private async Task<NextLeverResponse> RecommendationFor(Guid roundId, Guid userId, CancellationToken ct)
+    {
+        var (leverKey, title, rec, rationale, confidence) = await _svc.RecommendAsync(roundId, userId, ct);
+
+        return new NextLeverResponse
         {
             RoundId = roundId,
             UserId = userId,
@@ -44,6 +67,6 @@ public sealed class RecommendationsController : ControllerBase
             Rationale = rationale,
             ConfidenceLevel = confidence.ToString(),
             CreatedAt = DateTimeOffset.UtcNow
-        });
+        };
     }
 }
