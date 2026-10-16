@@ -49,6 +49,13 @@ const score = {
   habits: 10,
   confidenceLevel: "High",
   computedAt: "2026-05-03T10:00:00Z",
+  explanation: {
+    baselineAvgScore: 91.4,
+    baselineStdDev: 3.2,
+    roundsInHabitWindow: 3,
+    practiceSessionsInHabitWindow: 1,
+    reflected: false,
+  },
 };
 
 /** A fake API: a signed-in user with `trackingMode`, who can log a round that's scored at once. */

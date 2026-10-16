@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
+import { wideScreen } from "../common/media";
 import { LogRoundForm } from "./LogRoundForm";
+import { usePaneHeadingLevel } from "./paneHeading";
 
 /**
  * Where Log round opens (#92): a dialog over the current page on desktop, and its own
@@ -9,9 +11,6 @@ import { LogRoundForm } from "./LogRoundForm";
  */
 
 const OpenLogRound = createContext<(() => void) | null>(null);
-
-/** Desktop, where the form fits in a dialog. Matches the layout's sidebar breakpoint. */
-const dialogQuery = "(min-width: 901px)";
 
 /** Holds the dialog for the signed-in app; AppLayout wraps every section in it. */
 export function LogRoundProvider({ children }: { children: ReactNode }) {
@@ -43,7 +42,7 @@ export function LogRoundLink({ className, children }: { className?: string; chil
       to="/rounds/new"
       className={className}
       onClick={(event) => {
-        if (open && window.matchMedia?.(dialogQuery).matches) {
+        if (open && window.matchMedia?.(wideScreen).matches) {
           event.preventDefault();
           open();
         }
@@ -92,11 +91,12 @@ function LogRoundDialog({ onClose, onSaved }: { onClose: () => void; onSaved: (r
 /** /rounds/new: the form as a page, on phones or from a link. */
 export function LogRoundPage() {
   const navigate = useNavigate();
+  const level = usePaneHeadingLevel();
 
   return (
     <section className="page log-round-page">
       <LogRoundForm
-        headingLevel={1}
+        headingLevel={level}
         // Replace the form in history, so Back from the new round doesn't reopen it.
         onSaved={(roundId) => navigate(`/rounds/${roundId}`, { replace: true })}
         onCancel={() => ((window.history.state as { idx?: number } | null)?.idx ? navigate(-1) : navigate("/"))}

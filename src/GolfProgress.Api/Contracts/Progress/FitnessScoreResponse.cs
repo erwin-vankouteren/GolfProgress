@@ -17,6 +17,9 @@ namespace GolfProgress.Api.Contracts.Progress
         [StringEnum(typeof(Enums.ConfidenceLevel))]
         public string ConfidenceLevel { get; init; } = "Low";
         public DateTimeOffset ComputedAt { get; init; }
+
+        /// <summary>What the pillars were judged on (#95).</summary>
+        public FitnessScoreExplanation Explanation { get; init; } = new();
     }
 
 }

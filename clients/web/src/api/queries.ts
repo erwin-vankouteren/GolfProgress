@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useApi } from "../app/ApiContext";
 import { ApiProblem } from "./problem";
-import { unwrap, type Schemas } from "./client";
+import { totalCount, unwrap, type Schemas } from "./client";
 
 /**
  * Query keys, in one place so a write can invalidate exactly what it changed. Every key
@@ -11,9 +11,12 @@ export const queryKeys = {
   me: ["me"] as const,
   dashboard: ["dashboard"] as const,
   rounds: ["rounds"] as const,
+  roundList: ["rounds", "list"] as const,
   round: (roundId: string) => ["rounds", roundId] as const,
   fitnessScore: (roundId: string) => ["rounds", roundId, "fitness-score"] as const,
   microWins: (roundId: string) => ["rounds", roundId, "micro-wins"] as const,
+  nextLever: (roundId: string) => ["rounds", roundId, "next-lever"] as const,
+  reflections: (roundId: string) => ["rounds", roundId, "reflections"] as const,
 };
 
 /** The signed-in user's profile and preferences, e.g. the tracking mode. */
@@ -78,4 +81,45 @@ async function nullWhenNotFound<T>(load: () => Promise<T>): Promise<T | null> {
     if (error instanceof ApiProblem && error.status === 404) return null;
     throw error;
   }
+}
+
+/** Rounds per page of the round list. */
+export const roundPageSize = 20;
+
+/**
+ * The user's rounds, newest first, a page at a time (#95). The next page starts where
+ * the loaded ones end, until X-Total-Count is reached.
+ */
+export function useRoundList() {
+  const api = useApi();
+  return useInfiniteQuery({
+    queryKey: queryKeys.roundList,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const result = await api.GET("/me/rounds", { params: { query: { skip: pageParam, take: roundPageSize } } });
+      return { rounds: unwrap(result), total: totalCount(result.response) };
+    },
+    getNextPageParam: (lastPage, pages) => {
+      const loaded = pages.reduce((count, page) => count + page.rounds.length, 0);
+      const total = lastPage.total ?? loaded;
+      return loaded < total && lastPage.rounds.length > 0 ? loaded : undefined;
+    },
+  });
+}
+
+/** "Your next focus" for a round, read without recording a recommendation. */
+export function useNextLever(roundId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.nextLever(roundId),
+    queryFn: async () => unwrap(await api.GET("/rounds/{roundId}/next-lever", { params: { path: { roundId } } })),
+  });
+}
+
+export function useReflections(roundId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.reflections(roundId),
+    queryFn: async () => unwrap(await api.GET("/rounds/{roundId}/reflections", { params: { path: { roundId } } })),
+  });
 }

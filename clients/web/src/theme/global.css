@@ -59,6 +59,24 @@ a {
   color: var(--color-on-primary);
 }
 
+/* Destructive actions, such as deleting a round (#95). */
+.button--danger {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: var(--color-on-error);
+}
+
+.button--danger-outline {
+  background: var(--color-surface);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .page {
   max-width: 60rem;
 }

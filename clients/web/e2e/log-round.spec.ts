@@ -65,6 +65,13 @@ async function mockApi(page: Page) {
           habits: 10,
           confidenceLevel: "Medium",
           computedAt: "",
+          explanation: {
+            baselineAvgScore: 90,
+            baselineStdDev: 3,
+            roundsInHabitWindow: 2,
+            practiceSessionsInHabitWindow: 0,
+            reflected: false,
+          },
         });
       case `GET /rounds/${roundId}/micro-wins`:
         return json(route, 200, []);

@@ -70,14 +70,14 @@ public sealed class RoundsController : ControllerBase
         // Event log (RoundLogged) — core to event-based model
         _db.Events.Add(RoundEvent("RoundLogged", round, now));
 
-        var (baseline, _) = await _progress.StageForRoundAsync(round, _options.BaselineWindowRounds, ct);
+        var (baseline, fitness) = await _progress.StageForRoundAsync(round, _options.BaselineWindowRounds, ct);
         await _microWins.StageForRoundAsync(round, baseline, ct);
 
         // One save, so one transaction: the round, its score, the baseline, the
         // micro-wins and their events are all written, or none are (see #8).
         await _db.SaveChangesAsync(ct);
 
-        return CreatedAtAction(nameof(GetById), new { id = round.RoundId }, ToResponse(round));
+        return CreatedAtAction(nameof(GetById), new { id = round.RoundId }, ToResponse(round, fitness));
     }
 
     // GET /rounds/{id}
@@ -92,7 +92,9 @@ public sealed class RoundsController : ControllerBase
 
         if (round is null) return NotFound();
 
-        return Ok(ToResponse(round));
+        var score = await _db.FitnessScores.AsNoTracking().FirstOrDefaultAsync(f => f.RoundId == id, ct);
+
+        return Ok(ToResponse(round, score));
     }
 
     // PUT /rounds/{id}
@@ -127,7 +129,9 @@ public sealed class RoundsController : ControllerBase
 
         await _db.SaveChangesAsync(ct);
 
-        return Ok(ToResponse(round));
+        // The score staged above, now saved.
+        var score = _db.FitnessScores.Local.FirstOrDefault(f => f.RoundId == round.RoundId);
+        return Ok(ToResponse(round, score));
     }
 
     // DELETE /rounds/{id}
@@ -192,10 +196,15 @@ public sealed class RoundsController : ControllerBase
             .ThenBy(r => r.RoundId)
             .Skip(skip)
             .Take(take)
-            .Select(r => ToResponse(r))
             .ToListAsync(ct);
 
-        return Ok(rounds);
+        // The page's scores in one query, rather than one per round.
+        var ids = rounds.Select(r => r.RoundId).ToList();
+        var scores = await _db.FitnessScores.AsNoTracking()
+            .Where(f => ids.Contains(f.RoundId))
+            .ToDictionaryAsync(f => f.RoundId, ct);
+
+        return Ok(rounds.Select(r => ToResponse(r, scores.GetValueOrDefault(r.RoundId))).ToList());
     }
 
     /// <summary>Copies a validated create or update request onto the round.</summary>
@@ -238,7 +247,7 @@ public sealed class RoundsController : ControllerBase
         CreatedAt = now
     };
 
-    private static RoundResponse ToResponse(Round r) => new()
+    private static RoundResponse ToResponse(Round r, FitnessScore? score = null) => new()
     {
         RoundId = r.RoundId,
         UserId = r.UserId,
@@ -256,6 +265,8 @@ public sealed class RoundsController : ControllerBase
         Source = r.Source.ToString(),
         Notes = r.Notes,
         CreatedAt = r.CreatedAt,
-        UpdatedAt = r.UpdatedAt
+        UpdatedAt = r.UpdatedAt,
+        FitnessScore = score?.ScoreTotal,
+        FitnessConfidence = score?.ConfidenceLevel.ToString()
     };
 }

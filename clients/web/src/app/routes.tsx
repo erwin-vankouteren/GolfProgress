@@ -2,10 +2,11 @@ import type { RouteObject } from "react-router";
 import { CreateAccountPage, SignInPage, WelcomePage } from "../auth/AuthPages";
 import { AppLayout } from "../layout/AppLayout";
 import { DashboardPage } from "../dashboard/DashboardPage";
-import { NotFoundPage, PracticePage, ProgressPage, RoundsPage } from "../pages/SectionPage";
+import { NotFoundPage, PracticePage, ProgressPage } from "../pages/SectionPage";
 import { ProfilePage } from "../pages/ProfilePage";
 import { LogRoundPage } from "../rounds/LogRound";
-import { RoundDetailPage } from "../rounds/RoundDetailPage";
+import { EditRoundPage, RoundDetailPage } from "../rounds/RoundDetailPage";
+import { RoundsLayout } from "../rounds/RoundsLayout";
 import { PublicOnly, RequireSession } from "../session/SessionContext";
 
 /**
@@ -28,9 +29,15 @@ export const routes: RouteObject[] = [
         element: <AppLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
-          { path: "rounds", element: <RoundsPage /> },
-          { path: "rounds/new", element: <LogRoundPage /> },
-          { path: "rounds/:roundId", element: <RoundDetailPage /> },
+          {
+            path: "rounds",
+            element: <RoundsLayout />,
+            children: [
+              { path: "new", element: <LogRoundPage /> },
+              { path: ":roundId", element: <RoundDetailPage /> },
+              { path: ":roundId/edit", element: <EditRoundPage /> },
+            ],
+          },
           { path: "practice", element: <PracticePage /> },
           { path: "progress", element: <ProgressPage /> },
           { path: "profile", element: <ProfilePage /> },

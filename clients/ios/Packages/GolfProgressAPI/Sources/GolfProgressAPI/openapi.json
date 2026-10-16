@@ -1214,6 +1214,70 @@
             "Bearer": [ ]
           }
         ]
+      },
+      "get": {
+        "tags": [
+          "Recommendations"
+        ],
+        "operationId": "getNextLever",
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextLeverResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The access token is missing, invalid or expired. Refresh it and retry once.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
       }
     },
     "/rounds/{roundId}/reflections": {
@@ -2479,6 +2543,43 @@
         },
         "additionalProperties": false
       },
+      "FitnessScoreExplanation": {
+        "required": [
+          "baselineAvgScore",
+          "baselineStdDev",
+          "practiceSessionsInHabitWindow",
+          "reflected",
+          "roundsInHabitWindow"
+        ],
+        "type": "object",
+        "properties": {
+          "baselineAvgScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "baselineStdDev": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "roundsInHabitWindow": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "practiceSessionsInHabitWindow": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "reflected": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FitnessScoreResponse": {
         "required": [
           "computedAt",
@@ -2486,6 +2587,7 @@
           "consistency",
           "damageControl",
           "execution",
+          "explanation",
           "fitnessScoreId",
           "habits",
           "roundId",
@@ -2537,6 +2639,9 @@
           "computedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/FitnessScoreExplanation"
           }
         },
         "additionalProperties": false
@@ -3055,6 +3160,8 @@
           "courseName",
           "createdAt",
           "fairwaysHit",
+          "fitnessConfidence",
+          "fitnessScore",
           "gir",
           "holes",
           "notes",
@@ -3149,6 +3256,20 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "fitnessScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "fitnessConfidence": {
+            "enum": [
+              "Low",
+              "Medium",
+              "High"
+            ],
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
