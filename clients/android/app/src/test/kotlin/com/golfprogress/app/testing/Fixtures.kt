@@ -7,10 +7,14 @@ import com.golfprogress.api.generated.models.DashboardRoundSummary
 import com.golfprogress.api.generated.models.FitnessScoreExplanation
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
+import com.golfprogress.api.generated.models.MonthlyReviewResponse
+import com.golfprogress.api.generated.models.MonthlyTimelinePointResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
 import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
+import com.golfprogress.api.generated.models.RoundTimelinePointResponse
+import com.golfprogress.api.generated.models.UserBaselineResponse
 import com.golfprogress.api.generated.models.UserResponse
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -185,6 +189,75 @@ object Fixtures {
         primaryGoal = request.primaryGoal,
         notes = request.notes,
         createdAt = now,
+    )
+
+    fun timelinePoint(
+        i: Int,
+        playedAt: String,
+        score: Int?,
+        holes: Int = 18,
+    ) = RoundTimelinePointResponse(
+        roundId = roundId(i),
+        playedAt = playedAt,
+        holes = holes,
+        totalStrokes = if (holes == 18) 90 - i else 45,
+        totalPutts = null,
+        penalties = null,
+        threePutts = null,
+        blowUpHoles = null,
+        fitnessScoreTotal = score,
+        fitnessConfidence = score?.let { RoundTimelinePointResponse.FitnessConfidence.Medium },
+        microWinTitle = null,
+    )
+
+    fun timeline() =
+        listOf(
+            timelinePoint(1, "2026-08-02", 55),
+            timelinePoint(2, "2026-09-06", 60),
+            timelinePoint(3, "2026-10-04", 64, holes = 9),
+            timelinePoint(4, "2026-10-11", 70),
+        )
+
+    fun month(
+        monthStart: String,
+        average: Double?,
+        rounds: Int = if (average == null) 0 else 2,
+    ) = MonthlyTimelinePointResponse(monthStart, average, null, rounds, emptyList(), false)
+
+    fun months() = listOf(month("2026-08-01", 55.0, 1), month("2026-09-01", null), month("2026-10-01", 67.0))
+
+    fun baseline() =
+        UserBaselineResponse(
+            userId = userId,
+            windowRounds = 5,
+            sampleSize = 4,
+            avgScore = 88.25,
+            scoreStdDev = 3.4,
+            avgPutts = 33.5,
+            avgPenalties = null,
+            avgThreePutts = null,
+            avgBlowUpHoles = null,
+            avgFairwaysHit = null,
+            avgGir = null,
+            completenessRatio = 0.4,
+            confidenceLevel = UserBaselineResponse.ConfidenceLevel.Medium,
+            computedAt = now,
+        )
+
+    fun review(
+        monthStart: String,
+        focus: String? = null,
+    ) = MonthlyReviewResponse(
+        monthlyReviewId = UUID.nameUUIDFromBytes(monthStart.toByteArray()),
+        userId = userId,
+        monthStart = monthStart,
+        fitnessAvg = 67.0,
+        fitnessChange = 7.0,
+        focusNextMonth = focus,
+        roundsLogged = 2,
+        topMicroWinCategory = "Habit",
+        highlights = emptyList(),
+        computedAt = now,
     )
 
     fun reflection(

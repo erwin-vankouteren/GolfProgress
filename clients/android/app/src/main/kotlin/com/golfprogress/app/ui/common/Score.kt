@@ -24,6 +24,8 @@ import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.app.R
 import com.golfprogress.app.ui.theme.DesignTokens
 import com.golfprogress.app.ui.theme.LocalPalette
+import java.math.RoundingMode
+import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -194,3 +196,18 @@ fun MonthChange(
         modifier = Modifier.clearAndSetSemantics { contentDescription = text },
     )
 }
+
+/**
+ * A number with at most one decimal, rounded half up as the web app's Intl does (88.25
+ * is 88.3), not half to even as NumberFormat does by default.
+ */
+fun oneDecimal(
+    value: Double,
+    locale: Locale,
+): String =
+    NumberFormat
+        .getNumberInstance(locale)
+        .apply {
+            maximumFractionDigits = 1
+            roundingMode = RoundingMode.HALF_UP
+        }.format(value)

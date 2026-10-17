@@ -41,13 +41,13 @@ import com.golfprogress.app.practice.LogPracticeScreen
 import com.golfprogress.app.practice.PracticeDetailScreen
 import com.golfprogress.app.practice.PracticeDetailViewModel
 import com.golfprogress.app.practice.PracticeListScreen
+import com.golfprogress.app.progress.ProgressScreen
 import com.golfprogress.app.rounds.ReflectionScreen
 import com.golfprogress.app.rounds.RoundDetailScreen
 import com.golfprogress.app.rounds.RoundFormScreen
 import com.golfprogress.app.rounds.RoundFormViewModel
 import com.golfprogress.app.rounds.RoundsListScreen
 import com.golfprogress.app.sections.ProfileContent
-import com.golfprogress.app.sections.SectionContent
 import com.golfprogress.app.ui.common.OfflineBanner
 import java.util.UUID
 
@@ -165,7 +165,7 @@ fun MainScreen(
                     Destination.PracticeDetail.route,
                     arguments = listOf(navArgument(PracticeDetailViewModel.SESSION_ID) { type = NavType.StringType }),
                 ) { PracticeDetailScreen(onDeleted = { navController.popBackStack() }) }
-                composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }
+                composable(Destination.Progress.route) { ProgressScreen(onLogRound = logRound) }
                 composable(Destination.Profile.route) { ProfileContent(onSignOut) }
             }
         }

@@ -43,6 +43,7 @@ import com.golfprogress.app.ui.common.SectionCard
 import com.golfprogress.app.ui.common.Skeleton
 import com.golfprogress.app.ui.common.currentLocale
 import com.golfprogress.app.ui.common.formatDate
+import com.golfprogress.app.ui.common.oneDecimal
 import com.golfprogress.app.ui.theme.DesignTokens
 import java.text.NumberFormat
 import java.util.UUID
@@ -202,8 +203,7 @@ private fun Stat(
 }
 
 @Composable
-private fun oneDecimal(value: Double): String =
-    NumberFormat.getNumberInstance(currentLocale()).apply { maximumFractionDigits = 1 }.format(value)
+private fun oneDecimal(value: Double): String = oneDecimal(value, currentLocale())
 
 @Composable
 private fun wholeNumber(value: Double): String = NumberFormat.getIntegerInstance(currentLocale()).format(value)
