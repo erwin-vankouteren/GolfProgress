@@ -186,4 +186,18 @@
     </plurals>
     <string name="explain_reflected">You reflected on this round.</string>
     <string name="explain_not_reflected">Adding a reflection would add to this.</string>
+
+    <!-- Reflections (#101) -->
+    <string name="add_reflection">Add reflection</string>
+    <string name="add_another_reflection">Add another reflection</string>
+    <string name="save_reflection">Save reflection</string>
+    <string name="reflection_habits_hint">Reflecting counts towards the Habits part of your fitness score. This round\'s score includes it the next time the round is scored, for example when you edit it.</string>
+    <string name="reflection_needs_something">Fill in at least one thing to save a reflection.</string>
+    <string name="reflection_save_failed">Couldn\'t save the reflection. Please try again.</string>
+    <string name="offline_cant_save_reflection">You\'re offline. Connect to save this reflection.</string>
+    <string name="frustration_question">Did frustration carry over between holes?</string>
+    <string name="rating_of_five">%1$s, %2$d of 5</string>
+    <string name="clear">Clear</string>
+    <string name="clear_rating">Clear %1$s</string>
+    <string name="at_most_characters">Use at most %1$,d characters.</string>
 </resources>

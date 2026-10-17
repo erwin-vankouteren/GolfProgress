@@ -37,6 +37,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.golfprogress.app.R
 import com.golfprogress.app.dashboard.DashboardScreen
+import com.golfprogress.app.rounds.ReflectionScreen
 import com.golfprogress.app.rounds.RoundDetailScreen
 import com.golfprogress.app.rounds.RoundFormScreen
 import com.golfprogress.app.rounds.RoundFormViewModel
@@ -60,6 +61,7 @@ enum class Destination(
     LogRound("rounds/new", R.string.log_round, tab = false),
     RoundDetail("rounds/{roundId}", R.string.round_title, tab = false),
     EditRound("rounds/{roundId}/edit", R.string.edit_round, tab = false),
+    AddReflection("rounds/{roundId}/reflect", R.string.add_reflection, tab = false),
     Practice("practice", R.string.section_practice, tab = true),
     Progress("progress", R.string.section_progress, tab = true),
     Profile("profile", R.string.section_profile, tab = false),
@@ -134,10 +136,14 @@ fun MainScreen(
                     RoundDetailScreen(
                         onEdit = { id -> navController.navigate("rounds/$id/edit") },
                         onDeleted = { navController.popBackStack() },
+                        onAddReflection = { id -> navController.navigate("rounds/$id/reflect") },
                     )
                 }
                 composable(Destination.EditRound.route, arguments = listOf(roundIdArgument)) {
                     RoundFormScreen(onSaved = { navController.popBackStack() })
+                }
+                composable(Destination.AddReflection.route, arguments = listOf(roundIdArgument)) {
+                    ReflectionScreen(onSaved = { navController.popBackStack() })
                 }
                 composable(Destination.Practice.route) { SectionContent(R.string.practice_empty) }
                 composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }

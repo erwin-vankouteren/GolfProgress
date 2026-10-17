@@ -1,5 +1,6 @@
 package com.golfprogress.app.testing
 
+import com.golfprogress.api.generated.models.CreateReflectionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.FitnessScoreResponse
@@ -108,6 +109,17 @@ class FakeRoundsRepository(
     override suspend fun nextLever(roundId: UUID): NextLeverResponse? = Fixtures.nextLever(roundId)
 
     override suspend fun reflections(roundId: UUID): List<ReflectionResponse> = reflections
+
+    val added = mutableListOf<Pair<UUID, CreateReflectionRequest>>()
+
+    override suspend fun addReflection(
+        roundId: UUID,
+        request: CreateReflectionRequest,
+    ): ReflectionResponse {
+        check()
+        added += roundId to request
+        return Fixtures.reflection(roundId)
+    }
 }
 
 /** The fakes the Hilt graph hands out; [reset] before each test. */

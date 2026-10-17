@@ -7,6 +7,7 @@ import com.golfprogress.api.generated.apis.RecommendationsApi
 import com.golfprogress.api.generated.apis.ReflectionsApi
 import com.golfprogress.api.generated.apis.RoundsApi
 import com.golfprogress.api.generated.apis.UsersApi
+import com.golfprogress.api.generated.models.CreateReflectionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
@@ -54,6 +55,12 @@ interface RoundsRepository {
     suspend fun nextLever(roundId: UUID): NextLeverResponse?
 
     suspend fun reflections(roundId: UUID): List<ReflectionResponse>
+
+    /** Adds a reflection to the round (#101). */
+    suspend fun addReflection(
+        roundId: UUID,
+        request: CreateReflectionRequest,
+    ): ReflectionResponse
 }
 
 class ApiRoundsRepository
@@ -93,6 +100,11 @@ class ApiRoundsRepository
 
         override suspend fun reflections(roundId: UUID): List<ReflectionResponse> =
             nullWhenNotFound { api.service<ReflectionsApi>().listReflections(roundId).unwrap() }.orEmpty()
+
+        override suspend fun addReflection(
+            roundId: UUID,
+            request: CreateReflectionRequest,
+        ): ReflectionResponse = api.service<ReflectionsApi>().createReflection(roundId, request).unwrap()
     }
 
 /** The signed-in user's profile and preferences, e.g. the tracking mode Log round follows. */

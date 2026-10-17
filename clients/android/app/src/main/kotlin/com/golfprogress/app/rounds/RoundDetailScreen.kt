@@ -59,16 +59,13 @@ import java.time.format.FormatStyle
 import java.util.UUID
 import kotlin.math.abs
 
-/**
- * A round's detail (#97, docs/clients/ux-design.md → "Rounds"). [reflections] adds to the
- * reflection card, e.g. the form to add one (#101).
- */
+/** A round's detail (#97, docs/clients/ux-design.md → "Rounds"), where reflections are added (#101). */
 @Composable
 fun RoundDetailScreen(
     onEdit: (UUID) -> Unit,
     onDeleted: () -> Unit,
+    onAddReflection: (UUID) -> Unit,
     viewModel: RoundDetailViewModel = hiltViewModel(),
-    reflections: @Composable () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
@@ -80,7 +77,7 @@ fun RoundDetailScreen(
         onAskToDelete = viewModel::askToDelete,
         onConfirmDelete = viewModel::confirmDelete,
         onCancelDelete = viewModel::cancelDelete,
-        reflections = reflections,
+        onAddReflection = { onAddReflection(viewModel.roundId) },
     )
 }
 
@@ -93,7 +90,7 @@ fun RoundDetailContent(
     onConfirmDelete: () -> Unit,
     onCancelDelete: () -> Unit,
     online: Boolean = isOnline(),
-    reflections: @Composable () -> Unit = {},
+    onAddReflection: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(DesignTokens.Spacing.lg),
@@ -106,7 +103,7 @@ fun RoundDetailContent(
                 if (detail.value == null) {
                     RoundGone()
                 } else {
-                    Detail(detail.value, reflections)
+                    Detail(detail.value, onAddReflection, online)
                     Button(
                         onClick = onEdit,
                         enabled = online,
@@ -137,7 +134,8 @@ fun RoundDetailContent(
 @Composable
 private fun Detail(
     detail: RoundDetail,
-    reflections: @Composable () -> Unit,
+    onAddReflection: () -> Unit,
+    online: Boolean,
 ) {
     val round = detail.round
     Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)) {
@@ -171,7 +169,7 @@ private fun Detail(
     }
 
     StatsCard(round)
-    ReflectionsCard(detail.reflections, reflections)
+    ReflectionsCard(detail.reflections, onAddReflection, online)
 }
 
 /** "Hilversum · 18 holes · 88 strokes", or without the course when there's none. */
@@ -252,14 +250,19 @@ private fun StatsCard(round: RoundResponse) {
 @Composable
 private fun ReflectionsCard(
     reflections: List<ReflectionResponse>,
-    more: @Composable () -> Unit,
+    onAdd: () -> Unit,
+    online: Boolean,
 ) {
     SectionCard(R.string.reflection) {
         if (reflections.isEmpty()) {
             Text(stringResource(R.string.no_reflection), style = MaterialTheme.typography.bodyLarge)
         }
         reflections.forEach { ReflectionView(it) }
-        more()
+        OutlinedButton(
+            onClick = onAdd,
+            enabled = online,
+            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+        ) { Text(stringResource(if (reflections.isEmpty()) R.string.add_reflection else R.string.add_another_reflection)) }
     }
 }
 
