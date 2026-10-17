@@ -1,0 +1,204 @@
+/* Progress (#107). Tokens only: the charts draw with currentColor, set here per series. */
+
+.progress {
+  max-width: 72rem;
+}
+
+.progress-section p {
+  margin: 0;
+}
+
+.range-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-md);
+}
+
+.range-error {
+  flex-basis: 100%;
+}
+
+.review-month {
+  max-width: 20rem;
+}
+
+.chart-summary {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.chart-toggle {
+  justify-self: start;
+}
+
+.low-data {
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-variant);
+}
+
+.chart-skeleton .skeleton-block {
+  height: 280px;
+}
+
+/* ---------------------------------------------------------------- charts */
+
+.progress-chart {
+  display: grid;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.chart-series--fitness {
+  color: var(--color-primary);
+}
+
+.chart-series--strokes {
+  color: var(--color-info);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.chart-swatch {
+  width: 24px;
+  border-top: 3px solid currentColor;
+}
+
+.chart-swatch--dashed {
+  border-top-style: dashed;
+}
+
+/* The legend text stays secondary; only the swatch takes the series colour. */
+.chart-legend-item {
+  color: var(--color-text-secondary);
+}
+
+.chart-legend-item.chart-series--fitness .chart-swatch {
+  color: var(--color-primary);
+}
+
+.chart-legend-item.chart-series--strokes .chart-swatch {
+  color: var(--color-info);
+}
+
+.progress-chart .recharts-cartesian-grid line {
+  stroke: var(--color-border);
+}
+
+.progress-chart .recharts-cartesian-axis-line,
+.progress-chart .recharts-cartesian-axis-tick-line {
+  stroke: var(--color-border-strong);
+}
+
+.progress-chart .recharts-cartesian-axis-tick-value {
+  fill: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.progress-chart .chart-cursor {
+  fill: var(--color-surface-variant);
+  stroke: var(--color-border-strong);
+}
+
+.chart-tooltip {
+  display: grid;
+  gap: var(--space-xxs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-label);
+}
+
+.chart-tooltip p {
+  margin: 0;
+}
+
+.chart-tooltip-title {
+  font-weight: var(--font-weight-label);
+}
+
+/* ---------------------------------------------------------------- tables */
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-callout);
+}
+
+.progress-table th,
+.progress-table td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.progress-table thead th {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+}
+
+.progress-table tbody th {
+  font-weight: var(--font-weight-body);
+}
+
+.progress-table a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
+/* ---------------------------------------------------------------- baseline and review */
+
+.baseline-confidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.review {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.review-form {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 32rem;
+}
+
+.progress-chart .chart-dot {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 2;
+  /* The strokes line is dashed; its dots shouldn't be. */
+  stroke-dasharray: none;
+}
+
+.progress-chart .chart-dot--hollow {
+  fill: var(--color-surface);
+}

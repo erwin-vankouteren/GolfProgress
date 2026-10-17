@@ -7,6 +7,9 @@ public sealed class RoundTimelinePointResponse
     public Guid RoundId { get; init; }
     public string PlayedAt { get; init; } = ""; // yyyy-MM-dd
 
+    /// <summary>9 or 18, so a chart can tell a 9-hole score from an 18-hole one (#107).</summary>
+    public short Holes { get; init; }
+
     public short TotalStrokes { get; init; }
     public short? TotalPutts { get; init; }
     public short? Penalties { get; init; }

@@ -2862,6 +2862,7 @@
         "required": [
           "fitnessAvg",
           "fitnessChange",
+          "hasReview",
           "highlights",
           "monthStart",
           "roundsLogged"
@@ -2890,6 +2891,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "hasReview": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -3282,6 +3286,7 @@
           "blowUpHoles",
           "fitnessConfidence",
           "fitnessScoreTotal",
+          "holes",
           "microWinTitle",
           "penalties",
           "playedAt",
@@ -3298,6 +3303,10 @@
           },
           "playedAt": {
             "type": "string"
+          },
+          "holes": {
+            "type": "integer",
+            "format": "int32"
           },
           "totalStrokes": {
             "type": "integer",
@@ -3441,6 +3450,7 @@
           "completenessRatio",
           "computedAt",
           "confidenceLevel",
+          "sampleSize",
           "scoreStdDev",
           "userId",
           "windowRounds"
@@ -3452,6 +3462,10 @@
             "format": "uuid"
           },
           "windowRounds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sampleSize": {
             "type": "integer",
             "format": "int32"
           },

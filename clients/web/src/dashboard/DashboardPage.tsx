@@ -151,14 +151,32 @@ function Card({
   );
 }
 
+const changeWording = {
+  // This month against last month, on Home.
+  lastMonth: { same: messages.sameAsLastMonth, up: messages.upOnLastMonth, down: messages.downOnLastMonth },
+  // Any month against the one before it, in a monthly review (#107).
+  previousMonth: {
+    same: messages.sameAsPreviousMonth,
+    up: messages.upOnPreviousMonth,
+    down: messages.downOnPreviousMonth,
+  },
+};
+
 /** "▲ Up 4 on last month": the arrow is decoration, the words carry the direction. */
-export function MonthChange({ change }: { change: number }) {
+export function MonthChange({
+  change,
+  comparedWith = "lastMonth",
+}: {
+  change: number;
+  comparedWith?: keyof typeof changeWording;
+}) {
   const intl = useIntl();
+  const wording = changeWording[comparedWith];
   const rounded = Math.round(change);
   if (rounded === 0) {
     return (
       <p className="month-change">
-        <FormattedMessage {...messages.sameAsLastMonth} />
+        <FormattedMessage {...wording.same} />
       </p>
     );
   }
@@ -167,10 +185,7 @@ export function MonthChange({ change }: { change: number }) {
   return (
     <p className={`month-change month-change--${rounded > 0 ? "up" : "down"}`}>
       <span aria-hidden="true">{rounded > 0 ? "▲ " : "▼ "}</span>
-      <FormattedMessage
-        {...(rounded > 0 ? messages.upOnLastMonth : messages.downOnLastMonth)}
-        values={{ change: amount }}
-      />
+      <FormattedMessage {...(rounded > 0 ? wording.up : wording.down)} values={{ change: amount }} />
     </p>
   );
 }

@@ -31,8 +31,6 @@ function SectionPage({
   );
 }
 
-export const ProgressPage = () => <SectionPage title={messages.progress} empty={messages.progressEmpty} />;
-
 export function NotFoundPage() {
   return (
     <SectionPage

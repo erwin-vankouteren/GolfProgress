@@ -258,6 +258,60 @@ export const plainMessages = defineMessages({
     id: "confidence.lowExplanation",
     defaultMessage: "Based on only a few rounds so far: early days.",
   },
+
+  // Progress (#107)
+  timelineTitle: { id: "progress.timeline", defaultMessage: "Rounds over time" },
+  monthlyTrendTitle: { id: "progress.monthly", defaultMessage: "Monthly trend" },
+  monthlyReviewTitle: { id: "progress.review", defaultMessage: "Monthly review" },
+  progressLoadError: { id: "progress.loadError", defaultMessage: "Couldn't load your progress." },
+  timelineLoadError: { id: "progress.timelineLoadError", defaultMessage: "Couldn't load your rounds over time." },
+  monthlyLoadError: { id: "progress.monthlyLoadError", defaultMessage: "Couldn't load your monthly trend." },
+  baselineLoadError: { id: "progress.baselineLoadError", defaultMessage: "Couldn't load your baseline." },
+  reviewLoadError: { id: "progress.reviewLoadError", defaultMessage: "Couldn't load this review." },
+  period: { id: "progress.period", defaultMessage: "Period" },
+  range3m: { id: "progress.range3m", defaultMessage: "Last 3 months" },
+  range6m: { id: "progress.range6m", defaultMessage: "Last 6 months" },
+  range12m: { id: "progress.range12m", defaultMessage: "Last 12 months" },
+  rangeAll: { id: "progress.rangeAll", defaultMessage: "All time" },
+  rangeCustom: { id: "progress.rangeCustom", defaultMessage: "Choose dates" },
+  rangeFrom: { id: "progress.rangeFrom", defaultMessage: "From" },
+  rangeTo: { id: "progress.rangeTo", defaultMessage: "To" },
+  rangeOrder: { id: "progress.rangeOrder", defaultMessage: "The start date must be on or before the end date." },
+  showAsTable: { id: "progress.showAsTable", defaultMessage: "Show as table" },
+  showAsChart: { id: "progress.showAsChart", defaultMessage: "Show as chart" },
+  noRoundsInPeriod: {
+    id: "progress.noRoundsInPeriod",
+    defaultMessage: "No rounds in this period. Choose a longer one to see more.",
+  },
+  confidenceColumn: { id: "progress.confidenceColumn", defaultMessage: "Confidence" },
+  monthColumn: { id: "progress.monthColumn", defaultMessage: "Month" },
+  roundsColumn: { id: "progress.roundsColumn", defaultMessage: "Rounds" },
+  changeColumn: { id: "progress.changeColumn", defaultMessage: "Change on previous month" },
+  noScoredRounds: { id: "progress.noScoredRounds", defaultMessage: "No scored rounds" },
+  monthlyEmpty: { id: "progress.monthlyEmpty", defaultMessage: "No scored rounds in the last 12 months." },
+  monthlyNeedsAnotherMonth: {
+    id: "progress.monthlyNeedsAnotherMonth",
+    defaultMessage: "Play in another month to see a monthly trend.",
+  },
+  baselineEmpty: { id: "progress.baselineEmpty", defaultMessage: "Your baseline appears once you've logged a round." },
+  baselineIntro: {
+    id: "progress.baselineIntro",
+    defaultMessage: "What your next round is compared with: your recent averages, per 18 holes.",
+  },
+  averageStrokes: { id: "progress.averageStrokes", defaultMessage: "Strokes" },
+  spread: { id: "progress.spread", defaultMessage: "Spread" },
+  statsTracked: { id: "progress.statsTracked", defaultMessage: "Stats tracked" },
+  reviewMonth: { id: "progress.reviewMonth", defaultMessage: "Month" },
+  focusNextMonth: { id: "progress.focusNextMonth", defaultMessage: "Your focus for next month" },
+  focusHint: { id: "progress.focusHint", defaultMessage: "Optional. For example: fewer three-putts." },
+  createReview: { id: "progress.createReview", defaultMessage: "Create review" },
+  updateReview: { id: "progress.updateReview", defaultMessage: "Update review" },
+  creatingReview: { id: "progress.creatingReview", defaultMessage: "Creating review…" },
+  reviewReady: { id: "progress.reviewReady", defaultMessage: "Review ready." },
+  reviewFailed: { id: "progress.reviewFailed", defaultMessage: "Couldn't create the review. Please try again." },
+  offlineCantReview: { id: "progress.offlineReview", defaultMessage: "You're offline. Connect to create a review." },
+  reviewFocus: { id: "progress.reviewFocus", defaultMessage: "Focus for next month" },
+  sameAsPreviousMonth: { id: "progress.sameAsPreviousMonth", defaultMessage: "Same as the month before" },
 });
 
 /** Any message that takes no values, for components that are handed one. */
@@ -373,6 +427,89 @@ export const messagesWithValues = {
   roundSummaryWithCourse: defineMessage<{ course: string; holes: number; strokes: number }>({
     id: "round.summaryWithCourse",
     defaultMessage: "{course} · {holes} holes · {strokes, plural, one {# stroke} other {# strokes}}",
+  }),
+
+  // Progress (#107)
+  moreRoundsForTrend: defineMessage<{ count: number }>({
+    id: "progress.moreRoundsForTrend",
+    defaultMessage: "Log {count, plural, one {# more round} other {# more rounds}} to see a trend.",
+  }),
+  fewRoundsInPeriod: defineMessage<{ count: number }>({
+    id: "progress.fewRoundsInPeriod",
+    defaultMessage:
+      "{count, plural, one {Only # scored round} other {Only # scored rounds}} in this period: not enough for a trend. Choose a longer period.",
+  }),
+  timelineSummary: defineMessage<{ rounds: number; from: string; to: string }>({
+    id: "progress.timelineSummary",
+    defaultMessage: "{rounds, plural, one {# round} other {# rounds}} from {from} to {to}.",
+  }),
+  timelineScoreSummary: defineMessage<{ first: number; last: number; average: number }>({
+    id: "progress.timelineScoreSummary",
+    defaultMessage: "Fitness score went from {first} to {last}, averaging {average}.",
+  }),
+  timelineCapped: defineMessage<{ count: number }>({
+    id: "progress.timelineCapped",
+    defaultMessage: "Showing your latest {count} rounds in this period.",
+  }),
+  strokesLine: defineMessage<{ holes: number }>({
+    id: "progress.strokesLine",
+    defaultMessage: "Strokes ({holes} holes)",
+  }),
+  strokesLeaveOut: defineMessage<{ holes: number }>({
+    id: "progress.strokesLeaveOut",
+    defaultMessage: "The strokes line shows {holes}-hole rounds only; the table has every round.",
+  }),
+  monthlySummaryOne: defineMessage<{ month: string; average: number }>({
+    id: "progress.monthlySummaryOne",
+    defaultMessage: "Average fitness score in {month}: {average}.",
+  }),
+  monthlySummary: defineMessage<{
+    months: number;
+    firstMonth: string;
+    first: number;
+    lastMonth: string;
+    last: number;
+  }>({
+    id: "progress.monthlySummary",
+    defaultMessage:
+      "Scored rounds in {months, plural, one {# month} other {# months}}. Average fitness score went from {first} in {firstMonth} to {last} in {lastMonth}.",
+  }),
+  monthReviewed: defineMessage<{ month: string }>({
+    id: "progress.monthReviewed",
+    defaultMessage: "{month} (reviewed)",
+  }),
+  reviewNoRounds: defineMessage<{ month: string }>({
+    id: "progress.reviewNoRounds",
+    defaultMessage: "You didn't log any rounds in {month}, so there's nothing to review.",
+  }),
+  reviewNone: defineMessage<{ month: string }>({
+    id: "progress.reviewNone",
+    defaultMessage: "There's no review of {month} yet. Create one to see how the month went.",
+  }),
+  roundsPlayed: defineMessage<{ count: number }>({
+    id: "progress.roundsPlayed",
+    defaultMessage: "{count, plural, one {# round} other {# rounds}} played",
+  }),
+  reviewCreatedOn: defineMessage<{ date: string }>({
+    id: "progress.reviewCreatedOn",
+    defaultMessage: "Created {date}",
+  }),
+  baselineBasedOn: defineMessage<{ count: number }>({
+    id: "progress.baselineBasedOn",
+    defaultMessage: "Based on {count, plural, one {your last round} other {your last # rounds}}.",
+  }),
+  spreadValue: defineMessage<{ value: string }>({ id: "progress.spreadValue", defaultMessage: "± {value}" }),
+  upOnPreviousMonth: defineMessage<{ change: string }>({
+    id: "progress.upOnPreviousMonth",
+    defaultMessage: "Up {change} on the month before",
+  }),
+  downOnPreviousMonth: defineMessage<{ change: string }>({
+    id: "progress.downOnPreviousMonth",
+    defaultMessage: "Down {change} on the month before",
+  }),
+  focusTooLong: defineMessage<{ max: number }>({
+    id: "progress.focusTooLong",
+    defaultMessage: "Keep it to {max} characters or fewer.",
   }),
 };
 

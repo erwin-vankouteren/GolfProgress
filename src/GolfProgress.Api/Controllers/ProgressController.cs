@@ -50,10 +50,15 @@ public sealed class ProgressController : ControllerBase
         var b = await _db.UserBaselines.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == userId, ct);
         if (b is null) return NotFound();
 
+        // The baseline is the most recent WindowRounds rounds, recomputed on every
+        // round written, so it averages all of them until there are more.
+        var rounds = await _db.Rounds.CountAsync(r => r.UserId == userId, ct);
+
         return Ok(new UserBaselineResponse
         {
             UserId = b.UserId,
             WindowRounds = b.WindowRounds,
+            SampleSize = Math.Min(rounds, b.WindowRounds),
             AvgScore = b.AvgScore,
             ScoreStdDev = b.ScoreStdDev,
             AvgPutts = b.AvgPutts,

@@ -125,6 +125,7 @@ function RoundFields({
       // An edit can rescore other rounds and the baseline too, so every round query is stale.
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       void queryClient.invalidateQueries({ queryKey: queryKeys.rounds });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progress });
       onSaved(saved.roundId);
     },
     onError: (error) => {
@@ -144,6 +145,7 @@ function RoundFields({
       queryClient.removeQueries({ queryKey: queryKeys.round(roundId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       void queryClient.invalidateQueries({ queryKey: queryKeys.rounds });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progress });
       onDeleted?.();
     },
   });

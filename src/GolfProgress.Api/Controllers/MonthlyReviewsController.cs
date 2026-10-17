@@ -7,7 +7,6 @@ using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace GolfProgress.Api.Controllers;
 
@@ -36,10 +35,20 @@ public sealed class MonthlyReviewsController : ControllerBase
         if (!IsoDate.TryParse(request.MonthStart, out var monthStart))
             return this.FieldError(nameof(request.MonthStart), "MonthStart must be an ISO date, yyyy-MM-dd (the first day of the month).");
 
+        // A review covers a calendar month and is read back by its first day, so a
+        // review stored under "2026-04-15" could never be found again (#107).
+        if (monthStart.Day != 1)
+            return this.FieldError(nameof(request.MonthStart), "MonthStart must be the first day of a month, e.g. 2026-04-01.");
+
         var exists = await _db.Users.AnyAsync(u => u.UserId == userId, ct);
         if (!exists) return NotFound();
 
-        var review = await _svc.GenerateAsync(userId, monthStart, request.FocusNextMonth, ct);
+        var focus = string.IsNullOrWhiteSpace(request.FocusNextMonth) ? null : request.FocusNextMonth.Trim();
+        if (focus is not null && focus.EnumerateRunes().Count() > GenerateMonthlyReviewRequest.FocusNextMonthMaxLength)
+            return this.FieldError(nameof(request.FocusNextMonth),
+                $"FocusNextMonth must be at most {GenerateMonthlyReviewRequest.FocusNextMonthMaxLength} characters.");
+
+        var review = await _svc.GenerateAsync(userId, monthStart, focus, ct);
         return Ok(ToResponse(review));
     }
 
@@ -64,17 +73,7 @@ public sealed class MonthlyReviewsController : ControllerBase
 
     private static MonthlyReviewResponse ToResponse(GolfProgress.Domain.Entities.MonthlyReview r)
     {
-        var highlights = new List<string>();
-        try
-        {
-            if (r.HighlightsJson != null)
-            {
-                var root = r.HighlightsJson.RootElement;
-                if (root.TryGetProperty("highlights", out var arr) && arr.ValueKind == JsonValueKind.Array)
-                    highlights = arr.EnumerateArray().Select(x => x.GetString() ?? "").Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-            }
-        }
-        catch { /* keep empty list */ }
+        var highlights = MonthlyReviewService.ReadHighlights(r.HighlightsJson);
 
         return new MonthlyReviewResponse
         {

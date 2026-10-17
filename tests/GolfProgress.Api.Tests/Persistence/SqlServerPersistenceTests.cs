@@ -216,6 +216,47 @@ public sealed class SqlServerPersistenceTests
     }
 
     /// <summary>
+    /// Issue #107: the monthly trend reads each round's score in one query, which must
+    /// translate to SQL; an unscored round counts as logged but not in the average.
+    /// </summary>
+    [SqlServerFact]
+    public async Task MonthlyTimeline_AveragesScoredRoundsPerMonth()
+    {
+        var userId = await SeedUserAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var thisMonth = new DateOnly(today.Year, today.Month, 1);
+
+        await using (var db = _sql.CreateContext())
+        {
+            foreach (var (score, scored) in new[] { (60, true), (70, true), (0, false) })
+            {
+                var roundId = Guid.NewGuid();
+                db.Rounds.Add(new Round
+                {
+                    RoundId = roundId, UserId = userId, PlayedAt = thisMonth, Holes = 18, TotalStrokes = 90,
+                    CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow
+                });
+                if (scored)
+                    db.FitnessScores.Add(new FitnessScore
+                    {
+                        FitnessScoreId = Guid.NewGuid(), UserId = userId, RoundId = roundId, ScoreTotal = (short)score,
+                        ExplanationJson = JsonDocument.Parse("{}"), ComputedAt = DateTimeOffset.UtcNow
+                    });
+            }
+            await db.SaveChangesAsync();
+        }
+
+        await using (var db = _sql.CreateContext())
+        {
+            var timeline = await new TimelineService(db).GetMonthlyTimelineAsync(userId, 2, CancellationToken.None);
+
+            Assert.Equal(0, timeline.Items[0].RoundsLogged);
+            Assert.Equal(3, timeline.Items[1].RoundsLogged);
+            Assert.Equal(65m, timeline.Items[1].FitnessAvg);
+        }
+    }
+
+    /// <summary>
     /// Issue #84: deleting an account leaves no row referencing the user in any table,
     /// despite the Restrict foreign keys from Users. Every table with a UserId column is
     /// found from the model, so a table added later is checked without editing this.

@@ -11,6 +11,22 @@ public sealed class MonthlyReviewService
 
     public MonthlyReviewService(GolfProgressDbContext db) => _db = db;
 
+    /// <summary>A review's highlights, read leniently: anything unexpected reads as none.</summary>
+    public static List<string> ReadHighlights(JsonDocument? highlightsJson)
+    {
+        if (highlightsJson is null
+            || highlightsJson.RootElement.ValueKind != JsonValueKind.Object
+            || !highlightsJson.RootElement.TryGetProperty("highlights", out var arr)
+            || arr.ValueKind != JsonValueKind.Array)
+            return new();
+
+        return arr.EnumerateArray()
+            .Where(x => x.ValueKind == JsonValueKind.String)
+            .Select(x => x.GetString()!)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+    }
+
     public async Task<MonthlyReview> GenerateAsync(Guid userId, DateOnly monthStart, string? focusNextMonth, CancellationToken ct)
     {
         var nextMonth = monthStart.AddMonths(1);

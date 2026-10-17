@@ -1,7 +1,7 @@
-﻿using GolfProgress.Api.Contracts.Timeline;
+﻿using GolfProgress.Api.Contracts;
+using GolfProgress.Api.Contracts.Timeline;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace GolfProgress.Api.Services;
 
@@ -28,6 +28,8 @@ public sealed class TimelineService
             {
                 r.RoundId,
                 r.PlayedAt,
+                r.CreatedAt,
+                r.Holes,
                 r.TotalStrokes,
                 r.TotalPutts,
                 r.Penalties,
@@ -57,9 +59,11 @@ public sealed class TimelineService
             .GroupBy(x => x.RoundId)
             .ToDictionary(g => g.Key, g => g.First().Title);
 
-        // Compose response in chronological order for charting (oldest -> newest)
+        // Compose response in chronological order for charting (oldest -> newest). Two
+        // rounds on one day keep the order they were logged in.
         var items = rounds
             .OrderBy(r => r.PlayedAt)
+            .ThenBy(r => r.CreatedAt)
             .Select(r =>
             {
                 fitnessMap.TryGetValue(r.RoundId, out var fs);
@@ -69,6 +73,7 @@ public sealed class TimelineService
                 {
                     RoundId = r.RoundId,
                     PlayedAt = r.PlayedAt.ToString("yyyy-MM-dd"),
+                    Holes = r.Holes,
                     TotalStrokes = r.TotalStrokes,
                     TotalPutts = r.TotalPutts,
                     Penalties = r.Penalties,
@@ -89,51 +94,69 @@ public sealed class TimelineService
         };
     }
 
+    /// <summary>
+    /// One point per calendar month: the last <paramref name="months"/> months up to and
+    /// including this one (UTC), oldest first (#107). The averages come from the rounds
+    /// and their scores, so every month with rounds has one whether or not a monthly
+    /// review was generated for it; a month without scored rounds has none. Highlights
+    /// come from the month's review, when there is one.
+    /// </summary>
     public async Task<MonthlyTimelineResponse> GetMonthlyTimelineAsync(Guid userId, int months, CancellationToken ct)
     {
         months = Math.Clamp(months, 1, 24);
 
-        // Prefer MonthlyReviews when they exist (generated in step 3.5)
-        var reviews = await _db.MonthlyReviews.AsNoTracking()
-            .Where(r => r.UserId == userId)
-            .OrderByDescending(r => r.MonthStart)
-            .Take(months)
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var thisMonth = new DateOnly(today.Year, today.Month, 1);
+        var firstMonth = thisMonth.AddMonths(1 - months);
+        var end = thisMonth.AddMonths(1);
+        // The month before the first is read too, for the first month's change.
+        var readFrom = firstMonth.AddMonths(-1);
+
+        var rounds = await _db.Rounds.AsNoTracking()
+            .Where(r => r.UserId == userId && r.PlayedAt >= readFrom && r.PlayedAt < end)
+            .Select(r => new
+            {
+                r.PlayedAt,
+                Score = _db.FitnessScores
+                    .Where(fs => fs.RoundId == r.RoundId)
+                    .Select(fs => (short?)fs.ScoreTotal)
+                    .FirstOrDefault()
+            })
             .ToListAsync(ct);
 
-        var items = new List<MonthlyTimelinePointResponse>();
+        var byMonth = rounds
+            .GroupBy(r => new DateOnly(r.PlayedAt.Year, r.PlayedAt.Month, 1))
+            .ToDictionary(g => g.Key, g => g.ToList());
 
-        foreach (var r in reviews.OrderBy(x => x.MonthStart))
+        var reviews = await _db.MonthlyReviews.AsNoTracking()
+            .Where(r => r.UserId == userId && r.MonthStart >= firstMonth && r.MonthStart < end)
+            .ToListAsync(ct);
+        var reviewByMonth = reviews
+            .GroupBy(r => r.MonthStart)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        decimal? AverageIn(DateOnly month)
         {
-            var highlights = new List<string>();
+            if (!byMonth.TryGetValue(month, out var inMonth)) return null;
+            var scores = inMonth.Where(r => r.Score.HasValue).Select(r => (decimal)r.Score!.Value).ToList();
+            return scores.Count == 0 ? null : Math.Round(scores.Average(), 2);
+        }
 
-            try
-            {
-                if (r.HighlightsJson != null)
-                {
-                    var root = r.HighlightsJson.RootElement;
-                    if (root.TryGetProperty("highlights", out var arr) && arr.ValueKind == JsonValueKind.Array)
-                    {
-                        highlights = arr.EnumerateArray()
-                            .Select(x => x.GetString() ?? "")
-                            .Where(s => !string.IsNullOrWhiteSpace(s))
-                            .ToList();
-                    }
-                }
-            }
-            catch { /* keep empty */ }
-
-            // rounds count (computed quickly)
-            var nextMonth = r.MonthStart.AddMonths(1);
-            var roundCount = await _db.Rounds.AsNoTracking()
-                .CountAsync(x => x.UserId == userId && x.PlayedAt >= r.MonthStart && x.PlayedAt < nextMonth, ct);
+        var items = new List<MonthlyTimelinePointResponse>();
+        for (var month = firstMonth; month < end; month = month.AddMonths(1))
+        {
+            var avg = AverageIn(month);
+            var previous = AverageIn(month.AddMonths(-1));
+            reviewByMonth.TryGetValue(month, out var review);
 
             items.Add(new MonthlyTimelinePointResponse
             {
-                MonthStart = r.MonthStart.ToString("yyyy-MM-dd"),
-                FitnessAvg = r.FitnessAvg,
-                FitnessChange = r.FitnessChange,
-                RoundsLogged = roundCount,
-                Highlights = highlights
+                MonthStart = month.ToString(IsoDate.Format),
+                FitnessAvg = avg,
+                FitnessChange = avg.HasValue && previous.HasValue ? avg.Value - previous.Value : null,
+                RoundsLogged = byMonth.TryGetValue(month, out var inMonth) ? inMonth.Count : 0,
+                Highlights = review is null ? new() : MonthlyReviewService.ReadHighlights(review.HighlightsJson),
+                HasReview = review is not null
             });
         }
 

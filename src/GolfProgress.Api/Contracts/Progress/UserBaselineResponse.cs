@@ -5,7 +5,14 @@ namespace GolfProgress.Api.Contracts.Progress
     public sealed class UserBaselineResponse
     {
         public Guid UserId { get; init; }
+        /// <summary>How many recent rounds the baseline averages at most (configuration).</summary>
         public short WindowRounds { get; init; }
+
+        /// <summary>
+        /// How many rounds it actually averages: fewer than WindowRounds until that many
+        /// are logged, as in "Based on 3 rounds" (#107).
+        /// </summary>
+        public int SampleSize { get; init; }
         public decimal? AvgScore { get; init; }
         public decimal? ScoreStdDev { get; init; }
 

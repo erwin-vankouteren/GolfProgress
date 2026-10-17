@@ -12,6 +12,7 @@ export const queryKeys = {
   dashboard: ["dashboard"] as const,
   rounds: ["rounds"] as const,
   roundList: ["rounds", "list"] as const,
+  roundCount: ["rounds", "count"] as const,
   round: (roundId: string) => ["rounds", roundId] as const,
   fitnessScore: (roundId: string) => ["rounds", roundId, "fitness-score"] as const,
   microWins: (roundId: string) => ["rounds", roundId, "micro-wins"] as const,
@@ -20,6 +21,13 @@ export const queryKeys = {
   practice: ["practice"] as const,
   practiceList: ["practice", "list"] as const,
   practiceSession: (id: string) => ["practice", id] as const,
+  // Everything in Progress (#107) is computed from the rounds, so a round written
+  // invalidates all of it.
+  progress: ["progress"] as const,
+  timeline: (from: string, to: string, take: number) => ["progress", "timeline", from, to, take] as const,
+  monthlyTimeline: (months: number) => ["progress", "monthly", months] as const,
+  baseline: ["progress", "baseline"] as const,
+  monthlyReview: (monthStart: string) => ["progress", "review", monthStart] as const,
 };
 
 /** The signed-in user's profile and preferences, e.g. the tracking mode. */
@@ -155,5 +163,60 @@ export function usePracticeSession(id: string) {
   return useQuery({
     queryKey: queryKeys.practiceSession(id),
     queryFn: async () => unwrap(await api.GET("/me/practice-sessions/{id}", { params: { path: { id } } })),
+  });
+}
+
+/** How many rounds the user has logged, from X-Total-Count, reading a single round. */
+export function useRoundCount() {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.roundCount,
+    queryFn: async () => {
+      const result = await api.GET("/me/rounds", { params: { query: { skip: 0, take: 1 } } });
+      const rounds = unwrap(result);
+      return totalCount(result.response) ?? rounds.length;
+    },
+  });
+}
+
+/** Rounds in a date range for the Progress timeline (#107), oldest first. */
+export function useTimeline(range: { from?: string; to?: string }, take: number) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.timeline(range.from ?? "", range.to ?? "", take),
+    queryFn: async () => unwrap(await api.GET("/me/timeline", { params: { query: { ...range, take } } })),
+    // Keep the previous range on screen while the next one loads.
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** Monthly averages for the last `months` months, oldest first, one per month. */
+export function useMonthlyTimeline(months: number) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.monthlyTimeline(months),
+    queryFn: async () => unwrap(await api.GET("/me/timeline/monthly", { params: { query: { months } } })),
+  });
+}
+
+/** The current baseline, or null before the first round. */
+export function useBaseline() {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.baseline,
+    queryFn: async () => nullWhenNotFound(async () => unwrap(await api.GET("/me/baseline"))),
+  });
+}
+
+/** A month's review, or null when none was generated for it. */
+export function useMonthlyReview(monthStart: string | undefined) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.monthlyReview(monthStart ?? ""),
+    enabled: monthStart !== undefined,
+    queryFn: async () =>
+      nullWhenNotFound(async () =>
+        unwrap(await api.GET("/me/monthly-reviews/{monthStart}", { params: { path: { monthStart: monthStart! } } })),
+      ),
   });
 }
