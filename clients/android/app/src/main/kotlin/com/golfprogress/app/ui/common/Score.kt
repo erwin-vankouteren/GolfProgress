@@ -124,11 +124,13 @@ fun PillarBar(
     pillar: Pillar,
     value: Int,
     modifier: Modifier = Modifier,
+    /** Off inside something that already reads as one, such as the detail's disclosure button. */
+    merge: Boolean = true,
 ) {
     val label = stringResource(pillar.label)
     val score = stringResource(R.string.pillar_score, value, PILLAR_MAX)
     Column(
-        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        modifier = modifier.fillMaxWidth().let { if (merge) it.semantics(mergeDescendants = true) {} else it },
         verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
