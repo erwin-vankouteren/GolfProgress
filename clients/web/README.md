@@ -2,8 +2,10 @@
 
 The GolfProgress web app.
 
-**Status:** the app shell (#75) and sign-in (#69): Welcome, Create account, Sign in,
-session restore and sign out. The features arrive in M2.
+**Status:** the M2 features: Home (#88), logging rounds (#92), the round list, detail and
+editing (#95), reflections (#99), practice (#103), progress and monthly reviews (#107),
+and profile, preferences, onboarding and account deletion (#111). On top of the app
+shell (#75) and sign-in (#69).
 
 ## Stack
 
@@ -31,6 +33,8 @@ npm run build        # typecheck + production bundle in dist/
 ```
 
 Point it at another API with `VITE_API_BASE_URL`, e.g. in a `.env.local` file (not committed).
+`VITE_PRIVACY_POLICY_URL` and `VITE_TERMS_URL` add those links to Profile → About; each
+link is left out while its variable is unset.
 
 ## Structure
 
@@ -39,7 +43,8 @@ Point it at another API with `VITE_API_BASE_URL`, e.g. in a `.env.local` file (n
 | `src/main.tsx` | Entry point: API client, providers, router |
 | `src/app/` | `App` (providers), `routes.tsx`, `ApiContext` |
 | `src/layout/` | The app frame: header with **Log round**, sidebar that becomes a menu below 900 px, skip link |
-| `src/pages/` | One page per section; empty states from the wireframes until the features land |
+| `src/dashboard/`, `src/rounds/`, `src/practice/`, `src/progress/`, `src/profile/` | One folder per section: its pages, and the rules they check in plain `.ts` modules with their own tests |
+| `src/pages/` | The not-found page |
 | `src/auth/` | Welcome, Create account and Sign in: local checks first, then the API's field messages, 401/409, and 429 with its `Retry-After` wait |
 | `src/session/` | `Session` (sign-in state and tokens, below); `RequireSession` sends signed-out users to Welcome, and back afterwards |
 | `e2e/` | Playwright tests against the production build, with the API mocked by `page.route` |

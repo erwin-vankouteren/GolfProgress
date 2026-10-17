@@ -61,9 +61,13 @@ export function CreateAccountPage() {
   const session = useSession();
   const form = useAuthForm(["displayName", "email", "password"]);
 
-  const submit = form.handleSubmit(async ({ displayName, email, password }) => {
-    await session.register(email!, displayName!, password!);
-  }, intl.formatMessage(messages.emailTaken));
+  const submit = form.handleSubmit(
+    async ({ displayName, email, password }) => {
+      await session.register(email!, displayName!, password!);
+    },
+    intl.formatMessage(messages.emailTaken),
+    "/onboarding",
+  );
 
   return (
     <AuthFrame>
@@ -106,7 +110,8 @@ function useAuthForm(fields: FieldName[]) {
   const [busy, setBusy] = useState(false);
 
   const handleSubmit =
-    (action: (values: Values) => Promise<void>, conflictMessage: string) => async (event: FormEvent) => {
+    (action: (values: Values) => Promise<void>, conflictMessage: string, destination?: string) =>
+    async (event: FormEvent) => {
       event.preventDefault();
       setFormError(undefined);
 
@@ -117,9 +122,10 @@ function useAuthForm(fields: FieldName[]) {
       setBusy(true);
       try {
         await action(trimmed(values));
-        // Back to where a signed-out user was heading, or Home.
+        // A new account starts onboarding (#111); signing in goes back to where a
+        // signed-out user was heading, or Home.
         const from = (location.state as { from?: string } | null)?.from;
-        navigate(from && from !== "/welcome" ? from : "/", { replace: true });
+        navigate(destination ?? (from && from !== "/welcome" ? from : "/"), { replace: true });
       } catch (error) {
         const { field, form } = describe(error, fields, conflictMessage, intl);
         setFieldErrors(field);

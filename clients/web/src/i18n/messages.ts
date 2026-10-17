@@ -22,7 +22,6 @@ export const plainMessages = defineMessages({
     defaultMessage: "No practice logged yet. Practice counts towards your Habits score.",
   },
   progressEmpty: { id: "progress.empty", defaultMessage: "Log a few rounds to see your trends." },
-  profileIntro: { id: "profile.intro", defaultMessage: "Your profile and preferences will appear here." },
 
   notFoundTitle: { id: "notFound.title", defaultMessage: "Page not found" },
   notFoundBody: { id: "notFound.body", defaultMessage: "This page doesn't exist." },
@@ -312,6 +311,83 @@ export const plainMessages = defineMessages({
   offlineCantReview: { id: "progress.offlineReview", defaultMessage: "You're offline. Connect to create a review." },
   reviewFocus: { id: "progress.reviewFocus", defaultMessage: "Focus for next month" },
   sameAsPreviousMonth: { id: "progress.sameAsPreviousMonth", defaultMessage: "Same as the month before" },
+
+  // Profile (#111)
+  yourDetails: { id: "profile.details", defaultMessage: "Your details" },
+  preferences: { id: "profile.preferences", defaultMessage: "Preferences" },
+  account: { id: "profile.account", defaultMessage: "Account" },
+  about: { id: "profile.about", defaultMessage: "About" },
+  profileLoadError: { id: "profile.loadError", defaultMessage: "Couldn't load your profile." },
+  emailHint: { id: "profile.emailHint", defaultMessage: "You sign in with this. It can't be changed here." },
+  handicapIndex: { id: "profile.handicapIndex", defaultMessage: "Handicap index" },
+  typical18Score: { id: "profile.typical18Score", defaultMessage: "Typical 18-hole score" },
+  optionalHint: { id: "profile.optional", defaultMessage: "Optional." },
+  enterANumber: { id: "profile.enterANumber", defaultMessage: "Enter a number." },
+  changesSaved: { id: "profile.saved", defaultMessage: "Changes saved." },
+  profileSaveFailed: { id: "profile.saveFailed", defaultMessage: "Couldn't save your changes. Please try again." },
+  offlineCantSaveProfile: { id: "profile.offline", defaultMessage: "You're offline. Connect to save changes." },
+  units: { id: "profile.units", defaultMessage: "Units" },
+  unitsMetric: { id: "profile.unitsMetric", defaultMessage: "Metric" },
+  unitsImperial: { id: "profile.unitsImperial", defaultMessage: "Imperial" },
+  trackingMode: { id: "profile.trackingMode", defaultMessage: "Tracking mode" },
+  trackingMinimal: { id: "profile.trackingMinimal", defaultMessage: "Minimal" },
+  trackingMinimalHint: { id: "profile.trackingMinimalHint", defaultMessage: "Just your score" },
+  trackingBalanced: { id: "profile.trackingBalanced", defaultMessage: "Balanced" },
+  trackingBalancedHint: { id: "profile.trackingBalancedHint", defaultMessage: "Adds putts and penalties" },
+  trackingDetailed: { id: "profile.trackingDetailed", defaultMessage: "Detailed" },
+  trackingDetailedHint: {
+    id: "profile.trackingDetailedHint",
+    defaultMessage: "Also fairways, greens in regulation, three-putts and blow-up holes",
+  },
+  canChangeAnyTime: { id: "profile.canChangeAnyTime", defaultMessage: "You can change this any time." },
+  goalFocus: { id: "profile.goalFocus", defaultMessage: "Goal focus" },
+  goalPutting: { id: "goal.putting", defaultMessage: "Putting" },
+  goalPenalties: { id: "goal.penalties", defaultMessage: "Penalties" },
+  goalTeeShots: { id: "goal.teeShots", defaultMessage: "Tee shots" },
+  goalConsistency: { id: "goal.consistency", defaultMessage: "Consistency" },
+  changePassword: { id: "profile.changePassword", defaultMessage: "Change password" },
+  currentPassword: { id: "profile.currentPassword", defaultMessage: "Current password" },
+  newPassword: { id: "profile.newPassword", defaultMessage: "New password" },
+  newPasswordHint: { id: "profile.newPasswordHint", defaultMessage: "At least 8 characters." },
+  passwordChanged: { id: "profile.passwordChanged", defaultMessage: "Password changed." },
+  passwordChangeFailed: {
+    id: "profile.passwordChangeFailed",
+    defaultMessage: "Couldn't change your password. Please try again.",
+  },
+  passwordOnlySpaces: { id: "profile.passwordOnlySpaces", defaultMessage: "The password can't be only spaces." },
+  passwordIsEmail: { id: "profile.passwordIsEmail", defaultMessage: "The password can't be your email address." },
+  passwordUnchanged: {
+    id: "profile.passwordUnchanged",
+    defaultMessage: "Choose a password different from the current one.",
+  },
+  signOutHint: { id: "profile.signOutHint", defaultMessage: "Signs you out on this device." },
+  deleteAccount: { id: "profile.deleteAccount", defaultMessage: "Delete account" },
+  deleteAccountHint: {
+    id: "profile.deleteAccountHint",
+    defaultMessage: "Permanently deletes your account and everything in it.",
+  },
+  deleteAccountTitle: { id: "profile.deleteAccountTitle", defaultMessage: "Delete your account?" },
+  deleteAccountBody: {
+    id: "profile.deleteAccountBody",
+    defaultMessage:
+      "This permanently deletes your account and all your rounds, scores, reflections and practice sessions, and signs you out everywhere. It can't be undone.",
+  },
+  deleteMyAccount: { id: "profile.deleteMyAccount", defaultMessage: "Delete my account" },
+  deletingAccount: { id: "profile.deletingAccount", defaultMessage: "Deleting…" },
+  deleteAccountFailed: {
+    id: "profile.deleteAccountFailed",
+    defaultMessage: "Couldn't delete your account. Please try again.",
+  },
+  privacyPolicy: { id: "profile.privacyPolicy", defaultMessage: "Privacy policy" },
+  termsOfUse: { id: "profile.terms", defaultMessage: "Terms of use" },
+
+  // Onboarding (#111)
+  onboardingUnitsTitle: { id: "onboarding.units", defaultMessage: "Which units do you use?" },
+  onboardingTrackingTitle: { id: "onboarding.tracking", defaultMessage: "How much do you want to track?" },
+  onboardingGoalsTitle: { id: "onboarding.goals", defaultMessage: "What do you want to improve?" },
+  next: { id: "onboarding.next", defaultMessage: "Next" },
+  startLogging: { id: "onboarding.finish", defaultMessage: "Log your first round" },
+  skipForNow: { id: "onboarding.skip", defaultMessage: "Skip for now" },
 });
 
 /** Any message that takes no values, for components that are handed one. */
@@ -506,6 +582,23 @@ export const messagesWithValues = {
   downOnPreviousMonth: defineMessage<{ change: string }>({
     id: "progress.downOnPreviousMonth",
     defaultMessage: "Down {change} on the month before",
+  }),
+  numberRange: defineMessage<{ min: number; max: number }>({
+    id: "profile.numberRange",
+    defaultMessage: "Enter a number from {min} to {max}.",
+  }),
+  passwordTooShort: defineMessage<{ min: number }>({
+    id: "profile.passwordTooShort",
+    defaultMessage: "Use at least {min} characters.",
+  }),
+  goalFocusHint: defineMessage<{ max: number }>({
+    id: "profile.goalFocusHint",
+    defaultMessage: "Choose up to {max}. Your micro-wins look for progress here first.",
+  }),
+  appVersion: defineMessage<{ version: string }>({ id: "profile.version", defaultMessage: "Version {version}" }),
+  onboardingStep: defineMessage<{ step: number; total: number }>({
+    id: "onboarding.step",
+    defaultMessage: "Step {step} of {total}",
   }),
   focusTooLong: defineMessage<{ max: number }>({
     id: "progress.focusTooLong",

@@ -189,7 +189,7 @@ describe("sign in", () => {
 });
 
 describe("create account", () => {
-  it("creates the account and signs in", async () => {
+  it("creates the account, signs in and starts onboarding", async () => {
     const { user, requests } = renderApp("/create-account", { "POST /auth/register": () => json(200, signedIn) });
 
     await user.type(await screen.findByLabelText("Name"), "Erwin");
@@ -197,7 +197,7 @@ describe("create account", () => {
     await user.type(screen.getByLabelText("Password"), "correct horse battery");
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Home" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Which units do you use?" })).toBeInTheDocument();
     expect(await requestTo(requests, "/auth/register")!.clone().json()).toEqual({
       email: "erwin@example.test",
       displayName: "Erwin",
