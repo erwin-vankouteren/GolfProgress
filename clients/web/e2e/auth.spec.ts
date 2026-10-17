@@ -71,6 +71,9 @@ test("register, stay signed in across a reload, sign out and sign in again", asy
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
 
+  // A new account starts onboarding (#111); skipping it leads Home.
+  await expect(page.getByRole("heading", { level: 1, name: "Which units do you use?" })).toBeVisible();
+  await page.getByRole("button", { name: "Skip for now" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Home" })).toBeVisible();
   await expectNoStoredTokens(page);
 

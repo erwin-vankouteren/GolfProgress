@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import type { RouteObject } from "react-router";
 import { CreateAccountPage, SignInPage, WelcomePage } from "../auth/AuthPages";
 import { Skeleton } from "../common/states";
@@ -6,14 +6,18 @@ import { AppLayout } from "../layout/AppLayout";
 import { DashboardPage } from "../dashboard/DashboardPage";
 import { NotFoundPage } from "../pages/SectionPage";
 import { LogPracticePage, PracticeDetailPage, PracticePage } from "../practice/PracticePages";
-import { ProfilePage } from "../pages/ProfilePage";
 import { LogRoundPage } from "../rounds/LogRound";
 import { EditRoundPage, RoundDetailPage } from "../rounds/RoundDetailPage";
 import { RoundsLayout } from "../rounds/RoundsLayout";
 import { PublicOnly, RequireSession } from "../session/SessionContext";
 
-// Loaded on first visit, inside the app shell: its charts are most of its weight (#107).
+// Loaded on first visit, inside the app shell: Progress (#107) for its charts, and the
+// profile pages (#111), which are seldom opened. The main bundle stays under 500 kB.
 const ProgressPage = lazy(() => import("../progress/ProgressPage").then((m) => ({ default: m.ProgressPage })));
+const ProfilePage = lazy(() => import("../profile/ProfilePage").then((m) => ({ default: m.ProfilePage })));
+const OnboardingPage = lazy(() => import("../profile/OnboardingPage").then((m) => ({ default: m.OnboardingPage })));
+
+const loading = (page: ReactNode) => <Suspense fallback={<Skeleton blocks={3} />}>{page}</Suspense>;
 
 /**
  * The app's routes (#75, #69). The sign-in screens are only for signed-out users; the
@@ -31,6 +35,8 @@ export const routes: RouteObject[] = [
   {
     element: <RequireSession />,
     children: [
+      // After Create account, full screen like the sign-in screens (#111).
+      { path: "onboarding", element: loading(<OnboardingPage />) },
       {
         element: <AppLayout />,
         children: [
@@ -47,15 +53,8 @@ export const routes: RouteObject[] = [
           { path: "practice", element: <PracticePage /> },
           { path: "practice/new", element: <LogPracticePage /> },
           { path: "practice/:sessionId", element: <PracticeDetailPage /> },
-          {
-            path: "progress",
-            element: (
-              <Suspense fallback={<Skeleton blocks={3} />}>
-                <ProgressPage />
-              </Suspense>
-            ),
-          },
-          { path: "profile", element: <ProfilePage /> },
+          { path: "progress", element: loading(<ProgressPage />) },
+          { path: "profile", element: loading(<ProfilePage />) },
           { path: "*", element: <NotFoundPage /> },
         ],
       },

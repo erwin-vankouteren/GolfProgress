@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { FormattedMessage } from "react-intl";
 import { messages, type PlainMessage } from "../i18n/messages";
 
@@ -16,6 +16,7 @@ export function ConfirmDialog({
   error,
   onConfirm,
   onCancel,
+  children,
 }: {
   title: PlainMessage;
   body: PlainMessage;
@@ -25,6 +26,8 @@ export function ConfirmDialog({
   error?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Something to fill in before confirming, e.g. the password (#111); it gets focus. */
+  children?: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const cancel = useRef<HTMLButtonElement>(null);
@@ -37,8 +40,9 @@ export function ConfirmDialog({
     // jsdom has no showModal; there the dialog is simply shown.
     if (typeof element.showModal === "function") element.showModal();
     else element.setAttribute("open", "");
-    // After noting the opener, so focus can go back to it when the dialog closes.
-    cancel.current?.focus();
+    // After noting the opener, so focus can go back to it when the dialog closes. A
+    // field to fill in comes first; otherwise Cancel, the safe choice.
+    (element.querySelector<HTMLElement>("input") ?? cancel.current)?.focus();
     return () => {
       if (typeof element.close === "function") element.close();
       opener?.focus();
@@ -62,6 +66,7 @@ export function ConfirmDialog({
       <p id={bodyId}>
         <FormattedMessage {...body} />
       </p>
+      {children}
       {error && (
         <p className="form-error" role="alert">
           {error}
