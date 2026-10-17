@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -147,9 +148,16 @@ fun OutlinedCard(
     }
 }
 
+/** Overrides the connection state for screens below it: tests and previews set it. */
+val LocalOnline = staticCompositionLocalOf<Boolean?> { null }
+
+/** Whether there's a connection: [LocalOnline] when set, the device's state otherwise. */
+@Composable
+fun isOnline(): Boolean = LocalOnline.current ?: rememberOnline()
+
 /** "You're offline", across the top while there's no connection (v1 is online-only). */
 @Composable
-fun OfflineBanner(online: Boolean = rememberOnline()) {
+fun OfflineBanner(online: Boolean = isOnline()) {
     if (online) return
     Text(
         text = stringResource(R.string.offline),

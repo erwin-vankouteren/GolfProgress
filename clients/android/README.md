@@ -3,7 +3,7 @@
 The GolfProgress Android app.
 
 **Status:** the app shell (#77) and sign-in (#71), on top of the API client module (#65),
-and the M2 features as they land: Home (#90).
+and the M2 features as they land: Home (#90), Log round (#94).
 
 ## Stack
 
@@ -38,6 +38,7 @@ the module applies the Compose compiler plugin but not `kotlin-android`.
 | `session/` | `Session` (sign-in state for the UI), `TokenRefresher` and `EncryptedRefreshTokenStore` (below) |
 | `navigation/MainScreen.kt` | Bottom bar with Home, Rounds, **Log round** (centre), Practice and Progress; Profile from the avatar in the top bar, as in the wireframes |
 | `dashboard/` | Home (#90): `DashboardViewModel` (`StateFlow`) and its screen, with pull to refresh; it reloads whenever it comes back into view |
+| `rounds/` | Log round (#94): the form's rules in `RoundForm.kt` (the web app's, and the API's), `LogRoundViewModel`, and `RoundForm`, a composable Edit round reuses |
 | `data/` | Repositories over the generated client, one per area, bound in `di/RepositoryModule.kt`. View models only see these interfaces |
 | `ui/common/` | `Load` (loading, failed, loaded), skeletons, errors with Try again, empty states, cards, the offline banner, and the score pieces (confidence, pillars, dates) |
 | `sections/` | Empty states for the sections whose features haven't landed yet |

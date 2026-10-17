@@ -18,7 +18,6 @@
     <string name="practice_empty">No practice logged yet. Practice counts towards your Habits score.</string>
     <string name="progress_empty">Log a few rounds to see your trends.</string>
     <string name="profile_intro">Your profile and preferences will appear here.</string>
-    <string name="log_round_intro">The round form comes next.</string>
 
     <string name="update_required_title">Update required</string>
     <string name="update_required_body">This version of GolfProgress is no longer supported. Update the app to keep using it.</string>
@@ -84,4 +83,37 @@
     <string name="micro_wins">Micro-wins</string>
     <string name="this_month">This month</string>
     <string name="month_average">Average fitness score</string>
+
+    <!-- Log round (#94) -->
+    <string name="save">Save</string>
+    <string name="saving">Saving…</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="date">Date</string>
+    <string name="choose_date">Choose date</string>
+    <string name="holes">Holes</string>
+    <string name="holes_option">%1$d holes</string>
+    <string name="course">Course</string>
+    <string name="tee">Tee</string>
+    <string name="strokes">Strokes</string>
+    <string name="putts">Putts</string>
+    <string name="penalties">Penalties</string>
+    <string name="fairways">Fairways hit</string>
+    <string name="greens">Greens in regulation</string>
+    <string name="three_putts">Three-putts</string>
+    <string name="blow_up_holes">Blow-up holes</string>
+    <string name="notes">Notes</string>
+    <string name="out_of">out of %1$d</string>
+    <string name="decrease">Decrease %1$s</string>
+    <string name="increase">Increase %1$s</string>
+    <string name="more_stats_hint">More stats? Change your tracking mode in Profile.</string>
+    <string name="preferences_load_error">Couldn\'t load your preferences.</string>
+    <string name="offline_cant_save_round">You\'re offline. Connect to save this round.</string>
+    <string name="round_save_failed">Couldn\'t save the round. Please try again.</string>
+    <string name="strokes_required">Enter your strokes.</string>
+    <string name="whole_number">Enter a whole number.</string>
+    <string name="strokes_positive">Strokes must be more than 0.</string>
+    <string name="not_negative">Can\'t be less than 0.</string>
+    <string name="at_most_holes">Can\'t be more than %1$d, the number of holes.</string>
+    <string name="at_most_strokes">Can\'t be more than your strokes (%1$d).</string>
 </resources>

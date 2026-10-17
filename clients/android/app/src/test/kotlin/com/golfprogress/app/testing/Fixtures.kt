@@ -1,11 +1,14 @@
 package com.golfprogress.app.testing
 
+import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.DashboardRoundSummary
 import com.golfprogress.api.generated.models.FitnessScoreExplanation
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
+import com.golfprogress.api.generated.models.RoundResponse
+import com.golfprogress.api.generated.models.UserResponse
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -84,6 +87,50 @@ object Fixtures {
             monthlyFitnessAvg = null,
             monthlyFitnessChange = null,
         )
+
+    fun user(
+        trackingMode: UserResponse.TrackingMode = UserResponse.TrackingMode.Balanced,
+        typical18Score: Int? = 92,
+        goalFocus: List<String> = listOf("Putting"),
+    ) = UserResponse(
+        userId = userId,
+        email = "erwin@example.test",
+        displayName = "Erwin",
+        timezone = "Europe/Amsterdam",
+        units = UserResponse.Units.Metric,
+        trackingMode = trackingMode,
+        handicapIndex = 18.4,
+        typical18Score = typical18Score,
+        goalFocus = goalFocus,
+        createdAt = now,
+        updatedAt = now,
+    )
+
+    /** A round as the API returns it after saving [request], scored 72. */
+    fun round(
+        request: CreateRoundRequest,
+        roundId: UUID = roundId(9),
+    ) = RoundResponse(
+        roundId = roundId,
+        userId = userId,
+        playedAt = request.playedAt,
+        holes = request.holes ?: 18,
+        courseName = request.courseName,
+        teeName = request.teeName,
+        totalStrokes = request.totalStrokes,
+        totalPutts = request.totalPutts,
+        penalties = request.penalties,
+        fairwaysHit = request.fairwaysHit,
+        gir = request.gir,
+        threePutts = request.threePutts,
+        blowUpHoles = request.blowUpHoles,
+        source = "Manual",
+        notes = request.notes,
+        createdAt = now,
+        updatedAt = now,
+        fitnessScore = 72,
+        fitnessConfidence = RoundResponse.FitnessConfidence.Low,
+    )
 
     fun fitnessScore(
         roundId: UUID = roundId(1),
