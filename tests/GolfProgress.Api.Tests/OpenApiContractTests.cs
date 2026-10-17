@@ -272,6 +272,30 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
         Assert.False(round.Properties["totalStrokes"].Nullable);
     }
 
+    /// <summary>
+    /// A new user's dashboard has no last round or next focus. The spec has to say so,
+    /// or the generated Kotlin and Swift clients can't decode it.
+    /// </summary>
+    [Theory]
+    [InlineData("DashboardResponse", "lastRound", "DashboardRoundSummary")]
+    [InlineData("DashboardResponse", "nextLever", "NextLeverResponse")]
+    public void NullableObjects_AreNullable_AndKeepTheirType(string schema, string property, string type)
+    {
+        var field = _spec.Components.Schemas[schema].Properties[property];
+
+        Assert.True(field.Nullable);
+        Assert.Equal(type, Assert.Single(field.AllOf).Reference.Id);
+    }
+
+    [Fact]
+    public void NonNullableObjects_StayPlainReferences()
+    {
+        var field = _spec.Components.Schemas["FitnessScoreResponse"].Properties["explanation"];
+
+        Assert.False(field.Nullable);
+        Assert.Equal("FitnessScoreExplanation", field.Reference.Id);
+    }
+
     private string[] Required(string schema) =>
         _spec.Components.Schemas[schema].Required.OrderBy(r => r).ToArray();
 }

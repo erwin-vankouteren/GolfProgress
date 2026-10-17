@@ -65,14 +65,8 @@ export function useMicroWins(roundId: string) {
   });
 }
 
-/**
- * GET /me/dashboard. The spec types lastRound and nextLever as always present, but the
- * API returns null for a user with no rounds, so this says so.
- */
-export type Dashboard = Omit<Schemas["DashboardResponse"], "lastRound" | "nextLever"> & {
-  lastRound: Schemas["DashboardRoundSummary"] | null;
-  nextLever: Schemas["NextLeverResponse"] | null;
-};
+/** GET /me/dashboard. lastRound and nextLever are null before the first round. */
+export type Dashboard = Schemas["DashboardResponse"];
 
 export function useDashboard() {
   const api = useApi();

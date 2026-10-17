@@ -2453,7 +2453,12 @@
             "format": "uuid"
           },
           "lastRound": {
-            "$ref": "#/components/schemas/DashboardRoundSummary"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardRoundSummary"
+              }
+            ],
+            "nullable": true
           },
           "microWins": {
             "type": "array",
@@ -2462,7 +2467,12 @@
             }
           },
           "nextLever": {
-            "$ref": "#/components/schemas/NextLeverResponse"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextLeverResponse"
+              }
+            ],
+            "nullable": true
           },
           "baselineAvgScore": {
             "type": "number",

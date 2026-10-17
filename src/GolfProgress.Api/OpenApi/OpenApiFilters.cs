@@ -49,6 +49,7 @@ public static class OpenApiConfiguration
         options.OperationFilter<ResponseHeaderOperationFilter>();
         options.SchemaFilter<StringEnumSchemaFilter>();
         options.SchemaFilter<ResponseModelRequiredSchemaFilter>();
+        options.SchemaFilter<NullableObjectSchemaFilter>();
         options.DocumentFilter<ContentTypeDocumentFilter>();
     }
 
@@ -181,6 +182,37 @@ internal sealed class ResponseModelRequiredSchemaFilter : ISchemaFilter
 
         if (isResponseModel && schema.Properties.Count > 0)
             schema.Required = new SortedSet<string>(schema.Properties.Keys, StringComparer.Ordinal);
+    }
+}
+
+/// <summary>
+/// A nullable property of an object type (DashboardResponse.LastRound is null before the
+/// first round) becomes nullable in the spec. SupportNonNullableReferenceTypes can't say
+/// so for these: OpenAPI 3.0 ignores anything next to a $ref, so the spec claimed they
+/// were always present, and the generated Kotlin and Swift clients failed to decode a
+/// new user's dashboard. The reference is wrapped in a one-item allOf, which can be
+/// nullable; generators read it as the referenced type, optional.
+/// </summary>
+internal sealed class NullableObjectSchemaFilter : ISchemaFilter
+{
+    private static readonly NullabilityInfoContext Nullability = new();
+
+    public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+    {
+        if (schema.Properties.Count == 0) return;
+
+        foreach (var property in context.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var key = schema.Properties.Keys.FirstOrDefault(k => string.Equals(k, property.Name, StringComparison.OrdinalIgnoreCase));
+            if (key is null || schema.Properties[key].Reference is not { } reference) continue;
+            if (Nullability.Create(property).ReadState != NullabilityState.Nullable) continue;
+
+            schema.Properties[key] = new OpenApiSchema
+            {
+                AllOf = { new OpenApiSchema { Reference = reference } },
+                Nullable = true
+            };
+        }
     }
 }
 
