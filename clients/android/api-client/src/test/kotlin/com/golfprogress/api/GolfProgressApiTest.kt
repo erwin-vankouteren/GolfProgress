@@ -5,12 +5,16 @@ import com.golfprogress.api.generated.apis.DashboardApi
 import com.golfprogress.api.generated.apis.RoundsApi
 import com.golfprogress.api.generated.apis.UsersApi
 import com.golfprogress.api.generated.models.CreateRoundRequest
+import com.golfprogress.api.generated.models.DeleteAccountRequest
 import com.golfprogress.api.generated.models.LoginRequest
 import com.golfprogress.api.generated.models.UserResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -61,6 +65,36 @@ class GolfProgressApiTest {
         val request = server.takeRequest()
         assertEquals("/me", request.path)
         assertEquals("Bearer token-1", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun `updating the profile sends only the fields given, and null to clear one`() = runBlocking {
+        server.enqueue(json(200, USER_JSON))
+
+        api()
+            .service<AccountApi>()
+            .updateMe(
+                buildJsonObject {
+                    put("units", "Imperial")
+                    put("handicapIndex", JsonNull)
+                },
+            ).unwrap()
+
+        val request = server.takeRequest()
+        assertEquals("PATCH", request.method)
+        assertEquals("""{"units":"Imperial","handicapIndex":null}""", request.body.readUtf8())
+    }
+
+    @Test
+    fun `deleting the account sends the password in the DELETE body`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(204))
+
+        api().service<AccountApi>().deleteMe(DeleteAccountRequest(password = "correct horse")).unwrap()
+
+        val request = server.takeRequest()
+        assertEquals("DELETE", request.method)
+        assertEquals("/me", request.path)
+        assertEquals("""{"password":"correct horse"}""", request.body.readUtf8())
     }
 
     @Test

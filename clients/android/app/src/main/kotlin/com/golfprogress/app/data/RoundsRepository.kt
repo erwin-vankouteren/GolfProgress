@@ -6,7 +6,6 @@ import com.golfprogress.api.generated.apis.ProgressApi
 import com.golfprogress.api.generated.apis.RecommendationsApi
 import com.golfprogress.api.generated.apis.ReflectionsApi
 import com.golfprogress.api.generated.apis.RoundsApi
-import com.golfprogress.api.generated.apis.UsersApi
 import com.golfprogress.api.generated.models.CreateReflectionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.FitnessScoreResponse
@@ -14,7 +13,6 @@ import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
-import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.api.totalCount
 import com.golfprogress.api.unwrap
 import java.util.UUID
@@ -105,17 +103,4 @@ class ApiRoundsRepository
             roundId: UUID,
             request: CreateReflectionRequest,
         ): ReflectionResponse = api.service<ReflectionsApi>().createReflection(roundId, request).unwrap()
-    }
-
-/** The signed-in user's profile and preferences, e.g. the tracking mode Log round follows. */
-interface UserRepository {
-    suspend fun me(): UserResponse
-}
-
-class ApiUserRepository
-    @Inject
-    constructor(
-        private val api: GolfProgressApi,
-    ) : UserRepository {
-        override suspend fun me(): UserResponse = api.service<UsersApi>().getMe().unwrap()
     }

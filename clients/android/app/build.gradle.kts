@@ -24,6 +24,9 @@ android {
         // The API the app talks to. 10.0.2.2 is the development machine as seen from the
         // Android emulator, where the API runs locally; release builds override this.
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5068\"")
+        // Profile → About links (#113); each is hidden while empty. None exist before M3.
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"\"")
+        buildConfigField("String", "TERMS_URL", "\"\"")
     }
 
     buildTypes {
