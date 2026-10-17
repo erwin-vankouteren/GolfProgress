@@ -58,6 +58,7 @@ describe("open enums", () => {
   it.each([
     ["PracticeSessionResponse", "sessionType", knownSessionTypes],
     ["MicroWinResponse", "category", knownMicroWinCategories],
+    ["MonthlyReviewResponse", "topMicroWinCategory", knownMicroWinCategories],
     ["RoundResponse", "source", knownRoundSources],
   ] as const)("lists the same known values as the spec for %s.%s", (schema, property, known) => {
     const schemas = spec.components.schemas as Record<string, { properties: Record<string, Record<string, unknown>> }>;

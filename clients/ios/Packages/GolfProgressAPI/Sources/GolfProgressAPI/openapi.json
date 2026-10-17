@@ -2816,6 +2816,8 @@
           "highlights",
           "monthStart",
           "monthlyReviewId",
+          "roundsLogged",
+          "topMicroWinCategory",
           "userId"
         ],
         "type": "object",
@@ -2844,6 +2846,24 @@
           "focusNextMonth": {
             "type": "string",
             "nullable": true
+          },
+          "roundsLogged": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "topMicroWinCategory": {
+            "type": "string",
+            "description": "Known values: StatDelta, Behavior, Narrative, Habit, Recovery, FocusArea. New values may be added at any time; treat any other value as unknown.",
+            "nullable": true,
+            "x-known-values": [
+              "StatDelta",
+              "Behavior",
+              "Narrative",
+              "Habit",
+              "Recovery",
+              "FocusArea"
+            ]
           },
           "highlights": {
             "type": "array",

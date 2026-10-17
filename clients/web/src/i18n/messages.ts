@@ -310,6 +310,13 @@ export const plainMessages = defineMessages({
   reviewFailed: { id: "progress.reviewFailed", defaultMessage: "Couldn't create the review. Please try again." },
   offlineCantReview: { id: "progress.offlineReview", defaultMessage: "You're offline. Connect to create a review." },
   reviewFocus: { id: "progress.reviewFocus", defaultMessage: "Focus for next month" },
+  reviewTheme: { id: "progress.reviewTheme", defaultMessage: "Most of your micro-wins" },
+  themeStatDelta: { id: "theme.statDelta", defaultMessage: "Better stats" },
+  themeBehavior: { id: "theme.behavior", defaultMessage: "Reflecting on your rounds" },
+  themeNarrative: { id: "theme.narrative", defaultMessage: "Seeing the bigger picture" },
+  themeHabit: { id: "theme.habit", defaultMessage: "Logging consistently" },
+  themeRecovery: { id: "theme.recovery", defaultMessage: "Recovering from mistakes" },
+  themeFocusArea: { id: "theme.focusArea", defaultMessage: "Your focus areas" },
   sameAsPreviousMonth: { id: "progress.sameAsPreviousMonth", defaultMessage: "Same as the month before" },
 
   // Profile (#111)

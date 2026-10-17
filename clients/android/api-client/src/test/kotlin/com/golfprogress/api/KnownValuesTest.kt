@@ -86,6 +86,7 @@ class KnownValuesTest {
         fun openEnums(): List<Arguments> = listOf(
             Arguments.of("PracticeSessionResponse", "sessionType", apiValues(SessionType.entries) { it.apiValue }),
             Arguments.of("MicroWinResponse", "category", apiValues(MicroWinCategory.entries) { it.apiValue }),
+            Arguments.of("MonthlyReviewResponse", "topMicroWinCategory", apiValues(MicroWinCategory.entries) { it.apiValue }),
             Arguments.of("RoundResponse", "source", apiValues(RoundSource.entries) { it.apiValue }),
         )
     }
