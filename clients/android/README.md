@@ -2,8 +2,8 @@
 
 The GolfProgress Android app.
 
-**Status:** the app shell (#77) and sign-in (#71), on top of the API client module (#65).
-The features arrive in M2.
+**Status:** the app shell (#77) and sign-in (#71), on top of the API client module (#65),
+and the M2 features as they land: Home (#90).
 
 ## Stack
 
@@ -37,7 +37,10 @@ the module applies the Compose compiler plugin but not `kotlin-android`.
 | `auth/` | Welcome, Create account and Sign in. `AuthForm` checks fields locally, then shows the API's field messages, 401/409, and 429 with its `Retry-After` wait. Fields carry Autofill content types |
 | `session/` | `Session` (sign-in state for the UI), `TokenRefresher` and `EncryptedRefreshTokenStore` (below) |
 | `navigation/MainScreen.kt` | Bottom bar with Home, Rounds, **Log round** (centre), Practice and Progress; Profile from the avatar in the top bar, as in the wireframes |
-| `sections/` | Each section's empty state from the wireframes, until the features land |
+| `dashboard/` | Home (#90): `DashboardViewModel` (`StateFlow`) and its screen, with pull to refresh; it reloads whenever it comes back into view |
+| `data/` | Repositories over the generated client, one per area, bound in `di/RepositoryModule.kt`. View models only see these interfaces |
+| `ui/common/` | `Load` (loading, failed, loaded), skeletons, errors with Try again, empty states, cards, the offline banner, and the score pieces (confidence, pillars, dates) |
+| `sections/` | Empty states for the sections whose features haven't landed yet |
 | `version/` | `VersionViewModel`: "Update required" when this build is older than `GET /client-config`'s minimum. It never blocks start-up, and if the check fails the app carries on |
 | `di/AppModule.kt` | Hilt: the API client, the session and its token store, the app version, the minimum-version source |
 | `ui/theme/Theme.kt` | The Material 3 theme, built only from `DesignTokens`; light or dark follows the system |
@@ -69,7 +72,10 @@ the development machine, as seen from the emulator.
 - **Sign out:** clears the store, then calls `/auth/logout` to revoke the token.
 
 **Tests** run on the JVM with Robolectric, including Compose UI tests, so no emulator is
-needed: `./gradlew :app:testDebugUnitTest`.
+needed: `./gradlew :app:testDebugUnitTest`. View models are tested with the fakes in
+`test/.../testing/`; screens through their stateless `…Content` composables; and the shell
+through Hilt (`@HiltAndroidTest`, `HiltTestActivity` in the debug source set), which
+swaps `RepositoryModule` for the fakes.
 
 ```bash
 ./gradlew :app:assembleDebug        # needs the Android SDK (Android Studio installs it)

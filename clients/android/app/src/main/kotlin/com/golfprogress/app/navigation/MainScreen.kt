@@ -1,6 +1,7 @@
 package com.golfprogress.app.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -33,8 +34,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.golfprogress.app.R
+import com.golfprogress.app.dashboard.DashboardScreen
 import com.golfprogress.app.sections.ProfileContent
 import com.golfprogress.app.sections.SectionContent
+import com.golfprogress.app.ui.common.OfflineBanner
 
 /**
  * Destinations (docs/clients/ux-design.md → "Navigation"). Four are bottom tabs; Profile
@@ -106,13 +109,19 @@ fun MainScreen(
         },
     ) { padding ->
         val logRound = { navController.navigateTo(Destination.LogRound) }
-        NavHost(navController, startDestination = Destination.Home.route, modifier = Modifier.padding(padding)) {
-            composable(Destination.Home.route) { SectionContent(R.string.home_empty, onLogRound = logRound) }
-            composable(Destination.Rounds.route) { SectionContent(R.string.rounds_empty, onLogRound = logRound) }
-            composable(Destination.LogRound.route) { SectionContent(R.string.log_round_intro) }
-            composable(Destination.Practice.route) { SectionContent(R.string.practice_empty) }
-            composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }
-            composable(Destination.Profile.route) { ProfileContent(onSignOut) }
+        Column(Modifier.padding(padding)) {
+            OfflineBanner()
+            NavHost(navController, startDestination = Destination.Home.route, modifier = Modifier.weight(1f)) {
+                // The round detail arrives with #97; until then the last round opens Rounds.
+                composable(Destination.Home.route) {
+                    DashboardScreen(onLogRound = logRound, onOpenRound = { navController.navigateTo(Destination.Rounds) })
+                }
+                composable(Destination.Rounds.route) { SectionContent(R.string.rounds_empty, onLogRound = logRound) }
+                composable(Destination.LogRound.route) { SectionContent(R.string.log_round_intro) }
+                composable(Destination.Practice.route) { SectionContent(R.string.practice_empty) }
+                composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }
+                composable(Destination.Profile.route) { ProfileContent(onSignOut) }
+            }
         }
     }
 }

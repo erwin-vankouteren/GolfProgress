@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- For the offline banner: "You're offline" while there's no connection (M2). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- usesCleartextTraffic: the debug build talks to a local API over plain HTTP
          (10.0.2.2 from the emulator); release builds use HTTPS only (#77).
