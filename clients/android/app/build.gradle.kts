@@ -83,4 +83,7 @@ dependencies {
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
+    // Hilt in Robolectric tests: the real screens with fake repositories (M2).
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
 }

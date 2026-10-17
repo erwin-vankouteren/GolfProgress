@@ -9,17 +9,22 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Density
 import com.golfprogress.app.navigation.MainScreen
+import com.golfprogress.app.testing.FakeRepositories
 import com.golfprogress.app.ui.theme.GolfProgressTheme
 import com.golfprogress.app.version.MinimumVersionSource
 import com.golfprogress.app.version.UpdateRequiredScreen
 import com.golfprogress.app.version.VersionState
 import com.golfprogress.app.version.VersionViewModel
 import com.golfprogress.app.version.compareVersions
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltTestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -34,12 +39,19 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** The app shell (#77), on the JVM with Robolectric: no emulator needed. */
+/**
+ * The app shell (#77), on the JVM with Robolectric: no emulator needed. Hilt builds the
+ * real screens, over fake repositories (testing/FakeRepositories.kt).
+ */
+@HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+@Config(sdk = [35], application = HiltTestApplication::class)
 class MainScreenTest {
-    @get:Rule
-    val compose = createComposeRule()
+    @get:Rule(order = 0)
+    val hilt = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val compose = createAndroidComposeRule<HiltTestActivity>()
 
     private fun heading(text: String) = compose.onNode(hasText(text) and isHeading())
 
@@ -48,6 +60,7 @@ class MainScreenTest {
 
     @Before
     fun show() {
+        FakeRepositories.reset()
         compose.setContent { GolfProgressTheme { MainScreen() } }
     }
 
@@ -139,14 +152,19 @@ class VersionViewModelTest {
  * Accessibility checks (#78): at 200% font scale the shell keeps its heading and every
  * bottom-bar item on screen, and icon-only controls have a label TalkBack can read.
  */
+@HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+@Config(sdk = [35], application = HiltTestApplication::class)
 class LargeFontScaleTest {
-    @get:Rule
-    val compose = createComposeRule()
+    @get:Rule(order = 0)
+    val hilt = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val compose = createAndroidComposeRule<HiltTestActivity>()
 
     @Test
     fun theShellWorksAtTwiceTheFontSize() {
+        FakeRepositories.reset()
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {

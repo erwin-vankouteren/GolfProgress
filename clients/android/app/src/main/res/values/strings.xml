@@ -47,4 +47,41 @@
     <string name="auth_too_many_attempts_later">Too many attempts. Try again later.</string>
     <string name="auth_something_went_wrong">Something went wrong. Please try again.</string>
     <string name="auth_cant_connect">Couldn\'t reach GolfProgress. Check your connection and try again.</string>
+
+    <!-- States every screen handles (M2) -->
+    <string name="loading">Loading…</string>
+    <string name="offline">You\'re offline. You can look around, but changes need a connection.</string>
+
+    <!-- Scores -->
+    <string name="fitness_score_value">Fitness score %1$d</string>
+    <string name="not_scored_yet">This round hasn\'t been scored yet.</string>
+    <string name="confidence_low">Low</string>
+    <string name="confidence_medium">Medium</string>
+    <string name="confidence_high">High</string>
+    <string name="confidence_description">Confidence: %1$s</string>
+    <string name="confidence_low_explanation">Based on only a few rounds so far: early days.</string>
+    <string name="pillar_execution">Execution</string>
+    <string name="pillar_damage_control">Damage control</string>
+    <string name="pillar_consistency">Consistency</string>
+    <string name="pillar_habits">Habits</string>
+    <string name="pillar_score">%1$d / %2$d</string>
+    <string name="up_on_last_month">Up %1$d on last month</string>
+    <string name="down_on_last_month">Down %1$d on last month</string>
+    <string name="same_as_last_month">Same as last month</string>
+
+    <!-- Home (#90) -->
+    <string name="dashboard_load_error">Couldn\'t load your dashboard.</string>
+    <string name="log_first_round">Log your first round</string>
+    <string name="last_round">Last round</string>
+    <plurals name="last_round_link">
+        <item quantity="one">%1$s · %2$d stroke</item>
+        <item quantity="other">%1$s · %2$d strokes</item>
+    </plurals>
+    <string name="open_round">Open round</string>
+    <string name="next_focus">Your next focus</string>
+    <string name="baseline">Baseline</string>
+    <string name="baseline_average">Average score</string>
+    <string name="micro_wins">Micro-wins</string>
+    <string name="this_month">This month</string>
+    <string name="month_average">Average fitness score</string>
 </resources>
