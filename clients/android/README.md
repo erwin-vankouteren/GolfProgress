@@ -4,7 +4,7 @@ The GolfProgress Android app.
 
 **Status:** the app shell (#77) and sign-in (#71), on top of the API client module (#65),
 and the M2 features as they land: Home (#90), Log round (#94), and the round list, detail
-and editing (#97).
+and editing (#97), reflections (#101).
 
 ## Stack
 

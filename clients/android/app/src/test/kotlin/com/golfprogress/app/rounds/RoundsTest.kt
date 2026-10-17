@@ -230,6 +230,7 @@ class RoundsScreensTest {
     fun reset() = Dispatchers.resetMain()
 
     private var opened: UUID? = null
+    private var addReflectionFor: UUID? = null
 
     private fun showList(repository: FakeRoundsRepository): RoundsListViewModel {
         val viewModel = RoundsListViewModel(repository)
@@ -245,7 +246,14 @@ class RoundsScreensTest {
         val viewModel = RoundDetailViewModel(repository, roundArgs(Fixtures.roundId(1)))
         compose.setContent {
             CompositionLocalProvider(LocalOnline provides true) {
-                GolfProgressTheme { RoundDetailScreen(onEdit = {}, onDeleted = {}, viewModel = viewModel) }
+                GolfProgressTheme {
+                    RoundDetailScreen(
+                        onEdit = {},
+                        onDeleted = {},
+                        onAddReflection = { addReflectionFor = it },
+                        viewModel = viewModel,
+                    )
+                }
             }
         }
     }
@@ -299,6 +307,9 @@ class RoundsScreensTest {
         compose.onNodeWithText("33").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Tempo on the tee").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("4 of 5").assertExists()
+
+        compose.onNodeWithText("Add another reflection").performScrollTo().performClick()
+        assertEquals(Fixtures.roundId(1), addReflectionFor)
     }
 
     @Test
