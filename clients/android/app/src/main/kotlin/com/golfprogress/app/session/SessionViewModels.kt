@@ -1,5 +1,8 @@
 package com.golfprogress.app.session
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.golfprogress.app.R
@@ -52,6 +55,25 @@ class AuthViewModel
         fun createAccount() {
             viewModelScope.launch {
                 createAccountForm.submit { email, displayName, password -> session.register(email, displayName, password) }
+            }
+        }
+
+        /** Forgot password (#86): just the email. */
+        val forgotForm = AuthForm(listOf(AuthField.Email), R.string.auth_something_went_wrong)
+
+        /** The address a reset link was asked for, once the API accepted it. */
+        var resetRequestedFor by mutableStateOf<String?>(null)
+            private set
+
+        fun requestPasswordReset() {
+            viewModelScope.launch {
+                var sentTo: String? = null
+                val ok =
+                    forgotForm.submit { email, _, _ ->
+                        session.requestPasswordReset(email)
+                        sentTo = email
+                    }
+                if (ok) resetRequestedFor = sentTo
             }
         }
     }

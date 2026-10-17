@@ -46,6 +46,14 @@
     <string name="auth_something_went_wrong">Something went wrong. Please try again.</string>
     <string name="auth_cant_connect">Couldn\'t reach GolfProgress. Check your connection and try again.</string>
 
+    <!-- Password reset (#86) -->
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="reset_title">Reset your password</string>
+    <string name="reset_intro">Enter the email address you signed up with, and we\'ll send you a link to choose a new password.</string>
+    <string name="reset_send">Send reset link</string>
+    <string name="reset_link_sent">If %1$s has a GolfProgress account, a link to reset its password is on its way. It works for a limited time.</string>
+    <string name="reset_back_to_sign_in">Back to sign in</string>
+
     <!-- States every screen handles (M2) -->
     <string name="loading">Loading…</string>
     <string name="offline">You\'re offline. You can look around, but changes need a connection.</string>

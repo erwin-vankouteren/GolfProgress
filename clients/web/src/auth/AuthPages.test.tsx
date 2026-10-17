@@ -262,3 +262,58 @@ describe("sign out", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/welcome"));
   });
 });
+
+describe("password reset (#86)", () => {
+  it("asks for a link from Sign in, and says the same whatever the address", async () => {
+    const { user, requests } = renderApp("/sign-in", {
+      "POST /auth/password-reset": () => new Response(null, { status: 202 }),
+    });
+
+    await user.click(await screen.findByRole("link", { name: "Forgot password?" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Reset your password" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+    expect(screen.getByText("Email is required.")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Email"), " erwin@example.test ");
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "If erwin@example.test has a GolfProgress account, a link to reset its password is on its way.",
+    );
+    expect(await requestTo(requests, "/auth/password-reset")!.clone().json()).toEqual({ email: "erwin@example.test" });
+  });
+
+  it("sets the new password from the link", async () => {
+    const { user, requests } = renderApp("/reset-password?token=abc-123", {
+      "POST /auth/password-reset/confirm": () => new Response(null, { status: 204 }),
+    });
+
+    const password = await screen.findByLabelText("New password");
+    await user.type(password, "short");
+    await user.click(screen.getByRole("button", { name: "Save new password" }));
+    expect(screen.getByText("Use at least 8 characters.", { selector: ".auth-field-error" })).toBeInTheDocument();
+
+    await user.type(password, " and longer");
+    await user.click(screen.getByRole("button", { name: "Save new password" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Your password is changed");
+    expect(await requestTo(requests, "/auth/password-reset/confirm")!.clone().json()).toEqual({
+      token: "abc-123",
+      newPassword: "short and longer",
+    });
+  });
+
+  it("explains a used or expired link, and offers a new one", async () => {
+    const { user } = renderApp("/reset-password?token=old", {
+      "POST /auth/password-reset/confirm": () =>
+        json(400, { status: 400, errors: { Token: ["This reset link is invalid or has expired."] } }),
+    });
+
+    await user.type(await screen.findByLabelText("New password"), "a long new password");
+    await user.click(screen.getByRole("button", { name: "Save new password" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This reset link is invalid or has expired");
+    expect(screen.getByRole("link", { name: "Ask for a new link" })).toHaveAttribute("href", "/forgot-password");
+  });
+});

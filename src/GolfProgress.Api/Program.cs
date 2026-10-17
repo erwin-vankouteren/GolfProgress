@@ -247,7 +247,30 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<GolfProgress.Api.Services.EventRetentionService>();
 builder.Services.AddHostedService<GolfProgress.Api.Services.EventRetentionWorker>();
 
+// Password reset by email (#86). Emails leave through a background outbox, sent with
+// Azure Communication Services when Email:ConnectionString is set, otherwise logged.
+builder.Services.AddOptions<GolfProgress.Api.Email.EmailOptions>()
+    .Bind(builder.Configuration.GetSection(GolfProgress.Api.Email.EmailOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddOptions<GolfProgress.Api.Services.PasswordResetOptions>()
+    .Bind(builder.Configuration.GetSection(GolfProgress.Api.Services.PasswordResetOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+var emailConfigured = !string.IsNullOrWhiteSpace(builder.Configuration["Email:ConnectionString"]);
+if (emailConfigured)
+    builder.Services.AddSingleton<GolfProgress.Api.Email.IEmailSender, GolfProgress.Api.Email.AzureCommunicationEmailSender>();
+else
+    builder.Services.AddSingleton<GolfProgress.Api.Email.IEmailSender, GolfProgress.Api.Email.LoggingEmailSender>();
+builder.Services.AddSingleton<GolfProgress.Api.Email.ChannelEmailOutbox>();
+builder.Services.AddSingleton<GolfProgress.Api.Email.IEmailOutbox>(sp => sp.GetRequiredService<GolfProgress.Api.Email.ChannelEmailOutbox>());
+builder.Services.AddHostedService<GolfProgress.Api.Email.EmailSendingWorker>();
+builder.Services.AddScoped<GolfProgress.Api.Services.PasswordResetService>();
+
 var app = builder.Build();
+
+if (!emailConfigured && !app.Environment.IsDevelopment())
+    app.Logger.LogWarning("Email:ConnectionString is not set: password reset emails are logged, not sent. See docs/deployment.md, \"Email\".");
 
 // First in the pipeline, so it catches exceptions from everything after it (#7).
 app.UseExceptionHandler();

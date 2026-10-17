@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
@@ -56,6 +57,9 @@ fun AuthFlow(viewModel: AuthViewModel = hiltViewModel()) {
         createAccountForm = viewModel.createAccountForm,
         onSignIn = viewModel::signIn,
         onCreateAccount = viewModel::createAccount,
+        forgotForm = viewModel.forgotForm,
+        resetRequestedFor = viewModel.resetRequestedFor,
+        onRequestReset = viewModel::requestPasswordReset,
     )
 }
 
@@ -66,6 +70,9 @@ fun AuthFlow(
     createAccountForm: AuthForm,
     onSignIn: () -> Unit,
     onCreateAccount: () -> Unit,
+    forgotForm: AuthForm = remember { AuthForm(listOf(AuthField.Email), R.string.auth_something_went_wrong) },
+    resetRequestedFor: String? = null,
+    onRequestReset: () -> Unit = {},
 ) {
     val navController = rememberNavController()
     // Switching between Sign in and Create account replaces the screen, so Back returns to Welcome.
@@ -88,7 +95,11 @@ fun AuthFlow(
                 onSubmit = onSignIn,
                 switchLabel = R.string.auth_need_account,
                 onSwitch = { switchTo(CREATE_ACCOUNT) },
+                forgotPassword = { navController.navigate(FORGOT_PASSWORD) },
             )
+        }
+        composable(FORGOT_PASSWORD) {
+            ForgotPasswordScreen(forgotForm, resetRequestedFor, onRequestReset, onBack = { navController.popBackStack() })
         }
         composable(CREATE_ACCOUNT) {
             FormScreen(
@@ -106,6 +117,7 @@ fun AuthFlow(
 private const val WELCOME = "welcome"
 private const val SIGN_IN = "sign-in"
 private const val CREATE_ACCOUNT = "create-account"
+private const val FORGOT_PASSWORD = "forgot-password"
 
 @Composable
 private fun WelcomeScreen(
@@ -140,6 +152,7 @@ private fun FormScreen(
     onSubmit: () -> Unit,
     @StringRes switchLabel: Int,
     onSwitch: () -> Unit,
+    forgotPassword: (() -> Unit)? = null,
 ) {
     AuthScaffold {
         Text(
@@ -185,8 +198,63 @@ private fun FormScreen(
                 Text(stringResource(title))
             }
         }
+        if (forgotPassword != null) {
+            TextButton(onClick = forgotPassword, modifier = Modifier.heightIn(min = DesignTokens.touchTarget)) {
+                Text(stringResource(R.string.auth_forgot_password))
+            }
+        }
         TextButton(onClick = onSwitch, modifier = Modifier.heightIn(min = DesignTokens.touchTarget)) {
             Text(stringResource(switchLabel))
+        }
+    }
+}
+
+/**
+ * Forgot password (#86): the email address, then the same message whatever the address.
+ * The link in the email opens the web app to choose the new password, until the apps
+ * open it themselves (app links, M4).
+ */
+@Composable
+private fun ForgotPasswordScreen(
+    form: AuthForm,
+    sentTo: String?,
+    onSubmit: () -> Unit,
+    onBack: () -> Unit,
+) {
+    AuthScaffold {
+        Text(
+            text = stringResource(R.string.reset_title),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        if (sentTo != null) {
+            Text(
+                text = stringResource(R.string.reset_link_sent, sentTo),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.reset_intro),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AuthTextField(form, AuthField.Email, ContentType.Username, isLast = true, onDone = onSubmit)
+            form.formError?.let { error ->
+                Text(
+                    text = error.text(),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+            Button(
+                onClick = onSubmit,
+                enabled = !form.isSubmitting,
+                modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+            ) { Text(stringResource(if (form.isSubmitting) R.string.auth_working else R.string.reset_send)) }
+        }
+        TextButton(onClick = onBack, modifier = Modifier.heightIn(min = DesignTokens.touchTarget)) {
+            Text(stringResource(R.string.reset_back_to_sign_in))
         }
     }
 }

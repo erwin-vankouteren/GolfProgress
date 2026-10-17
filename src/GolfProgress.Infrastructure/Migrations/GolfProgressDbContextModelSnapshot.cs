@@ -203,6 +203,41 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.ToTable("MonthlyReviews", (string)null);
                 });
 
+            modelBuilder.Entity("GolfProgress.Domain.Entities.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("PasswordResetTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("sysutcdatetime()");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("PasswordResetTokenId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("PasswordResetTokens", (string)null);
+                });
+
             modelBuilder.Entity("GolfProgress.Domain.Entities.PracticeSession", b =>
                 {
                     b.Property<Guid>("PracticeSessionId")
@@ -555,6 +590,17 @@ namespace GolfProgress.Infrastructure.Migrations
                 {
                     b.HasOne("GolfProgress.Domain.Entities.User", "User")
                         .WithMany("MonthlyReviews")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.PasswordResetToken", b =>
+                {
+                    b.HasOne("GolfProgress.Domain.Entities.User", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

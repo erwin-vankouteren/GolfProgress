@@ -108,10 +108,34 @@ environment in the same way, e.g. `RateLimiting__Auth__PerIpPermitLimit=20`.
 All of these are checked at startup, and an invalid value stops the app with a message
 naming the setting.
 
+## Email
+
+Password reset (#86) sends a link by email, through **Azure Communication Services
+Email**. Without `Email__ConnectionString` the email is only written to the log, which
+is right on a developer's machine; anywhere else a warning at startup says so.
+
+| Setting | Default | Notes |
+|---|---|---|
+| `Email__ConnectionString` | empty | The Communication Services resource's connection string. **Secret:** use a Key Vault reference |
+| `Email__SenderAddress` | none | Required with the connection string: a sender on a domain verified in the Email Communication Service, e.g. `DoNotReply@golfprogress.app` |
+| `PasswordReset__LinkBaseUrl` | `http://localhost:5173/reset-password` | **Set per environment:** the web app's reset page, e.g. `https://staging.golfprogress.app/reset-password`. The token is added as `?token=` |
+| `PasswordReset__TokenLifetimeMinutes` | 30 | How long a reset link works |
+| `PasswordReset__MaxPerHour` | 3 | Reset emails one account can be sent per hour |
+
+Setting up the provider: create an **Email Communication Service** with a custom domain
+(add the DNS records it asks for), connect it to a **Communication Services** resource,
+and copy that resource's connection string. The emails go out from a background queue, so
+a request never waits on the provider; a failed send is logged without the address.
+
+The mobile apps send users to the same web page to choose the new password. Opening the
+link in the apps themselves needs universal links (iOS) and app links (Android) on the
+production domain, which come with the store releases (M4).
+
 ## Deployment checklist
 
 1. `Jwt__Key` is set: generated as above, unique to this environment, ideally a Key Vault reference.
 2. `ConnectionStrings__DefaultConnection` points at the application account or managed identity, never the admin.
 3. `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` if the app runs behind a proxy.
 4. Database migrations are applied with the migration credential (`db/README.md` → "Running migrations").
-5. After deploying, check the log for startup errors, then call any endpoint over HTTPS.
+5. `Email__ConnectionString`, `Email__SenderAddress` and `PasswordReset__LinkBaseUrl` are set (see "Email"), or password reset can't send its link.
+6. After deploying, check the log for startup errors, then call any endpoint over HTTPS.

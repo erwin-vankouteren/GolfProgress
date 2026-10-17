@@ -51,7 +51,7 @@ tracked as API issues.
 | Welcome | What the app does; Sign in / Create account | – |
 | Create account | Email, display name, password | `POST /auth/register` |
 | Sign in | Email, password; "Forgot password?" | `POST /auth/login` |
-| Reset password | Request a reset email; set a new password from the email link | **new** |
+| Reset password | Request a reset email; set a new password from the email link (on the web, for now also from the mobile apps) | `POST /auth/password-reset`, `/confirm` |
 | Update required | Shown when the app is older than the minimum supported version | `GET /client-config` |
 
 After creating an account, a short onboarding asks for units, tracking mode and up to

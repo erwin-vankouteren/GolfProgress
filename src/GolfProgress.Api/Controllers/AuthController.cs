@@ -181,6 +181,48 @@ public sealed class AuthController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Emails a password reset link (#86). Always 202, whether or not the address has an
+    /// account, and just as fast either way: the email is sent in the background. An
+    /// account gets at most a few per hour.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("/auth/password-reset", Name = "requestPasswordReset")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RequestPasswordReset(
+        [FromBody] PasswordResetRequest request,
+        [FromServices] PasswordResetService reset,
+        CancellationToken ct)
+    {
+        await reset.RequestAsync(request.Email, ct);
+        return Accepted();
+    }
+
+    /// <summary>
+    /// Sets a new password from a reset link (#86). The link works once, for a limited
+    /// time; afterwards every session on every device is signed out.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("/auth/password-reset/confirm", Name = "confirmPasswordReset")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ConfirmPasswordReset(
+        [FromBody] ConfirmPasswordResetRequest request,
+        [FromServices] PasswordResetService reset,
+        CancellationToken ct)
+    {
+        var user = await reset.FindUserAsync(request.Token, ct);
+        if (user is null)
+            return this.FieldError(nameof(request.Token), "This reset link is invalid or has expired. Ask for a new one.");
+
+        if (PasswordPolicy.Check(request.NewPassword, user.Email) is { } problem)
+            return this.FieldError(nameof(request.NewPassword), problem);
+
+        await reset.CompleteAsync(user, _hasher.HashPassword(user, request.NewPassword), ct);
+        return NoContent();
+    }
+
     private static bool UsesCookie(string? refreshTokenMode) =>
         string.Equals(refreshTokenMode, "cookie", StringComparison.OrdinalIgnoreCase);
 

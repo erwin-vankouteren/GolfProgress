@@ -1,5 +1,8 @@
 package com.golfprogress.app.auth
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
@@ -153,6 +156,47 @@ class AuthFlowTest {
         compose.onNode(hasText("Sign in") and !isHeading()).performClick()
 
         compose.onNodeWithText("Too many attempts. Try again in 42 seconds.").assertIsDisplayed()
+    }
+
+    @Test
+    fun `forgot password asks for the email, then says the same whatever the address`() {
+        val forgot = AuthForm(listOf(AuthField.Email), R.string.auth_something_went_wrong)
+        var requested = emptyList<String>()
+        var sentTo by mutableStateOf<String?>(null)
+        compose.setContent {
+            GolfProgressTheme {
+                AuthFlow(
+                    signInForm = signIn,
+                    createAccountForm = createAccount,
+                    onSignIn = {},
+                    onCreateAccount = {},
+                    forgotForm = forgot,
+                    resetRequestedFor = sentTo,
+                    onRequestReset = {
+                        runBlocking {
+                            if (forgot.submit { email, _, _ -> requested = requested + email }) sentTo = requested.last()
+                        }
+                    },
+                )
+            }
+        }
+
+        compose.onNodeWithText("Sign in").performClick()
+        compose.onNodeWithText("Forgot password?").performClick()
+        compose.onNode(hasText("Reset your password") and isHeading()).assertIsDisplayed()
+
+        compose.onNodeWithText("Send reset link").performClick()
+        compose.onNodeWithText("Email is required.").assertIsDisplayed()
+
+        compose.onNodeWithText("Email").performTextInput(" erwin@example.test ")
+        compose.onNodeWithText("Send reset link").performClick()
+
+        assertEquals(listOf("erwin@example.test"), requested)
+        compose
+            .onNodeWithText(
+                "If erwin@example.test has a GolfProgress account, a link to reset its password is on its way.",
+                substring = true,
+            ).assertIsDisplayed()
     }
 
     @Test

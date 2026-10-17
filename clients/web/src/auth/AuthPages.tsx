@@ -49,6 +49,9 @@ export function SignInPage() {
         <FormError message={form.formError} />
         <SubmitButton busy={form.busy} label={messages.signIn} />
       </form>
+      <AuthLink to="/forgot-password">
+        <FormattedMessage {...messages.forgotPassword} />
+      </AuthLink>
       <AuthLink to="/create-account">
         <FormattedMessage {...messages.needAccount} />
       </AuthLink>
@@ -196,7 +199,7 @@ function describe(
 
 // ---------------------------------------------------------------- pieces
 
-function AuthFrame({ children }: { children: ReactNode }) {
+export function AuthFrame({ children }: { children: ReactNode }) {
   return (
     <main className="auth-frame" id="main">
       <div className="auth-card">{children}</div>
@@ -244,7 +247,7 @@ function Field({
   );
 }
 
-function FormError({ message }: { message?: string }) {
+export function FormError({ message }: { message?: string }) {
   // role="alert" so screen readers announce it when it appears.
   return message ? (
     <p className="auth-form-error" role="alert">
@@ -253,7 +256,7 @@ function FormError({ message }: { message?: string }) {
   ) : null;
 }
 
-function SubmitButton({ busy, label }: { busy: boolean; label: PlainMessage }) {
+export function SubmitButton({ busy, label }: { busy: boolean; label: PlainMessage }) {
   return (
     <button type="submit" className="button button--primary auth-submit" disabled={busy} aria-busy={busy}>
       <FormattedMessage {...(busy ? messages.working : label)} />
