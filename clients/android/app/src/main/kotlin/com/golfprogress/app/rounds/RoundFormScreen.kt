@@ -68,26 +68,37 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.UUID
 
-/** Log round (#94): opens from the centre tab; after Save, [onSaved] gets the new round. */
+/** Log round (#94) or Edit round (#97); after Save, [onSaved] gets the round. */
 @Composable
-fun LogRoundScreen(
+fun RoundFormScreen(
     onSaved: (UUID) -> Unit,
-    viewModel: LogRoundViewModel = hiltViewModel(),
+    viewModel: RoundFormViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.savedRoundId) { state.savedRoundId?.let(onSaved) }
+    val padding = Modifier.padding(DesignTokens.Spacing.lg)
 
-    when (state.me) {
-        Load.Loading -> Skeleton(blocks = 3, modifier = Modifier.padding(DesignTokens.Spacing.lg))
-        is Load.Failed ->
-            LoadError(R.string.preferences_load_error, viewModel::retry, Modifier.padding(DesignTokens.Spacing.lg))
-        is Load.Loaded ->
-            RoundForm(
-                state = state,
-                actions = viewModel.actions(),
-                saveLabel = R.string.save,
+    when {
+        state.gone -> RoundGone(padding)
+        state.failed ->
+            LoadError(
+                if (state.editing is Load.Failed) R.string.round_load_error else R.string.preferences_load_error,
+                viewModel::retry,
+                padding,
             )
+        !state.ready -> Skeleton(blocks = 3, modifier = padding)
+        else -> RoundForm(state = state, actions = viewModel.actions(), saveLabel = R.string.save)
     }
+}
+
+/** A round deleted on another device: say so rather than show an error. */
+@Composable
+fun RoundGone(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(R.string.round_no_longer_exists),
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = modifier,
+    )
 }
 
 /** What the form can do, so the same form serves Log round and Edit round. */
@@ -105,7 +116,7 @@ class RoundFormActions(
     val focusHandled: () -> Unit,
 )
 
-fun LogRoundViewModel.actions() =
+fun RoundFormViewModel.actions() =
     RoundFormActions(
         setDate = ::setDate,
         setHoles = ::setHoles,
@@ -127,7 +138,7 @@ fun LogRoundViewModel.actions() =
  */
 @Composable
 fun RoundForm(
-    state: LogRoundState,
+    state: RoundFormState,
     actions: RoundFormActions,
     @StringRes saveLabel: Int,
     online: Boolean = isOnline(),
@@ -225,17 +236,6 @@ fun RoundForm(
         }
     }
 }
-
-private val StatField.label: Int
-    get() =
-        when (this) {
-            StatField.TotalPutts -> R.string.putts
-            StatField.Penalties -> R.string.penalties
-            StatField.FairwaysHit -> R.string.fairways
-            StatField.Gir -> R.string.greens
-            StatField.ThreePutts -> R.string.three_putts
-            StatField.BlowUpHoles -> R.string.blow_up_holes
-        }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

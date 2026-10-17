@@ -3,9 +3,13 @@ package com.golfprogress.app.testing
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.FitnessScoreResponse
+import com.golfprogress.api.generated.models.MicroWinResponse
+import com.golfprogress.api.generated.models.NextLeverResponse
+import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.DashboardRepository
+import com.golfprogress.app.data.Page
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.data.UserRepository
 import com.golfprogress.app.di.RepositoryModule
@@ -42,25 +46,68 @@ class FakeUserRepository(
     override suspend fun me(): UserResponse = me.invoke()
 }
 
-/** Keeps what was sent; answers with [respond], by default the round as saved. */
+/**
+ * Rounds in memory, newest first. Creating answers with [respond] (by default the round
+ * as saved, id 9); the rest read and change [rounds]. [failWith] makes every call throw.
+ */
 class FakeRoundsRepository(
+    rounds: List<RoundResponse> = emptyList(),
     var respond: (CreateRoundRequest) -> RoundResponse = { Fixtures.round(it) },
 ) : RoundsRepository {
+    val rounds = rounds.toMutableList()
     val created = mutableListOf<CreateRoundRequest>()
     val updated = mutableListOf<Pair<UUID, CreateRoundRequest>>()
+    val deleted = mutableListOf<UUID>()
+    val pages = mutableListOf<Pair<Int, Int>>()
+    var failWith: Exception? = null
+    var score: (UUID) -> FitnessScoreResponse? = { Fixtures.fitnessScore(it) }
+    var microWins: List<MicroWinResponse> = listOf(Fixtures.microWin("Fewer penalties"))
+    var reflections: List<ReflectionResponse> = emptyList()
+
+    private fun check() = failWith?.let { throw it }
 
     override suspend fun create(request: CreateRoundRequest): RoundResponse {
+        check()
         created += request
-        return respond(request)
+        return respond(request).also { rounds.add(0, it) }
     }
 
     override suspend fun update(
         roundId: UUID,
         request: CreateRoundRequest,
     ): RoundResponse {
+        check()
         updated += roundId to request
         return respond(request).copy(roundId = roundId)
     }
+
+    override suspend fun page(
+        skip: Int,
+        take: Int,
+    ): Page<RoundResponse> {
+        check()
+        pages += skip to take
+        return Page(rounds.drop(skip).take(take), rounds.size)
+    }
+
+    override suspend fun round(roundId: UUID): RoundResponse? {
+        check()
+        return rounds.firstOrNull { it.roundId == roundId }
+    }
+
+    override suspend fun delete(roundId: UUID) {
+        check()
+        deleted += roundId
+        rounds.removeAll { it.roundId == roundId }
+    }
+
+    override suspend fun fitnessScore(roundId: UUID): FitnessScoreResponse? = score(roundId)
+
+    override suspend fun microWins(roundId: UUID): List<MicroWinResponse> = microWins
+
+    override suspend fun nextLever(roundId: UUID): NextLeverResponse? = Fixtures.nextLever(roundId)
+
+    override suspend fun reflections(roundId: UUID): List<ReflectionResponse> = reflections
 }
 
 /** The fakes the Hilt graph hands out; [reset] before each test. */

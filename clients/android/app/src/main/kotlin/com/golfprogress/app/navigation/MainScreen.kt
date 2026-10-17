@@ -29,16 +29,22 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.golfprogress.app.R
 import com.golfprogress.app.dashboard.DashboardScreen
-import com.golfprogress.app.rounds.LogRoundScreen
+import com.golfprogress.app.rounds.RoundDetailScreen
+import com.golfprogress.app.rounds.RoundFormScreen
+import com.golfprogress.app.rounds.RoundFormViewModel
+import com.golfprogress.app.rounds.RoundsListScreen
 import com.golfprogress.app.sections.ProfileContent
 import com.golfprogress.app.sections.SectionContent
 import com.golfprogress.app.ui.common.OfflineBanner
+import java.util.UUID
 
 /**
  * Destinations (docs/clients/ux-design.md → "Navigation"). Four are bottom tabs; Profile
@@ -52,6 +58,8 @@ enum class Destination(
     Home("home", R.string.section_home, tab = true),
     Rounds("rounds", R.string.section_rounds, tab = true),
     LogRound("rounds/new", R.string.log_round, tab = false),
+    RoundDetail("rounds/{roundId}", R.string.round_title, tab = false),
+    EditRound("rounds/{roundId}/edit", R.string.edit_round, tab = false),
     Practice("practice", R.string.section_practice, tab = true),
     Progress("progress", R.string.section_progress, tab = true),
     Profile("profile", R.string.section_profile, tab = false),
@@ -113,13 +121,24 @@ fun MainScreen(
         Column(Modifier.padding(padding)) {
             OfflineBanner()
             NavHost(navController, startDestination = Destination.Home.route, modifier = Modifier.weight(1f)) {
-                // The round detail arrives with #97; until then the last round opens Rounds.
-                composable(Destination.Home.route) {
-                    DashboardScreen(onLogRound = logRound, onOpenRound = { navController.navigateTo(Destination.Rounds) })
+                val openRound = { id: UUID -> navController.navigate("rounds/$id") }
+                composable(Destination.Home.route) { DashboardScreen(onLogRound = logRound, onOpenRound = openRound) }
+                composable(Destination.Rounds.route) { RoundsListScreen(onOpenRound = openRound, onLogRound = logRound) }
+                // After saving, the new round's detail replaces the form: that score is the reward.
+                composable(Destination.LogRound.route) {
+                    RoundFormScreen(onSaved = { id ->
+                        navController.navigate("rounds/$id") { popUpTo(Destination.LogRound.route) { inclusive = true } }
+                    })
                 }
-                composable(Destination.Rounds.route) { SectionContent(R.string.rounds_empty, onLogRound = logRound) }
-                // The round detail arrives with #97; until then a saved round shows on Home.
-                composable(Destination.LogRound.route) { LogRoundScreen(onSaved = { navController.navigateTo(Destination.Home) }) }
+                composable(Destination.RoundDetail.route, arguments = listOf(roundIdArgument)) {
+                    RoundDetailScreen(
+                        onEdit = { id -> navController.navigate("rounds/$id/edit") },
+                        onDeleted = { navController.popBackStack() },
+                    )
+                }
+                composable(Destination.EditRound.route, arguments = listOf(roundIdArgument)) {
+                    RoundFormScreen(onSaved = { navController.popBackStack() })
+                }
                 composable(Destination.Practice.route) { SectionContent(R.string.practice_empty) }
                 composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }
                 composable(Destination.Profile.route) { ProfileContent(onSignOut) }
@@ -142,6 +161,8 @@ private fun RowScope.BottomItem(
         label = { Text(stringResource(destination.title)) },
     )
 }
+
+private val roundIdArgument = navArgument(RoundFormViewModel.ROUND_ID) { type = NavType.StringType }
 
 /** Tabs replace each other instead of stacking; Log round and Profile stack on top. */
 private fun NavHostController.navigateTo(destination: Destination) {
