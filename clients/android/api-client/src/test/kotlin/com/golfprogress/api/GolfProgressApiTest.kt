@@ -1,6 +1,7 @@
 package com.golfprogress.api
 
 import com.golfprogress.api.generated.apis.AuthApi
+import com.golfprogress.api.generated.apis.DashboardApi
 import com.golfprogress.api.generated.apis.RoundsApi
 import com.golfprogress.api.generated.apis.UsersApi
 import com.golfprogress.api.generated.models.CreateRoundRequest
@@ -60,6 +61,26 @@ class GolfProgressApiTest {
         val request = server.takeRequest()
         assertEquals("/me", request.path)
         assertEquals("Bearer token-1", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun `a new user's dashboard decodes, with no last round or next focus`() = runBlocking {
+        server.enqueue(
+            json(
+                200,
+                """
+                {"userId":"3f2b8c1e-5d4a-4b6f-9e2d-1a7c8b9d0e1f","lastRound":null,"microWins":[],
+                 "nextLever":null,"baselineAvgScore":null,"baselineConfidence":null,
+                 "monthlyFitnessAvg":null,"monthlyFitnessChange":null,
+                 "generatedAt":"2026-05-01T09:30:00+00:00"}
+                """.trimIndent(),
+            ),
+        )
+
+        val dashboard = api().service<DashboardApi>().getDashboard().unwrap()
+
+        assertNull(dashboard.lastRound)
+        assertNull(dashboard.nextLever)
     }
 
     @Test
