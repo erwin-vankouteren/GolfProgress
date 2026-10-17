@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.SavedStateHandle
 import com.golfprogress.api.ApiProblem
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.testing.FakeRoundsRepository
@@ -42,7 +43,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 /** The form's rules (#94): the same as the web app's roundForm.ts and the API's. */
-class RoundFormTest {
+class RoundFormRulesTest {
     private val today = LocalDate.of(2026, 5, 3)
 
     private fun values(
@@ -113,7 +114,7 @@ class RoundFormTest {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LogRoundViewModelTest {
+class RoundFormViewModelTest {
     @Before
     fun mainDispatcher() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
@@ -123,7 +124,7 @@ class LogRoundViewModelTest {
     @Test
     fun `saves the round, then hands over its id`() {
         val rounds = FakeRoundsRepository()
-        val viewModel = LogRoundViewModel(FakeUserRepository(), rounds)
+        val viewModel = RoundFormViewModel(FakeUserRepository(), rounds, SavedStateHandle())
 
         viewModel.setStrokes("88")
         viewModel.setStat(StatField.TotalPutts, "33")
@@ -140,7 +141,7 @@ class LogRoundViewModelTest {
     @Test
     fun `refuses to send a wrong form, and asks for focus on the first wrong field`() {
         val rounds = FakeRoundsRepository()
-        val viewModel = LogRoundViewModel(FakeUserRepository(), rounds)
+        val viewModel = RoundFormViewModel(FakeUserRepository(), rounds, SavedStateHandle())
 
         viewModel.save()
 
@@ -155,7 +156,7 @@ class LogRoundViewModelTest {
             FakeRoundsRepository(respond = {
                 throw ApiProblem(400, errors = mapOf("PlayedAt" to listOf("PlayedAt can't be in the future.")))
             })
-        val viewModel = LogRoundViewModel(FakeUserRepository(), rounds)
+        val viewModel = RoundFormViewModel(FakeUserRepository(), rounds, SavedStateHandle())
 
         viewModel.setStrokes("88")
         viewModel.save()
@@ -166,7 +167,8 @@ class LogRoundViewModelTest {
 
     @Test
     fun `a failure without field errors says so`() {
-        val viewModel = LogRoundViewModel(FakeUserRepository(), FakeRoundsRepository(respond = { throw IOException() }))
+        val viewModel =
+            RoundFormViewModel(FakeUserRepository(), FakeRoundsRepository(respond = { throw IOException() }), SavedStateHandle())
 
         viewModel.setStrokes("88")
         viewModel.save()
@@ -179,7 +181,13 @@ class LogRoundViewModelTest {
     fun `without the profile there's nothing to save yet, and Try again reloads it`() {
         var fail = true
         val viewModel =
-            LogRoundViewModel(FakeUserRepository(me = { if (fail) throw IOException() else Fixtures.user() }), FakeRoundsRepository())
+            RoundFormViewModel(
+                FakeUserRepository(me = {
+                    if (fail) throw IOException() else Fixtures.user()
+                }),
+                FakeRoundsRepository(),
+                SavedStateHandle(),
+            )
         assertTrue(viewModel.state.value.me is Load.Failed)
 
         fail = false
@@ -192,7 +200,7 @@ class LogRoundViewModelTest {
 /** The form on screen (#94): the main flow, mode-dependent fields and the steppers. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
-class LogRoundScreenTest {
+class RoundFormScreenTest {
     @get:Rule
     val compose = createComposeRule()
 
@@ -209,10 +217,10 @@ class LogRoundScreenTest {
         rounds: FakeRoundsRepository = FakeRoundsRepository(),
         online: Boolean = true,
     ): FakeRoundsRepository {
-        val viewModel = LogRoundViewModel(FakeUserRepository(me = { Fixtures.user(trackingMode = mode) }), rounds)
+        val viewModel = RoundFormViewModel(FakeUserRepository(me = { Fixtures.user(trackingMode = mode) }), rounds, SavedStateHandle())
         compose.setContent {
             CompositionLocalProvider(LocalOnline provides online) {
-                GolfProgressTheme { LogRoundScreen(onSaved = { saved = it }, viewModel = viewModel) }
+                GolfProgressTheme { RoundFormScreen(onSaved = { saved = it }, viewModel = viewModel) }
             }
         }
         return rounds

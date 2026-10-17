@@ -116,4 +116,74 @@
     <string name="not_negative">Can\'t be less than 0.</string>
     <string name="at_most_holes">Can\'t be more than %1$d, the number of holes.</string>
     <string name="at_most_strokes">Can\'t be more than your strokes (%1$d).</string>
+
+    <!-- Round list, detail and editing (#97) -->
+    <string name="round_title">Round</string>
+    <string name="edit_round">Edit round</string>
+    <string name="delete_round">Delete round</string>
+    <string name="delete_round_title">Delete this round?</string>
+    <string name="delete_round_body">Its score, micro-wins and reflections go too, and your other scores are worked out again. This can\'t be undone.</string>
+    <string name="delete_round_failed">Couldn\'t delete the round. Please try again.</string>
+    <string name="deleting">Deleting…</string>
+    <string name="rounds_load_error">Couldn\'t load your rounds.</string>
+    <string name="round_load_error">Couldn\'t load this round.</string>
+    <string name="round_no_longer_exists">This round no longer exists. It may have been deleted on another device.</string>
+    <string name="show_more_rounds">Show more rounds</string>
+    <string name="not_scored">Not scored</string>
+    <plurals name="strokes_count">
+        <item quantity="one">%d stroke</item>
+        <item quantity="other">%d strokes</item>
+    </plurals>
+    <string name="fitness_score">Fitness score</string>
+    <string name="stats">Stats</string>
+    <string name="no_stats_tracked">Only strokes were tracked for this round.</string>
+    <string name="reflection">Reflection</string>
+    <string name="no_reflection">No reflection yet. Reflecting on a round counts towards your Habits score.</string>
+    <string name="reflected_on">Added %1$s</string>
+    <string name="focus">Focus</string>
+    <string name="mood">Mood</string>
+    <string name="out_of_five">%1$d of 5</string>
+    <string name="frustration_carried_over">Frustration carried over</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="what_worked">What worked</string>
+    <string name="what_to_repeat">What to repeat</string>
+    <string name="one_change_next">One change for next time</string>
+    <string name="show_why">Show why</string>
+    <string name="expanded">Expanded</string>
+    <string name="collapsed">Collapsed</string>
+    <string name="explain_first_round">There are no earlier rounds to compare with yet, so this starts in the middle.</string>
+    <string name="explain_better">%1$d strokes, %2$s better than your recent average of %3$s.</string>
+    <string name="explain_worse">%1$d strokes, %2$s worse than your recent average of %3$s.</string>
+    <string name="explain_level">%1$d strokes, level with your recent average of %2$s.</string>
+    <string name="explain_nine_holes">Over 9 holes, your %1$d counts as %2$d over 18.</string>
+    <string name="explain_damage_not_tracked">Penalties and blow-up holes weren\'t tracked, so this is a middle score rather than full marks.</string>
+    <string name="explain_damage">%1$s, %2$s. Fewer of either scores higher.</string>
+    <string name="explain_no_penalties">No penalties</string>
+    <plurals name="explain_penalties">
+        <item quantity="one">%d penalty</item>
+        <item quantity="other">%d penalties</item>
+    </plurals>
+    <string name="explain_penalties_not_tracked">Penalties not tracked</string>
+    <string name="explain_no_blow_ups">no blow-up holes</string>
+    <plurals name="explain_blow_ups">
+        <item quantity="one">%d blow-up hole</item>
+        <item quantity="other">%d blow-up holes</item>
+    </plurals>
+    <string name="explain_blow_ups_not_tracked">blow-up holes not tracked</string>
+    <string name="explain_consistency_needs_rounds">Judging consistency needs a few earlier rounds, so this starts in the middle.</string>
+    <string name="explain_consistency_at_or_better">At or better than your recent average: full marks.</string>
+    <string name="explain_consistency_worse">%1$s strokes worse than your recent average, where your rounds usually vary by about %2$s. Twice that scores nothing.</string>
+    <string name="explain_habits_unknown">Habits reward playing or practising about once a week, and reflecting on your rounds.</string>
+    <string name="explain_habits">%1$s and %2$s in the 28 days up to this round; four or more earns full points.</string>
+    <plurals name="rounds_count">
+        <item quantity="one">%d round</item>
+        <item quantity="other">%d rounds</item>
+    </plurals>
+    <plurals name="practice_sessions_count">
+        <item quantity="one">%d practice session</item>
+        <item quantity="other">%d practice sessions</item>
+    </plurals>
+    <string name="explain_reflected">You reflected on this round.</string>
+    <string name="explain_not_reflected">Adding a reflection would add to this.</string>
 </resources>

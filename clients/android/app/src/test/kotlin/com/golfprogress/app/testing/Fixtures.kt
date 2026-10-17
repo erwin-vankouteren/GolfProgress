@@ -7,6 +7,7 @@ import com.golfprogress.api.generated.models.FitnessScoreExplanation
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
+import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.UserResponse
 import java.time.OffsetDateTime
@@ -130,6 +131,49 @@ object Fixtures {
         updatedAt = now,
         fitnessScore = 72,
         fitnessConfidence = RoundResponse.FitnessConfidence.Low,
+    )
+
+    /** A saved round with id [i], played [i] days before 20 May 2026. */
+    fun savedRound(
+        i: Int,
+        strokes: Int = 88,
+        holes: Int = 18,
+        course: String? = "Hilversum",
+        penalties: Int? = null,
+        putts: Int? = null,
+        blowUps: Int? = null,
+    ) = round(
+        CreateRoundRequest(
+            playedAt =
+                java.time.LocalDate
+                    .of(2026, 5, 20)
+                    .minusDays(i.toLong())
+                    .toString(),
+            totalStrokes = strokes,
+            holes = holes,
+            courseName = course,
+            totalPutts = putts,
+            penalties = penalties,
+            blowUpHoles = blowUps,
+        ),
+        roundId(i),
+    )
+
+    fun reflection(
+        roundId: UUID = roundId(1),
+        focus: Int? = 4,
+        whatWorked: String? = "Tempo on the tee",
+    ) = ReflectionResponse(
+        reflectionId = UUID.nameUUIDFromBytes("$roundId$focus$whatWorked".toByteArray()),
+        userId = userId,
+        roundId = roundId,
+        focusRating = focus,
+        moodRating = null,
+        frustrationSpillover = false,
+        whatWorked = whatWorked,
+        whatToRepeat = null,
+        oneChangeNext = null,
+        createdAt = now,
     )
 
     fun fitnessScore(
