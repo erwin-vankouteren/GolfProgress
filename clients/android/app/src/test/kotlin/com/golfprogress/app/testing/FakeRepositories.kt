@@ -1,16 +1,19 @@
 package com.golfprogress.app.testing
 
+import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.CreateReflectionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
+import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.DashboardRepository
 import com.golfprogress.app.data.Page
+import com.golfprogress.app.data.PracticeRepository
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.data.UserRepository
 import com.golfprogress.app.di.RepositoryModule
@@ -130,11 +133,14 @@ object FakeRepositories {
         private set
     lateinit var rounds: FakeRoundsRepository
         private set
+    lateinit var practice: FakePracticeRepository
+        private set
 
     fun reset() {
         dashboard = FakeDashboardRepository()
         user = FakeUserRepository()
         rounds = FakeRoundsRepository()
+        practice = FakePracticeRepository()
     }
 
     init {
@@ -153,4 +159,44 @@ object FakeRepositoryModule {
 
     @Provides
     fun rounds(): RoundsRepository = FakeRepositories.rounds
+
+    @Provides
+    fun practice(): PracticeRepository = FakeRepositories.practice
+}
+
+/** Practice sessions in memory, newest first; creating answers id 8. */
+class FakePracticeRepository(
+    sessions: List<PracticeSessionResponse> = emptyList(),
+) : PracticeRepository {
+    val sessions = sessions.toMutableList()
+    val created = mutableListOf<CreatePracticeSessionRequest>()
+    val deleted = mutableListOf<UUID>()
+    var failWith: Exception? = null
+
+    private fun check() = failWith?.let { throw it }
+
+    override suspend fun page(
+        skip: Int,
+        take: Int,
+    ): Page<PracticeSessionResponse> {
+        check()
+        return Page(sessions.drop(skip).take(take), sessions.size)
+    }
+
+    override suspend fun session(id: UUID): PracticeSessionResponse? {
+        check()
+        return sessions.firstOrNull { it.practiceSessionId == id }
+    }
+
+    override suspend fun create(request: CreatePracticeSessionRequest): PracticeSessionResponse {
+        check()
+        created += request
+        return Fixtures.practiceSession(8, request).also { sessions.add(0, it) }
+    }
+
+    override suspend fun delete(id: UUID) {
+        check()
+        deleted += id
+        sessions.removeAll { it.practiceSessionId == id }
+    }
 }

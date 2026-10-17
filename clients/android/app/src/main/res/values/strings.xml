@@ -200,4 +200,39 @@
     <string name="clear">Clear</string>
     <string name="clear_rating">Clear %1$s</string>
     <string name="at_most_characters">Use at most %1$,d characters.</string>
+
+    <!-- Practice (#105) -->
+    <string name="log_practice">Log practice</string>
+    <string name="practice_session">Practice session</string>
+    <string name="practice_habits_hint">Practice counts towards your Habits score.</string>
+    <string name="practice_load_error">Couldn\'t load your practice.</string>
+    <string name="practice_session_load_error">Couldn\'t load this session.</string>
+    <string name="practice_no_longer_exists">This session no longer exists. It may have been deleted on another device.</string>
+    <string name="show_more_practice">Show more sessions</string>
+    <string name="session_type">Type</string>
+    <string name="session_range">Range</string>
+    <string name="session_putting">Putting</string>
+    <string name="session_short_game">Short game</string>
+    <string name="session_simulator">Simulator</string>
+    <string name="session_lesson">Lesson</string>
+    <string name="session_other">Other</string>
+    <string name="session_unknown">Practice</string>
+    <string name="duration">Duration</string>
+    <string name="minutes_unit">minutes</string>
+    <string name="duration_minutes">%1$,d min</string>
+    <string name="duration_range">Enter between 1 and %1$,d minutes.</string>
+    <string name="venue">Venue</string>
+    <string name="goal">Goal</string>
+    <string name="tags">Tags</string>
+    <string name="tags_hint">Press Enter or type a comma to add a tag.</string>
+    <string name="tag_duplicate">That tag is already there.</string>
+    <string name="tag_too_long">A tag can be at most %1$d characters.</string>
+    <string name="too_many_tags">Use at most %1$d tags.</string>
+    <string name="remove_tag">Remove tag %1$s</string>
+    <string name="practice_save_failed">Couldn\'t save the session. Please try again.</string>
+    <string name="offline_cant_save_practice">You\'re offline. Connect to save this session.</string>
+    <string name="delete_practice">Delete session</string>
+    <string name="delete_practice_title">Delete this practice session?</string>
+    <string name="delete_practice_body">It no longer counts towards your Habits score. This can\'t be undone.</string>
+    <string name="delete_practice_failed">Couldn\'t delete the session. Please try again.</string>
 </resources>
