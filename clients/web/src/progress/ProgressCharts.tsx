@@ -9,7 +9,8 @@ import type { MonthPoint, TimelineRow } from "./progress";
  * The Progress charts (#107), loaded only when Progress opens: Recharts is most of the
  * page's weight. They are pictures for sighted users; the summary sentence and the
  * table beside each chart carry the same information for everyone else, so the charts
- * are hidden from screen readers.
+ * are hidden from screen readers. Recharts' own keyboard layer is off too: a chart
+ * screen readers skip mustn't take keyboard focus either (#120).
  *
  * Colours are tokens: each series sets `color` in CSS and draws with currentColor, so
  * dark mode follows the tokens without reading them here.
@@ -62,7 +63,7 @@ export function TimelineChart({ rows, strokesHoles }: { rows: TimelineRow[]; str
         )}
       </ul>
       <ResponsiveContainer width="100%" height={chartHeight}>
-        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} accessibilityLayer={false}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="index"
@@ -147,7 +148,7 @@ export function MonthlyChart({ items }: { items: MonthPoint[] }) {
   return (
     <div className="progress-chart" aria-hidden="true">
       <ResponsiveContainer width="100%" height={chartHeight}>
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} accessibilityLayer={false}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="monthStart" tickFormatter={shortMonth} interval="preserveStartEnd" />
           <YAxis domain={[0, 100]} width={36} />

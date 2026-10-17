@@ -41,7 +41,9 @@ The apps ship in English only, but **adding a language must only need translatio
 | Contrast of every token colour pair | `design/build-tokens.mjs` fails the build below 4.5:1 / 3:1 (Design CI) |
 | Web: common accessibility mistakes | `eslint-plugin-jsx-a11y` in `npm run lint` (Web CI) |
 | Web: landmarks, headings, names, focus after navigation | Testing Library queries by role and name (`App.test.tsx`) |
+| Web: every screen against WCAG 2.1 A and AA, in light and dark mode (#120) | axe in Playwright (`e2e/accessibility.spec.ts`), with the API mocked so each screen shows content |
 | Android: headings, tab roles, content descriptions, layout at 200% font scale | Compose UI tests on Robolectric (`AppShellTest.kt`) |
+| Android: every control on every main screen has a name and a 48 dp touch target, light and dark (#120) | `AccessibilityChecksTest.kt` walks the semantics tree (`testing/AccessibilityAssertions.kt`); the Accessibility Test Framework can't see Compose under Robolectric |
 | iOS: the shell at the largest Dynamic Type size | SwiftUI previews in `MainTabView.swift`, built in iOS CI |
 
 Screen readers themselves (VoiceOver, TalkBack, NVDA) can't be automated here; test with

@@ -224,7 +224,8 @@ private fun PillarDisclosure(
                 .semantics { stateDescription = if (open) expanded else collapsed },
         verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs),
     ) {
-        PillarBar(pillar, value)
+        // Not merged on its own: the button reads "Execution, 18 / 25" (#120).
+        PillarBar(pillar, value, merge = false)
         if (open) {
             sentences.forEach {
                 Text(it.text(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
