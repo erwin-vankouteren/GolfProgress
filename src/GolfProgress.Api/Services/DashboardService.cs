@@ -11,11 +11,13 @@ public sealed class DashboardService
 {
     private readonly GolfProgressDbContext _db;
     private readonly NextLeverService _nextLeverSvc;
+    private readonly TimelineService _timeline;
 
-    public DashboardService(GolfProgressDbContext db, NextLeverService nextLeverSvc)
+    public DashboardService(GolfProgressDbContext db, NextLeverService nextLeverSvc, TimelineService timeline)
     {
         _db = db;
         _nextLeverSvc = nextLeverSvc;
+        _timeline = timeline;
     }
 
     public async Task<DashboardResponse> BuildAsync(Guid userId, CancellationToken ct)
@@ -88,11 +90,10 @@ public sealed class DashboardService
         var baseline = await _db.UserBaselines.AsNoTracking()
             .FirstOrDefaultAsync(b => b.UserId == userId, ct);
 
-        // Monthly review (latest)
-        var monthly = await _db.MonthlyReviews.AsNoTracking()
-            .Where(m => m.UserId == userId)
-            .OrderByDescending(m => m.MonthStart)
-            .FirstOrDefaultAsync(ct);
+        // This calendar month (UTC), from its rounds, as the monthly trend computes it
+        // (#161). It used to be the latest generated review: hidden until one existed,
+        // then frozen at that month's figures after the calendar moved on.
+        var thisMonth = (await _timeline.GetMonthlyTimelineAsync(userId, months: 1, ct)).Items.Single();
 
         return new DashboardResponse
         {
@@ -102,8 +103,8 @@ public sealed class DashboardService
             NextLever = nextLever,
             BaselineAvgScore = baseline?.AvgScore,
             BaselineConfidence = baseline?.ConfidenceLevel.ToString(),
-            MonthlyFitnessAvg = monthly?.FitnessAvg,
-            MonthlyFitnessChange = monthly?.FitnessChange,
+            MonthlyFitnessAvg = thisMonth.FitnessAvg,
+            MonthlyFitnessChange = thisMonth.FitnessChange,
             GeneratedAt = DateTimeOffset.UtcNow
         };
     }
