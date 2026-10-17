@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.core.ktx)
     implementation(libs.datastore.preferences)
+    // Charts on Progress (#109), as docs/architecture.md chose.
+    implementation(libs.vico.compose.m3)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

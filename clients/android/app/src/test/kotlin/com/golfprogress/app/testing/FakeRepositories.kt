@@ -6,14 +6,19 @@ import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
+import com.golfprogress.api.generated.models.MonthlyReviewResponse
+import com.golfprogress.api.generated.models.MonthlyTimelinePointResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
 import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
+import com.golfprogress.api.generated.models.RoundTimelinePointResponse
+import com.golfprogress.api.generated.models.UserBaselineResponse
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.DashboardRepository
 import com.golfprogress.app.data.Page
 import com.golfprogress.app.data.PracticeRepository
+import com.golfprogress.app.data.ProgressRepository
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.data.UserRepository
 import com.golfprogress.app.di.RepositoryModule
@@ -135,12 +140,15 @@ object FakeRepositories {
         private set
     lateinit var practice: FakePracticeRepository
         private set
+    lateinit var progress: FakeProgressRepository
+        private set
 
     fun reset() {
         dashboard = FakeDashboardRepository()
         user = FakeUserRepository()
         rounds = FakeRoundsRepository()
         practice = FakePracticeRepository()
+        progress = FakeProgressRepository()
     }
 
     init {
@@ -162,6 +170,9 @@ object FakeRepositoryModule {
 
     @Provides
     fun practice(): PracticeRepository = FakeRepositories.practice
+
+    @Provides
+    fun progress(): ProgressRepository = FakeRepositories.progress
 }
 
 /** Practice sessions in memory, newest first; creating answers id 8. */
@@ -198,5 +209,50 @@ class FakePracticeRepository(
         check()
         deleted += id
         sessions.removeAll { it.practiceSessionId == id }
+    }
+}
+
+/** Progress in memory: twelve months, a timeline, a baseline and reviews by month. */
+class FakeProgressRepository(
+    var roundCount: Int = 4,
+    var timeline: List<RoundTimelinePointResponse> = Fixtures.timeline(),
+    var months: List<MonthlyTimelinePointResponse> = Fixtures.months(),
+    var baseline: UserBaselineResponse? = Fixtures.baseline(),
+) : ProgressRepository {
+    val reviews = mutableMapOf<String, MonthlyReviewResponse>()
+    val created = mutableListOf<Pair<String, String?>>()
+    val timelineQueries = mutableListOf<Pair<String?, String?>>()
+    var failWith: Exception? = null
+
+    private fun check() = failWith?.let { throw it }
+
+    override suspend fun roundCount(): Int = roundCount.also { check() }
+
+    override suspend fun timeline(
+        from: String?,
+        to: String?,
+        take: Int,
+    ): List<RoundTimelinePointResponse> {
+        check()
+        timelineQueries += from to to
+        return timeline
+    }
+
+    override suspend fun monthly(months: Int): List<MonthlyTimelinePointResponse> {
+        check()
+        return this.months.map { it.copy(hasReview = it.monthStart in reviews) }
+    }
+
+    override suspend fun baseline(): UserBaselineResponse? = baseline.also { check() }
+
+    override suspend fun review(monthStart: String): MonthlyReviewResponse? = reviews[monthStart].also { check() }
+
+    override suspend fun createReview(
+        monthStart: String,
+        focusNextMonth: String?,
+    ): MonthlyReviewResponse {
+        check()
+        created += monthStart to focusNextMonth
+        return Fixtures.review(monthStart, focusNextMonth).also { reviews[monthStart] = it }
     }
 }

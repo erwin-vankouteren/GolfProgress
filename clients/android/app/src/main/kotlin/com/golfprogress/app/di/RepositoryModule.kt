@@ -2,10 +2,12 @@ package com.golfprogress.app.di
 
 import com.golfprogress.app.data.ApiDashboardRepository
 import com.golfprogress.app.data.ApiPracticeRepository
+import com.golfprogress.app.data.ApiProgressRepository
 import com.golfprogress.app.data.ApiRoundsRepository
 import com.golfprogress.app.data.ApiUserRepository
 import com.golfprogress.app.data.DashboardRepository
 import com.golfprogress.app.data.PracticeRepository
+import com.golfprogress.app.data.ProgressRepository
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.data.UserRepository
 import dagger.Binds
@@ -28,4 +30,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun practice(repository: ApiPracticeRepository): PracticeRepository
+
+    @Binds
+    abstract fun progress(repository: ApiProgressRepository): ProgressRepository
 }

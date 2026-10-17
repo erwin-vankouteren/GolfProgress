@@ -235,4 +235,91 @@
     <string name="delete_practice_title">Delete this practice session?</string>
     <string name="delete_practice_body">It no longer counts towards your Habits score. This can\'t be undone.</string>
     <string name="delete_practice_failed">Couldn\'t delete the session. Please try again.</string>
+
+    <!-- Progress (#109) -->
+    <string name="progress_load_error">Couldn\'t load your progress.</string>
+    <string name="timeline_title">Rounds over time</string>
+    <string name="timeline_load_error">Couldn\'t load your rounds over time.</string>
+    <string name="period">Period</string>
+    <string name="range_3m">Last 3 months</string>
+    <string name="range_6m">Last 6 months</string>
+    <string name="range_12m">Last 12 months</string>
+    <string name="range_all">All time</string>
+    <string name="range_custom">Choose dates</string>
+    <string name="range_from">From</string>
+    <string name="range_to">To</string>
+    <string name="choose_date_for">Choose the %1$s date</string>
+    <string name="range_order">The start date must be on or before the end date.</string>
+    <string name="no_rounds_in_period">No rounds in this period. Choose a longer one to see more.</string>
+    <plurals name="timeline_summary">
+        <item quantity="one">%1$d round from %2$s to %3$s.</item>
+        <item quantity="other">%1$d rounds from %2$s to %3$s.</item>
+    </plurals>
+    <string name="timeline_score_summary">Fitness score went from %1$d to %2$d, averaging %3$d.</string>
+    <string name="timeline_capped">Showing your latest %1$d rounds in this period.</string>
+    <plurals name="more_rounds_for_trend">
+        <item quantity="one">Log %d more round to see a trend.</item>
+        <item quantity="other">Log %d more rounds to see a trend.</item>
+    </plurals>
+    <plurals name="few_rounds_in_period">
+        <item quantity="one">Only %d scored round in this period: not enough for a trend. Choose a longer period.</item>
+        <item quantity="other">Only %d scored rounds in this period: not enough for a trend. Choose a longer period.</item>
+    </plurals>
+    <string name="strokes_line">Strokes (%1$d holes)</string>
+    <string name="strokes_leave_out">The strokes line shows %1$d-hole rounds only; the table has every round.</string>
+    <string name="show_as_table">Show as table</string>
+    <string name="show_as_chart">Show as chart</string>
+    <string name="monthly_trend_title">Monthly trend</string>
+    <string name="monthly_load_error">Couldn\'t load your monthly trend.</string>
+    <string name="monthly_empty">No scored rounds in the last 12 months.</string>
+    <string name="monthly_needs_another_month">Play in another month to see a monthly trend.</string>
+    <string name="monthly_summary_one">Average fitness score in %1$s: %2$d.</string>
+    <plurals name="monthly_summary">
+        <item quantity="one">Scored rounds in %1$d month. Average fitness score went from %2$d in %3$s to %4$d in %5$s.</item>
+        <item quantity="other">Scored rounds in %1$d months. Average fitness score went from %2$d in %3$s to %4$d in %5$s.</item>
+    </plurals>
+    <string name="month">Month</string>
+    <string name="rounds_column">Rounds</string>
+    <string name="change_column">Change on previous month</string>
+    <string name="no_scored_rounds">No scored rounds</string>
+    <string name="baseline_load_error">Couldn\'t load your baseline.</string>
+    <string name="baseline_empty">Your baseline appears once you\'ve logged a round.</string>
+    <string name="baseline_intro">What your next round is compared with: your recent averages, per 18 holes.</string>
+    <string name="spread">Spread</string>
+    <string name="spread_value">± %1$s</string>
+    <string name="stats_tracked">Stats tracked</string>
+    <plurals name="baseline_based_on">
+        <item quantity="one">Based on your last round.</item>
+        <item quantity="other">Based on your last %d rounds.</item>
+    </plurals>
+    <string name="monthly_review_title">Monthly review</string>
+    <string name="review_load_error">Couldn\'t load this review.</string>
+    <string name="month_reviewed">%1$s (reviewed)</string>
+    <string name="review_none">There\'s no review of %1$s yet. Create one to see how the month went.</string>
+    <string name="review_no_rounds">You didn\'t log any rounds in %1$s, so there\'s nothing to review.</string>
+    <plurals name="rounds_played">
+        <item quantity="one">%d round played</item>
+        <item quantity="other">%d rounds played</item>
+    </plurals>
+    <string name="review_theme">Most of your micro-wins</string>
+    <string name="theme_stat_delta">Better stats</string>
+    <string name="theme_behavior">Reflecting on your rounds</string>
+    <string name="theme_narrative">Seeing the bigger picture</string>
+    <string name="theme_habit">Logging consistently</string>
+    <string name="theme_recovery">Recovering from mistakes</string>
+    <string name="theme_focus_area">Your focus areas</string>
+    <string name="review_focus">Focus for next month</string>
+    <string name="review_created_on">Created %1$s</string>
+    <string name="up_on_previous_month">Up %1$d on the month before</string>
+    <string name="down_on_previous_month">Down %1$d on the month before</string>
+    <string name="same_as_previous_month">Same as the month before</string>
+    <string name="focus_next_month">Your focus for next month</string>
+    <string name="focus_hint">Optional. For example: fewer three-putts.</string>
+    <string name="focus_too_long">Keep it to %1$d characters or fewer.</string>
+    <string name="create_review">Create review</string>
+    <string name="update_review">Update review</string>
+    <string name="creating_review">Creating review…</string>
+    <string name="review_ready">Review ready.</string>
+    <string name="review_failed">Couldn\'t create the review. Please try again.</string>
+    <string name="offline_cant_review">You\'re offline. Connect to create a review.</string>
 </resources>

@@ -52,8 +52,8 @@ import com.golfprogress.app.ui.common.Skeleton
 import com.golfprogress.app.ui.common.currentLocale
 import com.golfprogress.app.ui.common.formatDate
 import com.golfprogress.app.ui.common.isOnline
+import com.golfprogress.app.ui.common.oneDecimal
 import com.golfprogress.app.ui.theme.DesignTokens
-import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.UUID
@@ -315,14 +315,14 @@ val StatField.label: Int
 @Composable
 private fun Sentence.text(): String {
     val locale = currentLocale()
-    val oneDecimal = { value: Double -> NumberFormat.getNumberInstance(locale).apply { maximumFractionDigits = 1 }.format(value) }
+    val decimal = { value: Double -> oneDecimal(value, locale) }
     return when (this) {
         Sentence.FirstRound -> stringResource(R.string.explain_first_round)
         is Sentence.ComparedWithAverage ->
             when {
-                difference < 0 -> stringResource(R.string.explain_better, strokes, oneDecimal(abs(difference)), oneDecimal(average))
-                difference > 0 -> stringResource(R.string.explain_worse, strokes, oneDecimal(difference), oneDecimal(average))
-                else -> stringResource(R.string.explain_level, strokes, oneDecimal(average))
+                difference < 0 -> stringResource(R.string.explain_better, strokes, decimal(abs(difference)), decimal(average))
+                difference > 0 -> stringResource(R.string.explain_worse, strokes, decimal(difference), decimal(average))
+                else -> stringResource(R.string.explain_level, strokes, decimal(average))
             }
         is Sentence.NineHoleEquivalent -> stringResource(R.string.explain_nine_holes, strokes, per18)
         Sentence.DamageNotTracked -> stringResource(R.string.explain_damage_not_tracked)
@@ -343,7 +343,7 @@ private fun Sentence.text(): String {
         }
         Sentence.ConsistencyNeedsRounds -> stringResource(R.string.explain_consistency_needs_rounds)
         Sentence.ConsistencyAtOrBetter -> stringResource(R.string.explain_consistency_at_or_better)
-        is Sentence.ConsistencyWorse -> stringResource(R.string.explain_consistency_worse, oneDecimal(worseBy), oneDecimal(spread))
+        is Sentence.ConsistencyWorse -> stringResource(R.string.explain_consistency_worse, decimal(worseBy), decimal(spread))
         Sentence.HabitsUnknown -> stringResource(R.string.explain_habits_unknown)
         is Sentence.Habits ->
             stringResource(
