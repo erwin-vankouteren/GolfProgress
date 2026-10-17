@@ -216,6 +216,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
     private static readonly string[] AgreedOpenEnums =
     {
         "MicroWinResponse.category",
+        "MonthlyReviewResponse.topMicroWinCategory", // #162
         "PracticeSessionResponse.sessionType",
         "RoundResponse.source",
     };
@@ -235,6 +236,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
     [Theory]
     [InlineData("PracticeSessionResponse", "sessionType", new[] { "Range", "Putting", "ShortGame", "Simulator", "Lesson", "Other" })]
     [InlineData("MicroWinResponse", "category", new[] { "StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea" })]
+    [InlineData("MonthlyReviewResponse", "topMicroWinCategory", new[] { "StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea" })]
     [InlineData("RoundResponse", "source", new[] { "Manual", "Import", "Coach", "Other" })]
     public void OpenEnums_ArePlainStrings_ListingTheirKnownValues_Issue134(string schema, string property, string[] known)
     {

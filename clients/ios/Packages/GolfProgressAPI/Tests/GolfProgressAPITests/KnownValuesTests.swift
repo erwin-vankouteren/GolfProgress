@@ -45,6 +45,7 @@ final class KnownValuesTests: XCTestCase {
     func testListsTheSameKnownValuesAsTheSpec() throws {
         XCTAssertEqual(try knownValues("PracticeSessionResponse", "sessionType"), apiValues(SessionType.self))
         XCTAssertEqual(try knownValues("MicroWinResponse", "category"), apiValues(MicroWinCategory.self))
+        XCTAssertEqual(try knownValues("MonthlyReviewResponse", "topMicroWinCategory"), apiValues(MicroWinCategory.self))
         XCTAssertEqual(try knownValues("RoundResponse", "source"), apiValues(RoundSource.self))
     }
 

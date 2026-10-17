@@ -11,6 +11,24 @@ public sealed class MonthlyReviewService
 
     public MonthlyReviewService(GolfProgressDbContext db) => _db = db;
 
+    /// <summary>
+    /// A review's facts as data (#162), read leniently: reviews generated before they
+    /// were stored, or anything unexpected, read as null.
+    /// </summary>
+    public static (int? RoundsLogged, string? TopMicroWinCategory) ReadFacts(JsonDocument? highlightsJson)
+    {
+        if (highlightsJson is null || highlightsJson.RootElement.ValueKind != JsonValueKind.Object)
+            return (null, null);
+
+        var root = highlightsJson.RootElement;
+        int? rounds = root.TryGetProperty("roundsLogged", out var r) && r.ValueKind == JsonValueKind.Number
+            && r.TryGetInt32(out var count) && count >= 0 ? count : null;
+        string? category = root.TryGetProperty("topMicroWinCategory", out var c) && c.ValueKind == JsonValueKind.String
+            ? c.GetString() : null;
+
+        return (rounds, category);
+    }
+
     /// <summary>A review's highlights, read leniently: anything unexpected reads as none.</summary>
     public static List<string> ReadHighlights(JsonDocument? highlightsJson)
     {
@@ -65,9 +83,13 @@ public sealed class MonthlyReviewService
             .Where(mw => mw.UserId == userId && roundIds.Contains(mw.RoundId))
             .ToListAsync(ct);
 
+        // Ties go to the category named first, so generating twice gives the same theme.
         var mostCommonCategory = microWins.Count == 0
             ? null
-            : microWins.GroupBy(m => m.Category.ToString()).OrderByDescending(g => g.Count()).First().Key;
+            : microWins.GroupBy(m => m.Category.ToString())
+                .OrderByDescending(g => g.Count())
+                .ThenBy(g => g.Key, StringComparer.Ordinal)
+                .First().Key;
 
         var highlights = new List<string>
         {
@@ -100,8 +122,15 @@ public sealed class MonthlyReviewService
         existing.FitnessChange = change;
         existing.FocusNextMonth = focusNextMonth ?? existing.FocusNextMonth;
 
+        // The sentences for display, and the same facts as data clients can localise
+        // (#162), stored together so both describe the month as it was when generated.
         existing.HighlightsJson = JsonDocument.Parse(
-            JsonSerializer.Serialize(new { highlights }),
+            JsonSerializer.Serialize(new
+            {
+                highlights,
+                roundsLogged = rounds.Count,
+                topMicroWinCategory = mostCommonCategory
+            }),
             new JsonDocumentOptions()
         );
 

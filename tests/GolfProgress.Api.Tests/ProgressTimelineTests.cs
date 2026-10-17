@@ -1,7 +1,9 @@
 using GolfProgress.Api.Contracts;
+using GolfProgress.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace GolfProgress.Api.Tests;
 
@@ -163,6 +165,38 @@ public sealed class ProgressTimelineTests : IAsyncLifetime
 
         Assert.Null(review.FitnessAvg);
         Assert.Null(review.FitnessChange);
+        Assert.Equal(0, review.RoundsLogged);
+        Assert.Null(review.TopMicroWinCategory);
+    }
+
+    [Fact]
+    public async Task GenerateReview_GivesItsFactsAsData_ToReadBackLater()
+    {
+        await LogAsync(ThisMonth, 90);
+        await LogAsync(ThisMonth, 88);
+
+        var generated = await GenerateAsync(new { monthStart = Iso(ThisMonth) });
+        Assert.Equal(2, generated.RoundsLogged);
+        Assert.NotNull(generated.TopMicroWinCategory);
+
+        // As stored, not recomputed: a round logged afterwards doesn't change the review.
+        await LogAsync(ThisMonth, 86);
+        var read = await Client().GetFromJsonAsync<ReviewPayload>($"/me/monthly-reviews/{Iso(ThisMonth)}");
+        Assert.Equal(2, read!.RoundsLogged);
+        Assert.Equal(generated.TopMicroWinCategory, read.TopMicroWinCategory);
+    }
+
+    [Theory]
+    [InlineData("""{"highlights":["Rounds logged: 2"]}""")]           // generated before #162
+    [InlineData("""{"roundsLogged":"2","topMicroWinCategory":7}""")] // not the shape expected
+    [InlineData("""{"roundsLogged":-1}""")]
+    [InlineData("[]")]
+    public void ReviewFacts_FromOlderReviews_AreNullRatherThanAnError(string stored)
+    {
+        var (rounds, category) = MonthlyReviewService.ReadFacts(JsonDocument.Parse(stored));
+
+        Assert.Null(rounds);
+        Assert.Null(category);
     }
 
     [Fact]
@@ -219,7 +253,9 @@ public sealed class ProgressTimelineTests : IAsyncLifetime
 
     private sealed record MonthlyPayload(List<MonthPayload> Items);
 
-    private sealed record ReviewPayload(decimal? FitnessAvg, decimal? FitnessChange, string? FocusNextMonth);
+    private sealed record ReviewPayload(
+        decimal? FitnessAvg, decimal? FitnessChange, string? FocusNextMonth,
+        int? RoundsLogged, string? TopMicroWinCategory);
 
     private sealed record BaselinePayload(int SampleSize, short WindowRounds);
 

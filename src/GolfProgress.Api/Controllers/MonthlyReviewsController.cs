@@ -74,6 +74,7 @@ public sealed class MonthlyReviewsController : ControllerBase
     private static MonthlyReviewResponse ToResponse(GolfProgress.Domain.Entities.MonthlyReview r)
     {
         var highlights = MonthlyReviewService.ReadHighlights(r.HighlightsJson);
+        var (roundsLogged, topCategory) = MonthlyReviewService.ReadFacts(r.HighlightsJson);
 
         return new MonthlyReviewResponse
         {
@@ -83,6 +84,8 @@ public sealed class MonthlyReviewsController : ControllerBase
             FitnessAvg = r.FitnessAvg,
             FitnessChange = r.FitnessChange,
             FocusNextMonth = r.FocusNextMonth,
+            RoundsLogged = roundsLogged,
+            TopMicroWinCategory = topCategory,
             Highlights = highlights,
             ComputedAt = r.ComputedAt
         };

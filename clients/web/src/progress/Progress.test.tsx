@@ -89,6 +89,8 @@ function renderProgress({
         fitnessAvg: 67,
         fitnessChange: 7,
         focusNextMonth: body.focusNextMonth ?? null,
+        roundsLogged: 2,
+        topMicroWinCategory: "Habit",
         highlights: [],
         computedAt: "2026-10-17T09:00:00Z",
       };
@@ -216,6 +218,7 @@ describe("Progress (#107)", () => {
     expect(posted).toEqual([{ monthStart: "2026-10-01", focusNextMonth: "Fewer three-putts" }]);
     expect(within(review).getByText("Up 7 on the month before")).toBeInTheDocument();
     expect(within(review).getByText("2 rounds played")).toBeInTheDocument();
+    expect(within(review).getByText("Logging consistently")).toBeInTheDocument();
     expect(within(review).getByText("Fewer three-putts")).toBeInTheDocument();
     expect(within(review).getByRole("button", { name: "Update review" })).toBeInTheDocument();
     await waitFor(() =>

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useId, useState, type FormEvent, type ReactNode } from "react";
 import { FormattedMessage, FormattedNumber, useIntl, type IntlShape } from "react-intl";
 import { Link } from "react-router";
-import { ApiProblem, unwrap, type Schemas } from "../api";
+import { ApiProblem, microWinCategoryOf, unwrap, type MicroWinCategory, type Schemas } from "../api";
 import {
   queryKeys,
   useBaseline,
@@ -559,7 +559,7 @@ function ReviewSection() {
           ) : (
             <>
               {review.data ? (
-                <ReviewCard review={review.data} roundsLogged={point?.roundsLogged} />
+                <ReviewCard review={review.data} monthRounds={point?.roundsLogged} />
               ) : (
                 <p className="hint">
                   <FormattedMessage
@@ -579,8 +579,25 @@ function ReviewSection() {
   );
 }
 
-function ReviewCard({ review, roundsLogged }: { review: Schemas["MonthlyReviewResponse"]; roundsLogged?: number }) {
+/** The month's most common micro-win category, as users read it (#162). */
+const themeLabels: Record<Exclude<MicroWinCategory, "unknown">, PlainMessage> = {
+  StatDelta: messages.themeStatDelta,
+  Behavior: messages.themeBehavior,
+  Narrative: messages.themeNarrative,
+  Habit: messages.themeHabit,
+  Recovery: messages.themeRecovery,
+  FocusArea: messages.themeFocusArea,
+};
+
+/**
+ * A review as the API stored it. Its English `highlights` aren't shown: everything they
+ * say is in the fields, shown here in the user's language (#162). Reviews from before
+ * those fields fall back to the month's current round count.
+ */
+function ReviewCard({ review, monthRounds }: { review: Schemas["MonthlyReviewResponse"]; monthRounds?: number }) {
   const intl = useIntl();
+  const roundsLogged = review.roundsLogged ?? monthRounds;
+  const theme = microWinCategoryOf(review.topMicroWinCategory);
   return (
     <div className="review">
       <dl className="stat-list">
@@ -594,6 +611,12 @@ function ReviewCard({ review, roundsLogged }: { review: Schemas["MonthlyReviewRe
         {roundsLogged !== undefined && (
           <Stat label={messages.roundsColumn}>
             <FormattedMessage {...messages.roundsPlayed} values={{ count: roundsLogged }} />
+          </Stat>
+        )}
+        {/* A category added after this build (#134) is left out rather than misnamed. */}
+        {theme !== "unknown" && (
+          <Stat label={messages.reviewTheme}>
+            <FormattedMessage {...themeLabels[theme]} />
           </Stat>
         )}
         {review.focusNextMonth && (
