@@ -1,0 +1,76 @@
+name: Deploy web (staging)
+
+# Deploys the web app to Azure Static Web Apps (staging) after CI passes on main (#116).
+# Setup, settings and secrets: docs/deployment.md → "Web app (staging)".
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time; a newer one waits rather than racing it.
+concurrency:
+  group: deploy-web-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy
+    # Only after a green CI run on main (or when started by hand).
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_WEB_URL }}
+
+    defaults:
+      run:
+        working-directory: clients/web
+
+    steps:
+      - name: Check out the commit CI tested
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: clients/web/.nvmrc
+          cache: npm
+          cache-dependency-path: clients/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # The Content Security Policy allows calls to the API's origin and no other.
+      - name: Point the security headers at the staging API
+        env:
+          API_URL: ${{ vars.STAGING_API_URL }}
+        run: |
+          test -n "$API_URL" || { echo "::error::Set the STAGING_API_URL variable on the staging environment."; exit 1; }
+          origin=$(node -e "console.log(new URL(process.env.API_URL).origin)")
+          sed -i "s|__API_ORIGIN__|$origin|" public/staticwebapp.config.json
+          grep -q "$origin" public/staticwebapp.config.json
+
+      - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ vars.STAGING_API_URL }}
+          VITE_PRIVACY_POLICY_URL: ${{ vars.PRIVACY_POLICY_URL }}
+          VITE_TERMS_URL: ${{ vars.TERMS_URL }}
+        run: npm run build
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          # Built above; Static Web Apps only uploads it.
+          app_location: clients/web/dist
+          skip_app_build: true
+          skip_api_build: true

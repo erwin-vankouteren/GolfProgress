@@ -131,6 +131,46 @@ The mobile apps send users to the same web page to choose the new password. Open
 link in the apps themselves needs universal links (iOS) and app links (Android) on the
 production domain, which come with the store releases (M4).
 
+## Web app (staging)
+
+The web app is static files, served by **Azure Static Web Apps** (#116).
+`.github/workflows/web-deploy.yml` builds and deploys it after CI passes on `main`, or
+when started by hand.
+
+**One site for the web app and the API.** The refresh cookie is `SameSite=Strict`
+(architecture → "Authentication"), so the web app and the API must be on the same site:
+sibling subdomains of one domain you own, e.g. `staging.golfprogress.app` and
+`api.staging.golfprogress.app`. The default `*.azurestaticapps.net` and
+`*.azurewebsites.net` names are each a site of their own, so with them sign-in would not
+survive a reload. Add both custom domains before testing.
+
+**Setup:**
+
+1. Create a Static Web App (Free plan is enough for staging), source "Other", and add the
+   custom domain.
+2. In GitHub, create the environment **`staging`** (Settings → Environments), with
+   required reviewers if deployments should wait for approval, and give it:
+   - secret `AZURE_STATIC_WEB_APPS_API_TOKEN`: the Static Web App's deployment token;
+   - variable `STAGING_API_URL`: the staging API, e.g. `https://api.staging.golfprogress.app`;
+   - variable `STAGING_WEB_URL`: the web app, e.g. `https://staging.golfprogress.app`;
+   - variables `PRIVACY_POLICY_URL` and `TERMS_URL` once they're published (#121).
+3. On the staging API, set `Cors__AllowedOrigins__0` to the web app's origin and
+   `PasswordReset__LinkBaseUrl` to its `/reset-password` page.
+
+**What `public/staticwebapp.config.json` does:**
+
+- **Deep links:** any path that isn't a file falls back to `index.html`, so a link to a
+  round opens the app on that round.
+- **Security headers** on every response: a Content Security Policy that allows scripts,
+  styles and fonts from the app itself and calls to the API's origin only (the workflow
+  writes `STAGING_API_URL`'s origin in place of `__API_ORIGIN__`), no framing, no
+  plugins; `X-Content-Type-Options: nosniff`; `Referrer-Policy:
+  strict-origin-when-cross-origin`; a `Permissions-Policy` turning off camera, microphone,
+  location and payment; and HSTS. `e2e/security-headers.spec.ts` runs the app under the
+  same headers and fails on any policy violation.
+
+Adding crash reporting (#119) means adding its ingest origin to `connect-src`.
+
 ## Deployment checklist
 
 1. `Jwt__Key` is set: generated as above, unique to this environment, ideally a Key Vault reference.
