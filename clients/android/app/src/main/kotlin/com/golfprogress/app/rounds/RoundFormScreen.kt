@@ -239,7 +239,7 @@ fun RoundForm(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateField(
+fun DateField(
     date: LocalDate,
     onChange: (LocalDate) -> Unit,
 ) {

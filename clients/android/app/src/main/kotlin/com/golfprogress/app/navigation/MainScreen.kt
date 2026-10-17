@@ -37,6 +37,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.golfprogress.app.R
 import com.golfprogress.app.dashboard.DashboardScreen
+import com.golfprogress.app.practice.LogPracticeScreen
+import com.golfprogress.app.practice.PracticeDetailScreen
+import com.golfprogress.app.practice.PracticeDetailViewModel
+import com.golfprogress.app.practice.PracticeListScreen
 import com.golfprogress.app.rounds.ReflectionScreen
 import com.golfprogress.app.rounds.RoundDetailScreen
 import com.golfprogress.app.rounds.RoundFormScreen
@@ -63,6 +67,8 @@ enum class Destination(
     EditRound("rounds/{roundId}/edit", R.string.edit_round, tab = false),
     AddReflection("rounds/{roundId}/reflect", R.string.add_reflection, tab = false),
     Practice("practice", R.string.section_practice, tab = true),
+    LogPractice("practice/new", R.string.log_practice, tab = false),
+    PracticeDetail("practice/{sessionId}", R.string.practice_session, tab = false),
     Progress("progress", R.string.section_progress, tab = true),
     Profile("profile", R.string.section_profile, tab = false),
 }
@@ -145,7 +151,20 @@ fun MainScreen(
                 composable(Destination.AddReflection.route, arguments = listOf(roundIdArgument)) {
                     ReflectionScreen(onSaved = { navController.popBackStack() })
                 }
-                composable(Destination.Practice.route) { SectionContent(R.string.practice_empty) }
+                composable(Destination.Practice.route) {
+                    PracticeListScreen(onOpen = { id -> navController.navigate("practice/$id") }, onLogPractice = {
+                        navController.navigate(Destination.LogPractice.route)
+                    })
+                }
+                composable(Destination.LogPractice.route) {
+                    LogPracticeScreen(onSaved = { id ->
+                        navController.navigate("practice/$id") { popUpTo(Destination.LogPractice.route) { inclusive = true } }
+                    })
+                }
+                composable(
+                    Destination.PracticeDetail.route,
+                    arguments = listOf(navArgument(PracticeDetailViewModel.SESSION_ID) { type = NavType.StringType }),
+                ) { PracticeDetailScreen(onDeleted = { navController.popBackStack() }) }
                 composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }
                 composable(Destination.Profile.route) { ProfileContent(onSignOut) }
             }

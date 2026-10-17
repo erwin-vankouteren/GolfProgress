@@ -1,5 +1,6 @@
 package com.golfprogress.app.testing
 
+import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.DashboardRoundSummary
@@ -7,6 +8,7 @@ import com.golfprogress.api.generated.models.FitnessScoreExplanation
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
+import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.UserResponse
@@ -157,6 +159,32 @@ object Fixtures {
             blowUpHoles = blowUps,
         ),
         roundId(i),
+    )
+
+    fun practiceSession(
+        i: Int,
+        request: CreatePracticeSessionRequest =
+            CreatePracticeSessionRequest(
+                practicedAt =
+                    java.time.LocalDate
+                        .of(2026, 5, 20)
+                        .minusDays(i.toLong())
+                        .toString(),
+                durationMinutes = 45,
+                sessionType = CreatePracticeSessionRequest.SessionType.Putting,
+            ),
+        sessionType: String = request.sessionType?.value ?: "Range",
+    ) = PracticeSessionResponse(
+        practiceSessionId = UUID.fromString("00000000-0000-0000-0001-%012d".format(i)),
+        userId = userId,
+        practicedAt = request.practicedAt,
+        durationMinutes = request.durationMinutes,
+        sessionType = sessionType,
+        venueName = request.venueName,
+        tags = request.tags.orEmpty(),
+        primaryGoal = request.primaryGoal,
+        notes = request.notes,
+        createdAt = now,
     )
 
     fun reflection(
