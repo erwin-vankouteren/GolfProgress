@@ -171,6 +171,76 @@ survive a reload. Add both custom domains before testing.
 
 Adding crash reporting (#119) means adding its ingest origin to `connect-src`.
 
+## API (staging)
+
+The API runs on **Azure App Service**, with an Azure SQL database it signs in to as its own
+managed identity (#24), so staging holds no database password at all (#115).
+`infra/staging/main.bicep` describes the environment in one resource group;
+`.github/workflows/api-deploy.yml` applies migrations and deploys after CI passes on
+`main`, or when started by hand.
+
+**What the Bicep creates:**
+
+| Resource | Notes |
+|---|---|
+| App Service plan (Linux, B1) and app `golfprogress-api-staging` | .NET 8, HTTPS only, FTP off, system-assigned identity, health check on `/client-config`, every setting below |
+| Azure SQL server and database `GolfProgressDb` | **Microsoft Entra authentication only**, administered by an Entra group. Serverless, pausing after an hour idle, so the first request after a quiet spell takes up to a minute |
+| Key Vault | Holds `jwt-key` (and `email-connection-string`); the app's identity may read secrets and nothing else |
+| Application Insights and a Log Analytics workspace | The API's logs, requests and exceptions; IP addresses are masked, 30 days' retention |
+
+The app settings it sets: `ASPNETCORE_ENVIRONMENT=Staging`,
+`ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, `Jwt__Key` and `Email__ConnectionString` as
+Key Vault references, the passwordless connection string, `Cors__AllowedOrigins__0` and
+`PasswordReset__LinkBaseUrl` from `webOrigin`, and `APPLICATIONINSIGHTS_CONNECTION_STRING`.
+The API only sends telemetry when that last one is set, so nothing leaves a developer's
+machine.
+
+**Setup, once:**
+
+1. **An Entra group for the SQL admins,** e.g. `golfprogress-sql-admins`, with yourself in
+   it. Put its name and object id (`az ad group show -g <name> --query id -o tsv`) and the
+   web app's origin in `infra/staging/main.bicepparam`.
+2. **Deploy the infrastructure:**
+
+   ```powershell
+   az group create --name rg-golfprogress-staging --location westeurope
+   az deployment group create --resource-group rg-golfprogress-staging --template-file infra/staging/main.bicep --parameters infra/staging/main.bicepparam
+   ```
+
+   The outputs name the app, its URL, the SQL server and the vault. Running it again is
+   safe: it changes only what differs.
+3. **The JWT key,** generated as above, into the vault. Granting yourself **Key Vault
+   Secrets Officer** on the vault comes first, because the vault uses Azure RBAC:
+
+   ```powershell
+   az keyvault secret set --vault-name <vault> --name jwt-key --value <key>
+   ```
+
+4. **The database user for the API's identity,** as an SQL admin group member (db/README.md
+   → "Managed identity", step 3), with `AppIdentityName="golfprogress-api-staging"`. Steps
+   1, 2 and 4 there are done by the Bicep.
+5. **A deploy identity for GitHub:** an Entra app registration with a federated credential
+   for this repository's `staging` environment
+   (`repo:<owner>/golf-progress-api:environment:staging`), the **Website Contributor** role
+   on the app, and membership of the SQL admin group so it can apply migrations.
+6. **In GitHub,** on the `staging` environment:
+   - secrets `AZURE_CLIENT_ID` (the app registration), `AZURE_TENANT_ID`,
+     `AZURE_SUBSCRIPTION_ID`. These are identifiers, not passwords: OpenID Connect means no
+     Azure secret is stored in GitHub;
+   - variable `STAGING_API_APP_NAME`: `golfprogress-api-staging`;
+   - variable `STAGING_SQL_SERVER`: the `sqlServer` output;
+   - variable `STAGING_API_URL`, shared with the web app's deployment.
+7. **A custom domain** for the API on the web app's site, e.g. `api.staging.golfprogress.app`
+   (see "Web app (staging)" for why), with an App Service managed certificate.
+
+**Each deployment** builds the app and an EF Core migration bundle, applies any pending
+migrations as the deploy identity (the API itself can't change the schema), deploys, and
+waits for `/client-config` to answer.
+
+**Email** stays off until `emailSenderAddress` is set in the parameters and the
+`email-connection-string` secret is in the vault (see "Email"); until then reset emails are
+only logged.
+
 ## Deployment checklist
 
 1. `Jwt__Key` is set: generated as above, unique to this environment, ideally a Key Vault reference.

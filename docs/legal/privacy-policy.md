@@ -42,7 +42,8 @@ legitimate interest in keeping the service secure and working.
 ## Who processes it for us
 
 - **Microsoft Azure** hosts the service and its database in [region, e.g. West Europe],
-  and sends password reset emails (Azure Communication Services).
+  sends password reset emails (Azure Communication Services) and keeps the technical logs
+  (Application Insights, with IP addresses masked).
 - **[Crash reporting provider, e.g. Sentry]** receives crash and error reports
   ([region]).
 
@@ -55,6 +56,7 @@ safeguard, e.g. the provider's Standard Contractual Clauses.]
 - The activity log: 365 days, then it's deleted automatically.
 - Sign-in sessions: until they expire (14 days without use) or are revoked.
 - Password reset links: they stop working after 30 minutes or when used.
+- Technical logs: 30 days.
 - Crash reports: [the provider's retention, e.g. 90 days].
 - Database backups follow the hosting's backup retention ([e.g. 7 days]) and are then
   overwritten; we don't edit backups.

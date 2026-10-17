@@ -243,6 +243,12 @@ builder.Services.AddScoped<GolfProgress.Api.Services.RefreshTokenService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.AccountDeletionService>();
 builder.Services.AddMemoryCache();
 
+// API logs and telemetry in Application Insights (#115), sent only when
+// APPLICATIONINSIGHTS_CONNECTION_STRING is set, as on staging; locally and in tests
+// nothing leaves the machine.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+    builder.Services.AddApplicationInsightsTelemetry();
+
 // Audit-event retention (#20): purges old Events rows on a timer.
 builder.Services.AddScoped<GolfProgress.Api.Services.EventRetentionService>();
 builder.Services.AddHostedService<GolfProgress.Api.Services.EventRetentionWorker>();
