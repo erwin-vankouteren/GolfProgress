@@ -71,6 +71,9 @@ class Session(
         mutableState.update { if (it is SessionState.SignedIn) it.copy(newAccount = false) else it }
     }
 
+    /** Emails a password reset link (#86); the link opens the web app to choose a new password. */
+    suspend fun requestPasswordReset(email: String) = tokens.requestPasswordReset(email)
+
     suspend fun signOut() {
         tokens.signOut()
         mutableState.value = SessionState.SignedOut

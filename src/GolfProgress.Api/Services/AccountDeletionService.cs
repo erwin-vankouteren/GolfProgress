@@ -40,6 +40,7 @@ public sealed class AccountDeletionService
         // Deleting the refresh tokens is what revokes them: every device is signed out
         // at its next refresh.
         _db.RefreshTokens.RemoveRange(await _db.RefreshTokens.Where(x => x.UserId == userId).ToListAsync(ct));
+        _db.PasswordResetTokens.RemoveRange(await _db.PasswordResetTokens.Where(x => x.UserId == userId).ToListAsync(ct));
         _db.Users.Remove(user);
 
         // One save, so one transaction: the account is deleted entirely or not at all.

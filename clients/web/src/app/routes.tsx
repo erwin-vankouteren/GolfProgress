@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import type { RouteObject } from "react-router";
 import { CreateAccountPage, SignInPage, WelcomePage } from "../auth/AuthPages";
+import { ForgotPasswordPage, ResetPasswordPage } from "../auth/PasswordResetPages";
 import { Skeleton } from "../common/states";
 import { AppLayout } from "../layout/AppLayout";
 import { DashboardPage } from "../dashboard/DashboardPage";
@@ -24,12 +25,15 @@ const loading = (page: ReactNode) => <Suspense fallback={<Skeleton blocks={3} />
  * app itself requires a session, and sends anyone else to Welcome.
  */
 export const routes: RouteObject[] = [
+  // From the reset email (#86): open whether or not someone is signed in on this browser.
+  { path: "reset-password", element: <ResetPasswordPage /> },
   {
     element: <PublicOnly />,
     children: [
       { path: "welcome", element: <WelcomePage /> },
       { path: "sign-in", element: <SignInPage /> },
       { path: "create-account", element: <CreateAccountPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
     ],
   },
   {

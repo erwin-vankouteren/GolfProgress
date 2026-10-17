@@ -4,6 +4,7 @@ import com.golfprogress.api.ApiProblem
 import com.golfprogress.api.generated.apis.AuthApi
 import com.golfprogress.api.generated.models.AuthResponse
 import com.golfprogress.api.generated.models.LoginRequest
+import com.golfprogress.api.generated.models.PasswordResetRequest
 import com.golfprogress.api.generated.models.RefreshRequest
 import com.golfprogress.api.generated.models.RegisterRequest
 import com.golfprogress.api.unwrap
@@ -69,6 +70,11 @@ class TokenRefresher(
                 .register(registerRequest = RegisterRequest(email = email, displayName = displayName, password = password))
                 .unwrap(),
         )
+
+    /** Asks the API to email a reset link (#86). Answers the same whether or not the account exists. */
+    suspend fun requestPasswordReset(email: String) {
+        auth.requestPasswordReset(PasswordResetRequest(email = email)).unwrap()
+    }
 
     /**
      * Forgets the session here first, then revokes the refresh token on the API. If the

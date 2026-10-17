@@ -22,6 +22,7 @@ public class GolfProgressDbContext : DbContext
     public DbSet<MonthlyReview> MonthlyReviews => Set<MonthlyReview>();
     public DbSet<EventLog> Events => Set<EventLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -288,6 +289,26 @@ public class GolfProgressDbContext : DbContext
             e.Property(x => x.ExpiresAt).IsRequired();
 
             // Avoid cascade-path issues: don't cascade from User to RefreshTokens.
+            e.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Password reset links (#86): looked up by hash, and counted per user for the
+        // hourly limit.
+        modelBuilder.Entity<PasswordResetToken>(e =>
+        {
+            e.ToTable("PasswordResetTokens");
+            e.HasKey(x => x.PasswordResetTokenId);
+
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasIndex(x => new { x.UserId, x.CreatedAt });
+
+            e.Property(x => x.TokenHash).IsRequired().HasMaxLength(200);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
+            e.Property(x => x.ExpiresAt).IsRequired();
+
             e.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId)

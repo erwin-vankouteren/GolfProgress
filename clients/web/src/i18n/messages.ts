@@ -51,6 +51,25 @@ export const plainMessages = defineMessages({
   working: { id: "auth.working", defaultMessage: "Please wait…" },
   haveAccount: { id: "auth.haveAccount", defaultMessage: "Already have an account? Sign in" },
   needAccount: { id: "auth.needAccount", defaultMessage: "New here? Create an account" },
+  forgotPassword: { id: "auth.forgotPassword", defaultMessage: "Forgot password?" },
+  resetPasswordTitle: { id: "reset.title", defaultMessage: "Reset your password" },
+  resetPasswordIntro: {
+    id: "reset.intro",
+    defaultMessage: "Enter the email address you signed up with, and we'll send you a link to choose a new password.",
+  },
+  sendResetLink: { id: "reset.send", defaultMessage: "Send reset link" },
+  backToSignIn: { id: "reset.backToSignIn", defaultMessage: "Back to sign in" },
+  chooseNewPassword: { id: "reset.choose", defaultMessage: "Choose a new password" },
+  setNewPassword: { id: "reset.save", defaultMessage: "Save new password" },
+  passwordResetDone: {
+    id: "reset.done",
+    defaultMessage: "Your password is changed, and you're signed out on every device. Sign in with your new password.",
+  },
+  resetLinkInvalid: {
+    id: "reset.invalid",
+    defaultMessage: "This reset link is invalid or has expired: each link works once, for a limited time.",
+  },
+  askForNewLink: { id: "reset.askAgain", defaultMessage: "Ask for a new link" },
   invalidEmail: { id: "auth.invalidEmail", defaultMessage: "Enter a valid email address." },
   wrongCredentials: { id: "auth.wrongCredentials", defaultMessage: "Email or password is wrong." },
   emailTaken: { id: "auth.emailTaken", defaultMessage: "An account with this email already exists. Sign in instead." },
@@ -603,6 +622,11 @@ export const messagesWithValues = {
     defaultMessage: "Choose up to {max}. Your micro-wins look for progress here first.",
   }),
   appVersion: defineMessage<{ version: string }>({ id: "profile.version", defaultMessage: "Version {version}" }),
+  resetLinkSent: defineMessage<{ email: string }>({
+    id: "reset.sent",
+    defaultMessage:
+      "If {email} has a GolfProgress account, a link to reset its password is on its way. It works for a limited time.",
+  }),
   onboardingStep: defineMessage<{ step: number; total: number }>({
     id: "onboarding.step",
     defaultMessage: "Step {step} of {total}",

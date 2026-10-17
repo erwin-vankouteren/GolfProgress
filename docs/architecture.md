@@ -342,6 +342,7 @@ Users delete their account in the app (Profile → Delete account), as both stor
 | Baseline and monthly reviews | `UserBaselines`, `MonthlyReviews` |
 | The activity log (rounds logged, scores computed, and so on) | `Events` |
 | Sign-in sessions on every device | `RefreshTokens` |
+| Password reset links | `PasswordResetTokens` |
 
 Nothing is kept: no row in any table references the user afterwards, which a SQL Server
 test checks for every table with a `UserId` column. The API's log keeps one line,
