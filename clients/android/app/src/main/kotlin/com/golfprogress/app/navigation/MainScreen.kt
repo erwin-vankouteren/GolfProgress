@@ -35,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.golfprogress.app.R
 import com.golfprogress.app.dashboard.DashboardScreen
+import com.golfprogress.app.rounds.LogRoundScreen
 import com.golfprogress.app.sections.ProfileContent
 import com.golfprogress.app.sections.SectionContent
 import com.golfprogress.app.ui.common.OfflineBanner
@@ -117,7 +118,8 @@ fun MainScreen(
                     DashboardScreen(onLogRound = logRound, onOpenRound = { navController.navigateTo(Destination.Rounds) })
                 }
                 composable(Destination.Rounds.route) { SectionContent(R.string.rounds_empty, onLogRound = logRound) }
-                composable(Destination.LogRound.route) { SectionContent(R.string.log_round_intro) }
+                // The round detail arrives with #97; until then a saved round shows on Home.
+                composable(Destination.LogRound.route) { LogRoundScreen(onSaved = { navController.navigateTo(Destination.Home) }) }
                 composable(Destination.Practice.route) { SectionContent(R.string.practice_empty) }
                 composable(Destination.Progress.route) { SectionContent(R.string.progress_empty) }
                 composable(Destination.Profile.route) { ProfileContent(onSignOut) }
