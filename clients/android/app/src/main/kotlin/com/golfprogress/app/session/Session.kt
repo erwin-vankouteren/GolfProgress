@@ -20,6 +20,8 @@ sealed interface SessionState {
 
     data class SignedIn(
         val userId: String,
+        /** Just created: onboarding comes first (#113). */
+        val newAccount: Boolean = false,
     ) : SessionState
 }
 
@@ -61,7 +63,12 @@ class Session(
         displayName: String,
         password: String,
     ) {
-        mutableState.value = SessionState.SignedIn(tokens.register(email, displayName, password))
+        mutableState.value = SessionState.SignedIn(tokens.register(email, displayName, password), newAccount = true)
+    }
+
+    /** Onboarding is finished or skipped: on to the app. */
+    fun onboarded() {
+        mutableState.update { if (it is SessionState.SignedIn) it.copy(newAccount = false) else it }
     }
 
     suspend fun signOut() {

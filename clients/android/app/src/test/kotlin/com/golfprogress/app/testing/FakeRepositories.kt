@@ -1,5 +1,6 @@
 package com.golfprogress.app.testing
 
+import com.golfprogress.api.ApiProblem
 import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.CreateReflectionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
@@ -18,6 +19,7 @@ import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.DashboardRepository
 import com.golfprogress.app.data.Page
 import com.golfprogress.app.data.PracticeRepository
+import com.golfprogress.app.data.ProfileChanges
 import com.golfprogress.app.data.ProgressRepository
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.data.UserRepository
@@ -49,10 +51,54 @@ class FakeDashboardRepository(
     override suspend fun fitnessScore(roundId: UUID): FitnessScoreResponse? = scores[roundId]
 }
 
+/**
+ * The profile in memory: updates apply as the API applies them, [password] is the
+ * account's password, and [failWith] makes the account calls throw.
+ */
 class FakeUserRepository(
     var me: () -> UserResponse = { Fixtures.user() },
+    var password: String = "correct horse",
 ) : UserRepository {
+    val updates = mutableListOf<ProfileChanges>()
+    val passwordChanges = mutableListOf<Pair<String, String>>()
+    var deleted = false
+    var failWith: Exception? = null
+
     override suspend fun me(): UserResponse = me.invoke()
+
+    override suspend fun update(changes: ProfileChanges): UserResponse {
+        failWith?.let { throw it }
+        updates += changes
+        val current = me()
+        val updated =
+            current.copy(
+                displayName = changes.displayName ?: current.displayName,
+                units = changes.units?.let { u -> UserResponse.Units.entries.first { it.value == u } } ?: current.units,
+                trackingMode =
+                    changes.trackingMode?.let { t -> UserResponse.TrackingMode.entries.first { it.value == t } } ?: current.trackingMode,
+                goalFocus = changes.goalFocus ?: current.goalFocus,
+                handicapIndex = changes.handicapIndex?.let { it.value } ?: current.handicapIndex,
+                typical18Score = changes.typical18Score?.let { it.value } ?: current.typical18Score,
+            )
+        me = { updated }
+        return updated
+    }
+
+    override suspend fun changePassword(
+        current: String,
+        new: String,
+    ) {
+        failWith?.let { throw it }
+        if (current != password) throw ApiProblem(400, errors = mapOf("CurrentPassword" to listOf("The current password is incorrect.")))
+        passwordChanges += current to new
+        password = new
+    }
+
+    override suspend fun deleteAccount(password: String) {
+        failWith?.let { throw it }
+        if (password != this.password) throw ApiProblem(400, errors = mapOf("Password" to listOf("The password is incorrect.")))
+        deleted = true
+    }
 }
 
 /**

@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -41,13 +42,13 @@ import com.golfprogress.app.practice.LogPracticeScreen
 import com.golfprogress.app.practice.PracticeDetailScreen
 import com.golfprogress.app.practice.PracticeDetailViewModel
 import com.golfprogress.app.practice.PracticeListScreen
+import com.golfprogress.app.profile.ProfileScreen
 import com.golfprogress.app.progress.ProgressScreen
 import com.golfprogress.app.rounds.ReflectionScreen
 import com.golfprogress.app.rounds.RoundDetailScreen
 import com.golfprogress.app.rounds.RoundFormScreen
 import com.golfprogress.app.rounds.RoundFormViewModel
 import com.golfprogress.app.rounds.RoundsListScreen
-import com.golfprogress.app.sections.ProfileContent
 import com.golfprogress.app.ui.common.OfflineBanner
 import java.util.UUID
 
@@ -88,7 +89,10 @@ private val bottomBar =
 fun MainScreen(
     navController: NavHostController = rememberNavController(),
     onSignOut: () -> Unit = {},
+    /** After onboarding (#113): open Log round straight away. */
+    openLogRound: Boolean = false,
 ) {
+    LaunchedEffect(Unit) { if (openLogRound) navController.navigateTo(Destination.LogRound) }
     val backStack by navController.currentBackStackEntryAsState()
     val current = Destination.entries.firstOrNull { it.route == backStack?.destination?.route } ?: Destination.Home
 
@@ -166,7 +170,7 @@ fun MainScreen(
                     arguments = listOf(navArgument(PracticeDetailViewModel.SESSION_ID) { type = NavType.StringType }),
                 ) { PracticeDetailScreen(onDeleted = { navController.popBackStack() }) }
                 composable(Destination.Progress.route) { ProgressScreen(onLogRound = logRound) }
-                composable(Destination.Profile.route) { ProfileContent(onSignOut) }
+                composable(Destination.Profile.route) { ProfileScreen(onSignOut = onSignOut) }
             }
         }
     }

@@ -16,6 +16,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -24,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.golfprogress.app.auth.AuthFlow
 import com.golfprogress.app.navigation.MainScreen
+import com.golfprogress.app.profile.OnboardingScreen
 import com.golfprogress.app.session.SessionState
 import com.golfprogress.app.session.SessionViewModel
 import com.golfprogress.app.ui.theme.DesignTokens
@@ -58,6 +62,8 @@ private fun Root(
 ) {
     val version by versionViewModel.state.collectAsStateWithLifecycle()
     val session by sessionViewModel.state.collectAsStateWithLifecycle()
+    // Onboarding ends on Log round (#113): the first round is the point of signing up.
+    var openLogRound by rememberSaveable { mutableStateOf(false) }
 
     when {
         version == VersionState.UpdateRequired -> UpdateRequiredScreen()
@@ -66,7 +72,18 @@ private fun Root(
                 SessionState.Restoring -> RestoringScreen()
                 SessionState.RestoreFailed -> RestoreFailedScreen(onRetry = sessionViewModel::retry)
                 SessionState.SignedOut -> AuthFlow()
-                is SessionState.SignedIn -> MainScreen(onSignOut = sessionViewModel::signOut)
+                is SessionState.SignedIn ->
+                    if ((session as SessionState.SignedIn).newAccount) {
+                        OnboardingScreen(
+                            onFinished = {
+                                openLogRound = true
+                                sessionViewModel.onboarded()
+                            },
+                            onSkip = sessionViewModel::onboarded,
+                        )
+                    } else {
+                        MainScreen(onSignOut = sessionViewModel::signOut, openLogRound = openLogRound)
+                    }
             }
     }
 }

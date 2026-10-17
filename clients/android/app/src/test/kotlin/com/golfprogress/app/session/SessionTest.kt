@@ -161,6 +161,19 @@ class SessionTest {
         }
 
     @Test
+    fun `a new account starts onboarding, until it is finished or skipped`() =
+        runBlocking {
+            respond = { auth(token = "access-1", refreshToken = "refresh-1") }
+            val session = Session(refresher(FakeStore()))
+
+            session.register("erwin@example.test", "Erwin", "correct horse")
+            assertEquals(SessionState.SignedIn(USER_ID, newAccount = true), session.state.value)
+
+            session.onboarded()
+            assertEquals(SessionState.SignedIn(USER_ID), session.state.value)
+        }
+
+    @Test
     fun `signing in keeps the access token in memory and the refresh token in the store`() =
         runBlocking {
             val store = FakeStore()

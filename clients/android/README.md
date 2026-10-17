@@ -2,9 +2,10 @@
 
 The GolfProgress Android app.
 
-**Status:** the app shell (#77) and sign-in (#71), on top of the API client module (#65),
-and the M2 features as they land: Home (#90), Log round (#94), and the round list, detail
-and editing (#97), reflections (#101), practice (#105), progress and monthly reviews (#109).
+**Status:** the M2 features: Home (#90), Log round (#94), the round list, detail and
+editing (#97), reflections (#101), practice (#105), progress and monthly reviews (#109),
+and profile, preferences, onboarding and account deletion (#113). On top of the app shell
+(#77), sign-in (#71) and the API client module (#65).
 
 ## Stack
 
@@ -44,7 +45,7 @@ the module applies the Compose compiler plugin but not `kotlin-android`.
 | `rounds/` | Log round (#94) and Edit round (#97), one form: its rules in `RoundForm.kt` (the web app's, and the API's) and `RoundFormViewModel`, editing when the route carries a `roundId`. The list (`RoundsListViewModel`, paged by `skip`/`take` until `X-Total-Count`) and the detail (`RoundDetail.kt` explains each pillar, as the web app does) |
 | `data/` | Repositories over the generated client, one per area, bound in `di/RepositoryModule.kt`. View models only see these interfaces |
 | `ui/common/` | `Load` (loading, failed, loaded), skeletons, errors with Try again, empty states, cards, the offline banner, and the score pieces (confidence, pillars, dates) |
-| `sections/` | Empty states for the sections whose features haven't landed yet |
+| `profile/` | Profile (#113): your details, preferences, change password, sign out, delete account and About; and onboarding after Create account, which ends on Log round. `ProfileForm.kt` holds the web app's rules |
 | `version/` | `VersionViewModel`: "Update required" when this build is older than `GET /client-config`'s minimum. It never blocks start-up, and if the check fails the app carries on |
 | `di/AppModule.kt` | Hilt: the API client, the session and its token store, the app version, the minimum-version source |
 | `ui/theme/Theme.kt` | The Material 3 theme, built only from `DesignTokens`; light or dark follows the system |
@@ -124,3 +125,7 @@ try {
   strings in responses, because the API may add values at any time. Read them through
   `knownSessionType`, `knownCategory` and `knownSource` (`KnownValues.kt`), which give
   `Unknown` for a value this build doesn't know.
+- **Account calls** (`AccountApi.kt`): use `AccountApi.updateMe` and `deleteMe`, not the
+  generated `UsersApi` ones. The generated PATCH sends every field, nulls included, so
+  changing the units would clear the handicap; the generated DELETE puts a body on
+  `@DELETE`, which Retrofit refuses at runtime.

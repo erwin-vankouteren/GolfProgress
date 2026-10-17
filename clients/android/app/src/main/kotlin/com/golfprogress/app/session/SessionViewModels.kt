@@ -30,6 +30,8 @@ class SessionViewModel
         fun signOut() {
             viewModelScope.launch { session.signOut() }
         }
+
+        fun onboarded() = session.onboarded()
     }
 
 /** The Sign in and Create account forms (#71). */
