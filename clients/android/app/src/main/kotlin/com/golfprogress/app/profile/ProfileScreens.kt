@@ -43,9 +43,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,6 +58,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.BuildConfig
 import com.golfprogress.app.R
+import com.golfprogress.app.language.AppLanguage
+import com.golfprogress.app.language.AppLocales
+import com.golfprogress.app.language.shownLanguage
 import com.golfprogress.app.ui.common.ConfirmDialog
 import com.golfprogress.app.ui.common.Load
 import com.golfprogress.app.ui.common.LoadError
@@ -88,6 +96,14 @@ private fun RadioRow(
     onClick: () -> Unit,
     @StringRes label: Int,
     @StringRes hint: Int? = null,
+) = RadioRow(selected, onClick, AnnotatedString(stringResource(label)), hint?.let { AnnotatedString(stringResource(it)) })
+
+@Composable
+private fun RadioRow(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: AnnotatedString,
+    hint: AnnotatedString?,
 ) {
     Row(
         modifier =
@@ -99,10 +115,10 @@ private fun RadioRow(
     ) {
         RadioButton(selected = selected, onClick = null)
         Column(Modifier.padding(start = DesignTokens.Spacing.sm)) {
-            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
+            Text(label, style = MaterialTheme.typography.bodyLarge)
             hint?.let {
                 Text(
-                    stringResource(it),
+                    it,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -134,6 +150,32 @@ fun TrackingChoice(
         Hint(stringResource(R.string.can_change_any_time))
     }
 }
+
+/**
+ * Each language by its own name, as language pickers do, so it can be found whatever
+ * the app shows; the name carries its locale, so TalkBack says it in that language.
+ * The device's language is named next to its option.
+ */
+@Composable
+fun LanguageChoice(
+    value: AppLanguage?,
+    onChange: (AppLanguage?) -> Unit,
+) {
+    val context = LocalContext.current
+    val device = shownLanguage(null, AppLocales.deviceTags(context))
+    Column(Modifier.selectableGroup()) {
+        Hint(stringResource(R.string.language_hint))
+        RadioRow(value == null, { onChange(null) }, AnnotatedString(stringResource(R.string.language_device)), ownName(device))
+        AppLanguage.entries.forEach { language ->
+            RadioRow(value == language, { onChange(language) }, ownName(language), null)
+        }
+    }
+}
+
+private fun ownName(language: AppLanguage) =
+    buildAnnotatedString {
+        withStyle(SpanStyle(localeList = LocaleList(language.tag))) { append(language.ownName) }
+    }
 
 /** Up to three; once three are ticked, the others are disabled until one is unticked. */
 @Composable
@@ -423,7 +465,14 @@ private fun PreferencesCard(
         TrackingChoice(preferences.trackingMode) { viewModel.setPreferences(preferences.copy(trackingMode = it)) }
         Label(R.string.goal_focus)
         GoalsChoice(preferences.goalFocus, viewModel::toggleGoal)
+        Label(R.string.language)
+        LanguageChoice(preferences.language) { viewModel.setPreferences(preferences.copy(language = it)) }
         if (state.preferencesSaved) Saved(R.string.changes_saved)
+        // Once saved, the app switches to it (and does nothing if it's shown already).
+        val context = LocalContext.current
+        LaunchedEffect(state.preferencesSaved) {
+            if (state.preferencesSaved) AppLocales.apply(context, preferences.language)
+        }
         Problem(state.preferencesProblem)
         SaveButton(R.string.save, state.preferencesSaving, online, viewModel::savePreferences)
     }

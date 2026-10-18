@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dutch. Every string in values/strings.xml has an entry here with the same format
+     arguments; StringsTranslationTest checks it. Terms as on the web (src/i18n/nl.ts):
+     ronde invoeren, slagen, strafslagen, uitschieters (blow-up holes), drie-putts,
+     fitnessscore, micro-wins, basislijn, training, voortgang. Informal: je, not u. -->
+<resources>
+    <string name="app_name">GolfProgress</string>
+
+    <string name="section_home">Home</string>
+    <string name="section_rounds">Rondes</string>
+    <string name="section_practice">Training</string>
+    <string name="section_progress">Voortgang</string>
+    <string name="section_profile">Profiel</string>
+    <string name="log_round">Ronde invoeren</string>
+    <string name="open_profile">Profiel</string>
+    <string name="navigate_back">Terug</string>
+
+    <string name="home_empty">Voer je eerste ronde in om je fitnessscore te zien.</string>
+    <string name="rounds_empty">Nog geen rondes ingevoerd.</string>
+    <string name="practice_empty">Nog geen training ingevoerd. Training telt mee voor je gewoontescore.</string>
+    <string name="progress_empty">Voer een paar rondes in om je trends te zien.</string>
+
+    <string name="update_required_title">Update nodig</string>
+    <string name="update_required_body">Deze versie van GolfProgress wordt niet meer ondersteund. Werk de app bij om hem te blijven gebruiken.</string>
+
+    <!-- Sign-in (#71) -->
+    <string name="session_restoring">Je wordt ingelogd…</string>
+    <string name="try_again">Opnieuw proberen</string>
+    <string name="welcome_body">Zie je vooruitgang, verder dan alleen je score: elke ronde gescoord op uitvoering, schadebeperking, consistentie en gewoontes.</string>
+    <string name="auth_create_account">Account aanmaken</string>
+    <string name="auth_sign_in">Inloggen</string>
+    <string name="auth_sign_out">Uitloggen</string>
+    <string name="auth_name">Naam</string>
+    <string name="auth_email">E-mail</string>
+    <string name="auth_password">Wachtwoord</string>
+    <string name="auth_working">Even geduld…</string>
+    <string name="auth_have_account">Heb je al een account? Log in</string>
+    <string name="auth_need_account">Nieuw hier? Maak een account aan</string>
+    <string name="auth_required">%1$s is verplicht.</string>
+    <string name="auth_invalid_email">Vul een geldig e-mailadres in.</string>
+    <string name="auth_wrong_credentials">E-mailadres of wachtwoord klopt niet.</string>
+    <string name="auth_email_taken">Er bestaat al een account met dit e-mailadres. Log in plaats daarvan in.</string>
+    <plurals name="auth_too_many_attempts">
+        <item quantity="one">Te veel pogingen. Probeer het over %d seconde opnieuw.</item>
+        <item quantity="other">Te veel pogingen. Probeer het over %d seconden opnieuw.</item>
+    </plurals>
+    <string name="auth_too_many_attempts_later">Te veel pogingen. Probeer het later opnieuw.</string>
+    <string name="auth_something_went_wrong">Er ging iets mis. Probeer het opnieuw.</string>
+    <string name="auth_cant_connect">GolfProgress is niet bereikbaar. Controleer je verbinding en probeer het opnieuw.</string>
+
+    <!-- Password reset (#86) -->
+    <string name="auth_forgot_password">Wachtwoord vergeten?</string>
+    <string name="reset_title">Wachtwoord opnieuw instellen</string>
+    <string name="reset_intro">Vul het e-mailadres in waarmee je je hebt aangemeld. We sturen je een link om een nieuw wachtwoord te kiezen.</string>
+    <string name="reset_send">Link versturen</string>
+    <string name="reset_link_sent">Als %1$s een GolfProgress-account heeft, is er een link onderweg om het wachtwoord opnieuw in te stellen. De link werkt een beperkte tijd.</string>
+    <string name="reset_back_to_sign_in">Terug naar inloggen</string>
+
+    <!-- States every screen handles (M2) -->
+    <string name="loading">Laden…</string>
+    <string name="offline">Je bent offline. Je kunt rondkijken, maar voor wijzigingen heb je een verbinding nodig.</string>
+
+    <!-- Scores -->
+    <string name="fitness_score_value">Fitnessscore %1$d</string>
+    <string name="not_scored_yet">Deze ronde heeft nog geen score.</string>
+    <string name="confidence_low">Laag</string>
+    <string name="confidence_medium">Gemiddeld</string>
+    <string name="confidence_high">Hoog</string>
+    <string name="confidence_description">Betrouwbaarheid: %1$s</string>
+    <string name="confidence_low_explanation">Gebaseerd op nog maar een paar rondes: het is nog vroeg.</string>
+    <string name="pillar_execution">Uitvoering</string>
+    <string name="pillar_damage_control">Schadebeperking</string>
+    <string name="pillar_consistency">Consistentie</string>
+    <string name="pillar_habits">Gewoontes</string>
+    <string name="pillar_score">%1$d / %2$d</string>
+    <string name="up_on_last_month">%1$d hoger dan vorige maand</string>
+    <string name="down_on_last_month">%1$d lager dan vorige maand</string>
+    <string name="same_as_last_month">Gelijk aan vorige maand</string>
+
+    <!-- Home (#90) -->
+    <string name="dashboard_load_error">Je dashboard kon niet worden geladen.</string>
+    <string name="log_first_round">Voer je eerste ronde in</string>
+    <string name="last_round">Laatste ronde</string>
+    <plurals name="last_round_link">
+        <item quantity="one">%1$s · %2$d slag</item>
+        <item quantity="other">%1$s · %2$d slagen</item>
+    </plurals>
+    <string name="open_round">Ronde openen</string>
+    <string name="next_focus">Je volgende focus</string>
+    <string name="baseline">Basislijn</string>
+    <string name="baseline_average">Gemiddelde score</string>
+    <string name="micro_wins">Micro-wins</string>
+    <string name="this_month">Deze maand</string>
+    <string name="month_average">Gemiddelde fitnessscore</string>
+
+    <!-- Log round (#94) -->
+    <string name="save">Opslaan</string>
+    <string name="saving">Opslaan…</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Annuleren</string>
+    <string name="date">Datum</string>
+    <string name="choose_date">Datum kiezen</string>
+    <string name="holes">Holes</string>
+    <string name="holes_option">%1$d holes</string>
+    <string name="course">Baan</string>
+    <string name="tee">Tee</string>
+    <string name="strokes">Slagen</string>
+    <string name="putts">Putts</string>
+    <string name="penalties">Strafslagen</string>
+    <string name="fairways">Fairways geraakt</string>
+    <string name="greens">Greens in regulation</string>
+    <string name="three_putts">Drie-putts</string>
+    <string name="blow_up_holes">Uitschieters</string>
+    <string name="notes">Notities</string>
+    <string name="out_of">van %1$d</string>
+    <string name="decrease">%1$s verlagen</string>
+    <string name="increase">%1$s verhogen</string>
+    <string name="more_stats_hint">Meer statistieken? Verander in je profiel wat je bijhoudt.</string>
+    <string name="preferences_load_error">Je voorkeuren konden niet worden geladen.</string>
+    <string name="offline_cant_save_round">Je bent offline. Maak verbinding om deze ronde op te slaan.</string>
+    <string name="round_save_failed">De ronde kon niet worden opgeslagen. Probeer het opnieuw.</string>
+    <string name="strokes_required">Vul je aantal slagen in.</string>
+    <string name="whole_number">Vul een heel getal in.</string>
+    <string name="strokes_positive">Het aantal slagen moet meer dan 0 zijn.</string>
+    <string name="not_negative">Kan niet minder dan 0 zijn.</string>
+    <string name="at_most_holes">Kan niet meer zijn dan %1$d, het aantal holes.</string>
+    <string name="at_most_strokes">Kan niet meer zijn dan je aantal slagen (%1$d).</string>
+
+    <!-- Round list, detail and editing (#97) -->
+    <string name="round_title">Ronde</string>
+    <string name="edit_round">Ronde bewerken</string>
+    <string name="delete_round">Ronde verwijderen</string>
+    <string name="delete_round_title">Deze ronde verwijderen?</string>
+    <string name="delete_round_body">De score, micro-wins en reflecties van deze ronde worden ook verwijderd, en je andere scores worden opnieuw berekend. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="delete_round_failed">De ronde kon niet worden verwijderd. Probeer het opnieuw.</string>
+    <string name="deleting">Verwijderen…</string>
+    <string name="rounds_load_error">Je rondes konden niet worden geladen.</string>
+    <string name="round_load_error">Deze ronde kon niet worden geladen.</string>
+    <string name="round_no_longer_exists">Deze ronde bestaat niet meer. Misschien is hij op een ander apparaat verwijderd.</string>
+    <string name="show_more_rounds">Meer rondes tonen</string>
+    <string name="not_scored">Geen score</string>
+    <plurals name="strokes_count">
+        <item quantity="one">%d slag</item>
+        <item quantity="other">%d slagen</item>
+    </plurals>
+    <string name="fitness_score">Fitnessscore</string>
+    <string name="stats">Statistieken</string>
+    <string name="no_stats_tracked">Voor deze ronde zijn alleen de slagen bijgehouden.</string>
+    <string name="reflection">Reflectie</string>
+    <string name="no_reflection">Nog geen reflectie. Reflecteren op een ronde telt mee voor je gewoontescore.</string>
+    <string name="reflected_on">Toegevoegd op %1$s</string>
+    <string name="focus">Focus</string>
+    <string name="mood">Stemming</string>
+    <string name="out_of_five">%1$d van 5</string>
+    <string name="frustration_carried_over">Frustratie meegenomen</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nee</string>
+    <string name="what_worked">Wat werkte</string>
+    <string name="what_to_repeat">Wat je wilt herhalen</string>
+    <string name="one_change_next">Eén ding om volgende keer anders te doen</string>
+    <string name="show_why">Toon waarom</string>
+    <string name="expanded">Uitgeklapt</string>
+    <string name="collapsed">Ingeklapt</string>
+    <string name="explain_first_round">Er zijn nog geen eerdere rondes om mee te vergelijken, dus dit begint in het midden.</string>
+    <string name="explain_better">%1$d slagen, %2$s beter dan je recente gemiddelde van %3$s.</string>
+    <string name="explain_worse">%1$d slagen, %2$s slechter dan je recente gemiddelde van %3$s.</string>
+    <string name="explain_level">%1$d slagen, gelijk aan je recente gemiddelde van %2$s.</string>
+    <string name="explain_nine_holes">Over 9 holes telt je %1$d als %2$d over 18.</string>
+    <string name="explain_damage_not_tracked">Strafslagen en uitschieters zijn niet bijgehouden, dus dit is een middenscore in plaats van de volle punten.</string>
+    <string name="explain_damage">%1$s, %2$s. Hoe minder van allebei, hoe hoger de score.</string>
+    <string name="explain_no_penalties">Geen strafslagen</string>
+    <plurals name="explain_penalties">
+        <item quantity="one">%d strafslag</item>
+        <item quantity="other">%d strafslagen</item>
+    </plurals>
+    <string name="explain_penalties_not_tracked">Strafslagen niet bijgehouden</string>
+    <string name="explain_no_blow_ups">geen uitschieters</string>
+    <plurals name="explain_blow_ups">
+        <item quantity="one">%d uitschieter</item>
+        <item quantity="other">%d uitschieters</item>
+    </plurals>
+    <string name="explain_blow_ups_not_tracked">uitschieters niet bijgehouden</string>
+    <string name="explain_consistency_needs_rounds">Voor consistentie zijn een paar eerdere rondes nodig, dus dit begint in het midden.</string>
+    <string name="explain_consistency_at_or_better">Gelijk aan of beter dan je recente gemiddelde: volle punten.</string>
+    <string name="explain_consistency_worse">%1$s slagen slechter dan je recente gemiddelde, terwijl je rondes meestal zo\'n %2$s verschillen. Twee keer zoveel levert niets op.</string>
+    <string name="explain_habits_unknown">Gewoontes belonen ongeveer één keer per week spelen of trainen, en reflecteren op je rondes.</string>
+    <string name="explain_habits">%1$s en %2$s in de 28 dagen tot en met deze ronde; vier of meer levert de volle punten op.</string>
+    <plurals name="rounds_count">
+        <item quantity="one">%d ronde</item>
+        <item quantity="other">%d rondes</item>
+    </plurals>
+    <plurals name="practice_sessions_count">
+        <item quantity="one">%d trainingssessie</item>
+        <item quantity="other">%d trainingssessies</item>
+    </plurals>
+    <string name="explain_reflected">Je hebt op deze ronde gereflecteerd.</string>
+    <string name="explain_not_reflected">Een reflectie toevoegen zou dit verhogen.</string>
+
+    <!-- Reflections (#101) -->
+    <string name="add_reflection">Reflectie toevoegen</string>
+    <string name="add_another_reflection">Nog een reflectie toevoegen</string>
+    <string name="save_reflection">Reflectie opslaan</string>
+    <string name="reflection_habits_hint">Reflecteren telt mee voor het onderdeel Gewoontes van je fitnessscore. De score van deze ronde neemt het mee zodra de ronde opnieuw wordt gescoord, bijvoorbeeld als je hem bewerkt.</string>
+    <string name="reflection_needs_something">Vul minstens één ding in om een reflectie op te slaan.</string>
+    <string name="reflection_save_failed">De reflectie kon niet worden opgeslagen. Probeer het opnieuw.</string>
+    <string name="offline_cant_save_reflection">Je bent offline. Maak verbinding om deze reflectie op te slaan.</string>
+    <string name="frustration_question">Nam je frustratie mee van de ene hole naar de volgende?</string>
+    <string name="rating_of_five">%1$s, %2$d van 5</string>
+    <string name="clear">Wissen</string>
+    <string name="clear_rating">%1$s wissen</string>
+    <string name="at_most_characters">Gebruik maximaal %1$,d tekens.</string>
+
+    <!-- Practice (#105) -->
+    <string name="log_practice">Training invoeren</string>
+    <string name="practice_session">Trainingssessie</string>
+    <string name="practice_habits_hint">Training telt mee voor je gewoontescore.</string>
+    <string name="practice_load_error">Je training kon niet worden geladen.</string>
+    <string name="practice_session_load_error">Deze sessie kon niet worden geladen.</string>
+    <string name="practice_no_longer_exists">Deze sessie bestaat niet meer. Misschien is hij op een ander apparaat verwijderd.</string>
+    <string name="show_more_practice">Meer sessies tonen</string>
+    <string name="session_type">Soort</string>
+    <string name="session_range">Driving range</string>
+    <string name="session_putting">Putten</string>
+    <string name="session_short_game">Korte spel</string>
+    <string name="session_simulator">Simulator</string>
+    <string name="session_lesson">Les</string>
+    <string name="session_other">Anders</string>
+    <string name="session_unknown">Training</string>
+    <string name="duration">Duur</string>
+    <string name="minutes_unit">minuten</string>
+    <string name="duration_minutes">%1$,d min</string>
+    <string name="duration_range">Vul tussen 1 en %1$,d minuten in.</string>
+    <string name="venue">Locatie</string>
+    <string name="goal">Doel</string>
+    <string name="tags">Labels</string>
+    <string name="tags_hint">Druk op Enter of typ een komma om een label toe te voegen.</string>
+    <string name="tag_duplicate">Dat label staat er al.</string>
+    <string name="tag_too_long">Een label mag maximaal %1$d tekens hebben.</string>
+    <string name="too_many_tags">Gebruik maximaal %1$d labels.</string>
+    <string name="remove_tag">Label %1$s verwijderen</string>
+    <string name="practice_save_failed">De sessie kon niet worden opgeslagen. Probeer het opnieuw.</string>
+    <string name="offline_cant_save_practice">Je bent offline. Maak verbinding om deze sessie op te slaan.</string>
+    <string name="delete_practice">Sessie verwijderen</string>
+    <string name="delete_practice_title">Deze trainingssessie verwijderen?</string>
+    <string name="delete_practice_body">Hij telt dan niet meer mee voor je gewoontescore. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="delete_practice_failed">De sessie kon niet worden verwijderd. Probeer het opnieuw.</string>
+
+    <!-- Progress (#109) -->
+    <string name="progress_load_error">Je voortgang kon niet worden geladen.</string>
+    <string name="timeline_title">Rondes door de tijd</string>
+    <string name="timeline_load_error">Je rondes door de tijd konden niet worden geladen.</string>
+    <string name="period">Periode</string>
+    <string name="range_3m">Afgelopen 3 maanden</string>
+    <string name="range_6m">Afgelopen 6 maanden</string>
+    <string name="range_12m">Afgelopen 12 maanden</string>
+    <string name="range_all">Alles</string>
+    <string name="range_custom">Kies datums</string>
+    <string name="range_from">Van</string>
+    <string name="range_to">Tot en met</string>
+    <string name="choose_date_for">Kies de datum voor \'%1$s\'</string>
+    <string name="range_order">De begindatum moet op of vóór de einddatum liggen.</string>
+    <string name="no_rounds_in_period">Geen rondes in deze periode. Kies een langere periode om meer te zien.</string>
+    <plurals name="timeline_summary">
+        <item quantity="one">%1$d ronde van %2$s tot en met %3$s.</item>
+        <item quantity="other">%1$d rondes van %2$s tot en met %3$s.</item>
+    </plurals>
+    <string name="timeline_score_summary">De fitnessscore ging van %1$d naar %2$d, met een gemiddelde van %3$d.</string>
+    <string name="timeline_capped">Je laatste %1$d rondes in deze periode worden getoond.</string>
+    <plurals name="more_rounds_for_trend">
+        <item quantity="one">Voer nog %d ronde in om een trend te zien.</item>
+        <item quantity="other">Voer nog %d rondes in om een trend te zien.</item>
+    </plurals>
+    <plurals name="few_rounds_in_period">
+        <item quantity="one">Maar %d ronde met score in deze periode: niet genoeg voor een trend. Kies een langere periode.</item>
+        <item quantity="other">Maar %d rondes met score in deze periode: niet genoeg voor een trend. Kies een langere periode.</item>
+    </plurals>
+    <string name="strokes_line">Slagen (%1$d holes)</string>
+    <string name="strokes_leave_out">De lijn met slagen toont alleen rondes van %1$d holes; de tabel heeft elke ronde.</string>
+    <string name="show_as_table">Als tabel tonen</string>
+    <string name="show_as_chart">Als grafiek tonen</string>
+    <string name="monthly_trend_title">Trend per maand</string>
+    <string name="monthly_load_error">Je trend per maand kon niet worden geladen.</string>
+    <string name="monthly_empty">Geen rondes met score in de afgelopen 12 maanden.</string>
+    <string name="monthly_needs_another_month">Speel ook in een andere maand om een trend per maand te zien.</string>
+    <string name="monthly_summary_one">Gemiddelde fitnessscore in %1$s: %2$d.</string>
+    <plurals name="monthly_summary">
+        <item quantity="one">Rondes met score in %1$d maand. De gemiddelde fitnessscore ging van %2$d in %3$s naar %4$d in %5$s.</item>
+        <item quantity="other">Rondes met score in %1$d maanden. De gemiddelde fitnessscore ging van %2$d in %3$s naar %4$d in %5$s.</item>
+    </plurals>
+    <string name="month">Maand</string>
+    <string name="rounds_column">Rondes</string>
+    <string name="change_column">Verschil met vorige maand</string>
+    <string name="no_scored_rounds">Geen rondes met score</string>
+    <string name="baseline_load_error">Je basislijn kon niet worden geladen.</string>
+    <string name="baseline_empty">Je basislijn verschijnt zodra je een ronde hebt ingevoerd.</string>
+    <string name="baseline_intro">Waarmee je volgende ronde wordt vergeleken: je recente gemiddelden, per 18 holes.</string>
+    <string name="spread">Spreiding</string>
+    <string name="spread_value">± %1$s</string>
+    <string name="stats_tracked">Statistieken bijgehouden</string>
+    <plurals name="baseline_based_on">
+        <item quantity="one">Gebaseerd op je laatste ronde.</item>
+        <item quantity="other">Gebaseerd op je laatste %d rondes.</item>
+    </plurals>
+    <string name="monthly_review_title">Maandoverzicht</string>
+    <string name="review_load_error">Dit overzicht kon niet worden geladen.</string>
+    <string name="month_reviewed">%1$s (overzicht gemaakt)</string>
+    <string name="review_none">Er is nog geen overzicht van %1$s. Maak er een om te zien hoe de maand ging.</string>
+    <string name="review_no_rounds">Je hebt in %1$s geen rondes ingevoerd, dus er is niets om te bekijken.</string>
+    <plurals name="rounds_played">
+        <item quantity="one">%d ronde gespeeld</item>
+        <item quantity="other">%d rondes gespeeld</item>
+    </plurals>
+    <string name="review_theme">De meeste van je micro-wins</string>
+    <string name="theme_stat_delta">Betere statistieken</string>
+    <string name="theme_behavior">Reflecteren op je rondes</string>
+    <string name="theme_narrative">Het grotere geheel zien</string>
+    <string name="theme_habit">Consequent invoeren</string>
+    <string name="theme_recovery">Herstellen van fouten</string>
+    <string name="theme_focus_area">Je focusgebieden</string>
+    <string name="review_focus">Focus voor volgende maand</string>
+    <string name="review_created_on">Gemaakt op %1$s</string>
+    <string name="up_on_previous_month">%1$d hoger dan de maand ervoor</string>
+    <string name="down_on_previous_month">%1$d lager dan de maand ervoor</string>
+    <string name="same_as_previous_month">Gelijk aan de maand ervoor</string>
+    <string name="focus_next_month">Je focus voor volgende maand</string>
+    <string name="focus_hint">Optioneel. Bijvoorbeeld: minder drie-putts.</string>
+    <string name="focus_too_long">Houd het bij maximaal %1$d tekens.</string>
+    <string name="create_review">Overzicht maken</string>
+    <string name="update_review">Overzicht bijwerken</string>
+    <string name="creating_review">Overzicht maken…</string>
+    <string name="review_ready">Overzicht klaar.</string>
+    <string name="review_failed">Het overzicht kon niet worden gemaakt. Probeer het opnieuw.</string>
+    <string name="offline_cant_review">Je bent offline. Maak verbinding om een overzicht te maken.</string>
+
+    <!-- Profile and onboarding (#113) -->
+    <string name="profile_load_error">Je profiel kon niet worden geladen.</string>
+    <string name="your_details">Je gegevens</string>
+    <string name="preferences">Voorkeuren</string>
+    <string name="account">Account</string>
+    <string name="about">Over</string>
+    <string name="email_hint">Hiermee log je in. Je kunt het hier niet wijzigen.</string>
+    <string name="handicap_index">Handicap</string>
+    <string name="typical_18_score">Gebruikelijke score over 18 holes</string>
+    <string name="optional">Optioneel.</string>
+    <string name="enter_a_number">Vul een getal in.</string>
+    <string name="number_range">Vul een getal van %1$d tot en met %2$d in.</string>
+    <string name="changes_saved">Wijzigingen opgeslagen.</string>
+    <string name="profile_save_failed">Je wijzigingen konden niet worden opgeslagen. Probeer het opnieuw.</string>
+    <string name="offline_cant_save_profile">Je bent offline. Maak verbinding om wijzigingen op te slaan.</string>
+    <string name="units">Eenheden</string>
+    <string name="units_metric">Metrisch</string>
+    <string name="units_imperial">Imperiaal</string>
+    <string name="tracking_mode">Wat je bijhoudt</string>
+    <string name="tracking_minimal">Minimaal</string>
+    <string name="tracking_minimal_hint">Alleen je score</string>
+    <string name="tracking_balanced">Gemiddeld</string>
+    <string name="tracking_balanced_hint">Ook putts en strafslagen</string>
+    <string name="tracking_detailed">Uitgebreid</string>
+    <string name="tracking_detailed_hint">Ook fairways, greens in regulation, drie-putts en uitschieters</string>
+    <string name="can_change_any_time">Je kunt dit altijd veranderen.</string>
+    <string name="goal_focus">Focusgebieden</string>
+    <string name="goal_focus_hint">Kies er maximaal %1$d. Je micro-wins zoeken hier als eerste naar vooruitgang.</string>
+    <string name="goal_putting">Putten</string>
+    <string name="goal_penalties">Strafslagen</string>
+    <string name="goal_tee_shots">Afslagen</string>
+    <string name="goal_consistency">Consistentie</string>
+    <string name="language">Taal</string>
+    <string name="language_device">Zelfde als dit apparaat</string>
+    <string name="language_hint">De app, je micro-wins en je volgende focus worden in deze taal getoond.</string>
+    <string name="change_password">Wachtwoord wijzigen</string>
+    <string name="current_password">Huidig wachtwoord</string>
+    <string name="new_password">Nieuw wachtwoord</string>
+    <string name="new_password_hint">Minstens 8 tekens.</string>
+    <string name="password_changed">Wachtwoord gewijzigd.</string>
+    <string name="password_too_short">Gebruik minstens %1$d tekens.</string>
+    <string name="password_only_spaces">Het wachtwoord kan niet alleen uit spaties bestaan.</string>
+    <string name="password_is_email">Het wachtwoord kan niet je e-mailadres zijn.</string>
+    <string name="password_unchanged">Kies een ander wachtwoord dan je huidige.</string>
+    <string name="sign_out_hint">Logt je uit op dit apparaat.</string>
+    <string name="delete_account">Account verwijderen</string>
+    <string name="delete_account_hint">Verwijdert je account en alles erin definitief.</string>
+    <string name="delete_account_title">Je account verwijderen?</string>
+    <string name="delete_account_body">Dit verwijdert je account en al je rondes, scores, reflecties en trainingssessies definitief, en logt je overal uit. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="delete_my_account">Mijn account verwijderen</string>
+    <string name="app_version">Versie %1$s</string>
+    <string name="privacy_policy">Privacybeleid</string>
+    <string name="terms_of_use">Gebruiksvoorwaarden</string>
+    <string name="onboarding_units">Welke eenheden gebruik je?</string>
+    <string name="onboarding_tracking">Hoeveel wil je bijhouden?</string>
+    <string name="onboarding_goals">Waarin wil je beter worden?</string>
+    <string name="onboarding_step">Stap %1$d van %2$d</string>
+    <string name="next">Volgende</string>
+    <string name="skip_for_now">Nu overslaan</string>
+</resources>

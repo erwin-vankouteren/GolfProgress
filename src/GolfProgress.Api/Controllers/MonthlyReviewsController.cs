@@ -1,4 +1,5 @@
-﻿using GolfProgress.Api.Contracts.MonthlyReviews;
+﻿using GolfProgress.Api.Localization;
+using GolfProgress.Api.Contracts.MonthlyReviews;
 using GolfProgress.Api.Contracts;
 using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Security;
@@ -73,7 +74,7 @@ public sealed class MonthlyReviewsController : ControllerBase
 
     private static MonthlyReviewResponse ToResponse(GolfProgress.Domain.Entities.MonthlyReview r)
     {
-        var highlights = MonthlyReviewService.ReadHighlights(r.HighlightsJson);
+        var highlights = MonthlyReviewService.Highlights(r, ApiTexts.Current);
         var (roundsLogged, topCategory) = MonthlyReviewService.ReadFacts(r.HighlightsJson);
 
         return new MonthlyReviewResponse

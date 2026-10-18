@@ -64,6 +64,7 @@ function renderRounds(path: string, { count = 3, trackingMode = "Balanced" } = {
         timezone: null,
         units: "Metric",
         trackingMode,
+        language: null,
         handicapIndex: null,
         typical18Score: null,
         goalFocus: [],

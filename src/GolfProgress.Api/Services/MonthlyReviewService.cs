@@ -1,4 +1,6 @@
-﻿using GolfProgress.Domain.Entities;
+﻿using GolfProgress.Api.Localization;
+using GolfProgress.Domain.Entities;
+using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -43,6 +45,36 @@ public sealed class MonthlyReviewService
             .Select(x => x.GetString()!)
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .ToList();
+    }
+
+    /// <summary>
+    /// A review's highlights in <paramref name="texts"/>' language, written from its
+    /// facts. Reviews generated before the facts were stored (#162) only have their
+    /// English sentences, which are shown as they are.
+    /// </summary>
+    public static List<string> Highlights(MonthlyReview review, ApiTexts texts)
+    {
+        var (roundsLogged, topCategory) = ReadFacts(review.HighlightsJson);
+        return roundsLogged is int rounds
+            ? HighlightsFor(texts, rounds, review.FitnessAvg, topCategory, review.FitnessChange)
+            : ReadHighlights(review.HighlightsJson);
+    }
+
+    private static List<string> HighlightsFor(ApiTexts texts, int roundsLogged, decimal? average, string? topCategory, decimal? change)
+    {
+        var highlights = new List<string>
+        {
+            texts.RoundsLogged(roundsLogged),
+            texts.AverageFitnessScore(average),
+        };
+
+        if (Enum.TryParse<MicroWinCategory>(topCategory, out var category))
+            highlights.Add(texts.TopMicroWinTheme(category));
+
+        if (change.HasValue)
+            highlights.Add(texts.ChangeVsLastMonth(change.Value));
+
+        return highlights;
     }
 
     public async Task<MonthlyReview> GenerateAsync(Guid userId, DateOnly monthStart, string? focusNextMonth, CancellationToken ct)
@@ -91,17 +123,8 @@ public sealed class MonthlyReviewService
                 .ThenBy(g => g.Key, StringComparer.Ordinal)
                 .First().Key;
 
-        var highlights = new List<string>
-        {
-            $"Rounds logged: {rounds.Count}",
-            scores.Count == 0 ? "Fitness score: not enough data yet" : $"Average fitness score: {avg:0.##}",
-        };
-
-        if (!string.IsNullOrWhiteSpace(mostCommonCategory))
-            highlights.Add($"Most common micro‑win theme: {mostCommonCategory}");
-
-        if (change.HasValue)
-            highlights.Add($"Change vs last month: {change.Value:+0.##;-0.##;0}");
+        // Stored in English; Highlights shows them in the reader's language.
+        var highlights = HighlightsFor(ApiTexts.English, rounds.Count, avg, mostCommonCategory, change);
 
         var now = DateTimeOffset.UtcNow;
 

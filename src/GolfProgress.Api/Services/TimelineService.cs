@@ -1,4 +1,5 @@
 ﻿using GolfProgress.Api.Contracts;
+using GolfProgress.Api.Localization;
 using GolfProgress.Api.Contracts.Timeline;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -49,15 +50,16 @@ public sealed class TimelineService
         var fitnessMap = fitness.ToDictionary(x => x.RoundId, x => x);
 
         // micro win title (optional) - take the earliest-created win for stable display
-        var microWinTitles = await _db.MicroWins.AsNoTracking()
+        var microWins = await _db.MicroWins.AsNoTracking()
             .Where(mw => mw.UserId == userId && roundIds.Contains(mw.RoundId))
             .OrderBy(mw => mw.CreatedAt)
-            .Select(mw => new { mw.RoundId, mw.Title })
             .ToListAsync(ct);
 
-        var microWinMap = microWinTitles
+        // In the request's language, as everywhere micro-wins are shown.
+        var texts = ApiTexts.Current;
+        var microWinMap = microWins
             .GroupBy(x => x.RoundId)
-            .ToDictionary(g => g.Key, g => g.First().Title);
+            .ToDictionary(g => g.Key, g => MicroWinTexts.For(g.First(), texts).Title);
 
         // Compose response in chronological order for charting (oldest -> newest). Two
         // rounds on one day keep the order they were logged in.
@@ -155,7 +157,7 @@ public sealed class TimelineService
                 FitnessAvg = avg,
                 FitnessChange = avg.HasValue && previous.HasValue ? avg.Value - previous.Value : null,
                 RoundsLogged = byMonth.TryGetValue(month, out var inMonth) ? inMonth.Count : 0,
-                Highlights = review is null ? new() : MonthlyReviewService.ReadHighlights(review.HighlightsJson),
+                Highlights = review is null ? new() : MonthlyReviewService.Highlights(review, ApiTexts.Current),
                 HasReview = review is not null
             });
         }

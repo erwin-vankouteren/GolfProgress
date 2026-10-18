@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { IntlProvider } from "react-intl";
 import { ApiProblem, type ApiClient } from "../api";
+import { LanguageProvider } from "../i18n/LanguageProvider";
 import type { Session } from "../session/session";
 import { SessionProvider } from "../session/SessionContext";
 import { UpdateGate } from "../version/UpdateGate";
@@ -51,10 +51,9 @@ export function App({
     <ApiProvider client={api}>
       <SessionProvider session={session}>
         <QueryClientProvider client={queryClient}>
-          {/* English only for now; messages fall back to their defaultMessage (#78). */}
-          <IntlProvider locale="en" defaultLocale="en">
+          <LanguageProvider>
             <UpdateGate appVersion={appVersion}>{children}</UpdateGate>
-          </IntlProvider>
+          </LanguageProvider>
         </QueryClientProvider>
       </SessionProvider>
     </ApiProvider>

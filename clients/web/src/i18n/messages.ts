@@ -1,6 +1,6 @@
 import { defineMessage, defineMessages } from "react-intl";
 
-/** Messages without values. English is the default and, for now, the only locale. */
+/** Messages without values. English is each defaultMessage; nl.ts has the Dutch. */
 export const plainMessages = defineMessages({
   appName: { id: "app.name", defaultMessage: "GolfProgress" },
   skipToContent: { id: "app.skipToContent", defaultMessage: "Skip to content" },
@@ -371,6 +371,12 @@ export const plainMessages = defineMessages({
   goalPenalties: { id: "goal.penalties", defaultMessage: "Penalties" },
   goalTeeShots: { id: "goal.teeShots", defaultMessage: "Tee shots" },
   goalConsistency: { id: "goal.consistency", defaultMessage: "Consistency" },
+  language: { id: "profile.language", defaultMessage: "Language" },
+  languageDevice: { id: "profile.languageDevice", defaultMessage: "Same as this device" },
+  languageHint: {
+    id: "profile.languageHint",
+    defaultMessage: "The app, your micro-wins and your next focus are shown in this language.",
+  },
   changePassword: { id: "profile.changePassword", defaultMessage: "Change password" },
   currentPassword: { id: "profile.currentPassword", defaultMessage: "Current password" },
   newPassword: { id: "profile.newPassword", defaultMessage: "New password" },

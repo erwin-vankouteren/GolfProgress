@@ -1,4 +1,5 @@
-﻿using GolfProgress.Api.Caching;
+﻿using GolfProgress.Api.Localization;
+using GolfProgress.Api.Caching;
 using GolfProgress.Api.Contracts.Dashboard;
 using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
@@ -30,7 +31,7 @@ public sealed class DashboardController : ControllerBase
     {
         var userId = User.GetUserId();
         var result = await _cache.GetOrCreateAsync(
-            userId, CacheKeys.Dashboard(userId), () => _svc.BuildAsync(userId, ct));
+            userId, CacheKeys.Dashboard(userId, ApiTexts.Current.Language), () => _svc.BuildAsync(userId, ct));
         return Ok(result);
     }
 }

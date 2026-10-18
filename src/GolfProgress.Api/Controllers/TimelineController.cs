@@ -1,4 +1,5 @@
-﻿using GolfProgress.Api.Contracts.Timeline;
+﻿using GolfProgress.Api.Localization;
+using GolfProgress.Api.Contracts.Timeline;
 using GolfProgress.Api.Contracts;
 using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Api.Security;
@@ -61,7 +62,7 @@ public sealed class TimelineController : ControllerBase
         // filtered anything. Both are now applied and part of the key.
         var result = await _cache.GetOrCreateAsync(
             userId,
-            CacheKeys.Timeline(userId, take, fromDate, toDate),
+            CacheKeys.Timeline(userId, take, fromDate, toDate, ApiTexts.Current.Language),
             () => _svc.GetRoundTimelineAsync(userId, take, fromDate, toDate, ct));
 
         return Ok(result);

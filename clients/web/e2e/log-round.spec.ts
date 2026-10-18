@@ -40,6 +40,7 @@ async function mockApi(page: Page) {
           timezone: null,
           units: "Metric",
           trackingMode: "Balanced",
+          language: null,
           handicapIndex: null,
           typical18Score: 92,
           goalFocus: [],

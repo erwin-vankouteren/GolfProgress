@@ -12,6 +12,11 @@ export interface ApiClientOptions {
   tokens: AccessTokenProvider;
   /** Replaces `fetch`, for tests. */
   fetch?: (request: Request) => Promise<Response>;
+  /**
+   * The language shown, sent as Accept-Language so the API's own texts (micro-wins,
+   * next focus) come in it too.
+   */
+  language?: () => string;
 }
 
 /**
@@ -25,10 +30,20 @@ export interface ApiClientOptions {
  * ```
  */
 export function createApiClient(options: ApiClientOptions) {
-  return createClient<paths>({
+  const client = createClient<paths>({
     baseUrl: options.baseUrl,
     fetch: createAuthFetch(options.tokens, options.fetch),
   });
+  const { language } = options;
+  if (language) {
+    client.use({
+      onRequest({ request }) {
+        request.headers.set("Accept-Language", language());
+        return request;
+      },
+    });
+  }
+  return client;
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;

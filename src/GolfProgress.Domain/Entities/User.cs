@@ -22,6 +22,9 @@ public class User
 
     public TrackingMode TrackingMode { get; set; } = TrackingMode.Minimal;
 
+    /// <summary>The language the user chose in their profile; null follows the device.</summary>
+    public AppLanguage? Language { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 

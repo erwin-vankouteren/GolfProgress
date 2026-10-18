@@ -19,6 +19,7 @@ const me = {
   timezone: "Europe/Amsterdam",
   units: "Metric",
   trackingMode: "Detailed",
+  language: null,
   handicapIndex: 18.4,
   typical18Score: 92,
   goalFocus: ["Putting"],

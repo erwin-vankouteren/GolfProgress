@@ -9,6 +9,7 @@ const me = {
   timezone: null,
   units: "Metric",
   trackingMode: "Minimal",
+  language: null,
   handicapIndex: 18.4,
   typical18Score: 92,
   goalFocus: ["Putting"],
@@ -74,10 +75,42 @@ describe("profile (#111)", () => {
     await user.click(within(preferences).getByRole("radio", { name: /Detailed/ }));
     await user.click(within(preferences).getByRole("button", { name: "Save" }));
     await within(preferences).findByRole("status");
-    expect(patches).toEqual([{ units: "Metric", trackingMode: "Detailed", goalFocus: ["Putting"] }]);
+    expect(patches).toEqual([{ units: "Metric", trackingMode: "Detailed", goalFocus: ["Putting"], language: null }]);
 
     await router.navigate("/rounds/new");
     expect(await screen.findByLabelText(/Fairways hit/, { selector: "input" })).toBeInTheDocument();
+  });
+
+  it("switches the app to the language chosen, once saved", async () => {
+    const { user, patches, requests } = renderProfile();
+    const preferences = await region("Preferences");
+
+    await user.click(within(preferences).getByRole("radio", { name: "Nederlands" }));
+    // Not before it's saved.
+    expect(screen.getByRole("region", { name: "Preferences" })).toBeInTheDocument();
+    await user.click(within(preferences).getByRole("button", { name: "Save" }));
+
+    expect(await region("Voorkeuren")).toBeInTheDocument();
+    expect(patches).toEqual([{ units: "Metric", trackingMode: "Minimal", goalFocus: ["Putting"], language: "Dutch" }]);
+    expect(document.documentElement.lang).toBe("nl");
+    // The API's own texts follow: requests from now on ask for Dutch.
+    await waitFor(() => expect(requests.at(-1)?.headers.get("Accept-Language")).toBe("nl"));
+  });
+
+  it("names each language in that language, and the device's next to its option", async () => {
+    const { user } = renderProfile("/profile");
+    const preferences = await region("Preferences");
+
+    const english = within(preferences).getByRole("radio", { name: "English" });
+    const dutch = within(preferences).getByRole("radio", { name: "Nederlands" });
+    const device = within(preferences).getByRole("radio", { name: /Same as this device/ });
+    expect(device).toBeChecked();
+    expect(within(preferences).getByText("Nederlands")).toHaveAttribute("lang", "nl");
+    expect(within(preferences).getAllByText("English")[0]).toHaveAttribute("lang", "en");
+
+    await user.click(dutch);
+    expect(dutch).toBeChecked();
+    expect(english).not.toBeChecked();
   });
 
   it("allows three goal focus areas at most", async () => {

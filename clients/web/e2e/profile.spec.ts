@@ -14,6 +14,7 @@ async function mockApi(page: Page) {
     timezone: "Europe/Amsterdam",
     units: "Metric",
     trackingMode: "Minimal",
+    language: null,
     handicapIndex: 18.4,
     typical18Score: 92,
     goalFocus: ["Putting"],

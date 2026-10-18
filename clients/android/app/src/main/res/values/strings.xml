@@ -362,6 +362,9 @@
     <string name="goal_penalties">Penalties</string>
     <string name="goal_tee_shots">Tee shots</string>
     <string name="goal_consistency">Consistency</string>
+    <string name="language">Language</string>
+    <string name="language_device">Same as this device</string>
+    <string name="language_hint">The app, your micro-wins and your next focus are shown in this language.</string>
     <string name="change_password">Change password</string>
     <string name="current_password">Current password</string>
     <string name="new_password">New password</string>

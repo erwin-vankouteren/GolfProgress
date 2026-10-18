@@ -1,4 +1,6 @@
-﻿namespace GolfProgress.Api.Caching;
+﻿using GolfProgress.Domain.Enums;
+
+namespace GolfProgress.Api.Caching;
 
 /// <summary>
 /// The single place cache keys are built (#15). A key must include every input
@@ -10,9 +12,10 @@ public static class CacheKeys
     public static string UserExists(Guid userId)
         => $"user-exists:{userId}";
 
-    public static string Dashboard(Guid userId)
-        => $"dashboard:{userId}";
+    // Both carry texts in the request's language, so the language is part of the key.
+    public static string Dashboard(Guid userId, AppLanguage language)
+        => $"dashboard:{userId}:lang={language}";
 
-    public static string Timeline(Guid userId, int take, DateOnly? from, DateOnly? to)
-        => $"timeline:{userId}:take={take}:from={from:yyyy-MM-dd}:to={to:yyyy-MM-dd}";
+    public static string Timeline(Guid userId, int take, DateOnly? from, DateOnly? to, AppLanguage language)
+        => $"timeline:{userId}:take={take}:from={from:yyyy-MM-dd}:to={to:yyyy-MM-dd}:lang={language}";
 }

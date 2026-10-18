@@ -11,6 +11,7 @@ const me = (trackingMode: "Minimal" | "Balanced" | "Detailed", typical18Score: n
   timezone: null,
   units: "Metric",
   trackingMode,
+  language: null,
   handicapIndex: null,
   typical18Score,
   goalFocus: [],

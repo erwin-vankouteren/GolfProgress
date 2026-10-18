@@ -5,6 +5,7 @@ import { vi } from "vitest";
 import { createApiClient } from "../api";
 import { App } from "../app/App";
 import { routes } from "../app/routes";
+import { currentLanguage } from "../i18n/language";
 import { Session } from "../session/session";
 
 /** Answers one request: keyed by "METHOD /path", e.g. "GET /me/dashboard". */
@@ -33,6 +34,7 @@ export function renderSignedIn(path: string, handlers: Record<string, Handler>) 
   const api = createApiClient({
     baseUrl: "https://api.example.test",
     tokens: { accessToken: () => "token", refreshAccessToken: async () => null },
+    language: () => currentLanguage.locale,
     fetch: vi.fn(async (request: Request) => {
       requests.push(request);
       const handler = all[`${request.method} ${new URL(request.url).pathname}`];

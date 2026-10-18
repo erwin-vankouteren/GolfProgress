@@ -3,6 +3,7 @@ package com.golfprogress.app.profile
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.Change
 import com.golfprogress.app.data.ProfileChanges
+import com.golfprogress.app.language.AppLanguage
 
 // The profile's rules (#113), without Compose: what PATCH /me and POST /me/password
 // accept, checked before sending. The same as the web app's profileForm.ts.
@@ -111,12 +112,15 @@ data class Preferences(
     val units: UserResponse.Units = UserResponse.Units.Metric,
     val trackingMode: UserResponse.TrackingMode = UserResponse.TrackingMode.Minimal,
     val goalFocus: List<GoalArea> = emptyList(),
+    /** Null follows the device's language. */
+    val language: AppLanguage? = null,
 ) {
     fun toChanges() =
         ProfileChanges(
             units = units.value,
             trackingMode = trackingMode.value,
             goalFocus = goalFocus.map { it.name },
+            language = Change(language?.apiName),
         )
 }
 
@@ -126,6 +130,7 @@ fun preferencesOf(me: UserResponse) =
         units = me.units,
         trackingMode = me.trackingMode,
         goalFocus = GoalArea.entries.filter { area -> me.goalFocus.any { it.equals(area.name, ignoreCase = true) } },
+        language = AppLanguage.fromApi(me.language),
     )
 
 /** Ticks or unticks an area, in the API's order; no more than three can be ticked. */

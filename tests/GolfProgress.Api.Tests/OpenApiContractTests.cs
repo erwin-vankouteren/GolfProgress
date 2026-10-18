@@ -219,6 +219,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
         "MonthlyReviewResponse.topMicroWinCategory", // #162
         "PracticeSessionResponse.sessionType",
         "RoundResponse.source",
+        "UserResponse.language", // more languages will come
     };
 
     [Fact]
@@ -238,6 +239,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
     [InlineData("MicroWinResponse", "category", new[] { "StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea" })]
     [InlineData("MonthlyReviewResponse", "topMicroWinCategory", new[] { "StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea" })]
     [InlineData("RoundResponse", "source", new[] { "Manual", "Import", "Coach", "Other" })]
+    [InlineData("UserResponse", "language", new[] { "English", "Dutch" })]
     public void OpenEnums_ArePlainStrings_ListingTheirKnownValues_Issue134(string schema, string property, string[] known)
     {
         var field = _spec.Components.Schemas[schema].Properties[property];

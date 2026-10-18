@@ -13,6 +13,10 @@ namespace GolfProgress.Api.Contracts.Users
         [StringEnum(typeof(Enums.TrackingMode))]
         public string TrackingMode { get; init; } = "Minimal";
 
+        /// <summary>The language chosen in the profile; null means the device's language.</summary>
+        [StringEnum(typeof(Enums.AppLanguage), Open = true)]
+        public string? Language { get; init; }
+
         public decimal? HandicapIndex { get; init; }
         public int? Typical18Score { get; init; }
         public List<string> GoalFocus { get; init; } = new();

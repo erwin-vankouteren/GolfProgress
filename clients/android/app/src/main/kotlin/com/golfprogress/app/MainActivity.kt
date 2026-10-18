@@ -1,5 +1,6 @@
 package com.golfprogress.app
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,6 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.golfprogress.app.auth.AuthFlow
+import com.golfprogress.app.language.AppLocales
+import com.golfprogress.app.language.LanguageSync
 import com.golfprogress.app.navigation.MainScreen
 import com.golfprogress.app.profile.OnboardingScreen
 import com.golfprogress.app.session.SessionState
@@ -39,6 +42,11 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    // Before Android 13 the app applies the chosen language itself; see AppLocales.
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocales.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -82,6 +90,7 @@ private fun Root(
                             onSkip = sessionViewModel::onboarded,
                         )
                     } else {
+                        LanguageSync((session as SessionState.SignedIn).userId)
                         MainScreen(onSignOut = sessionViewModel::signOut, openLogRound = openLogRound)
                     }
             }

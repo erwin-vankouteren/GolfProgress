@@ -10,6 +10,7 @@ const user: Schemas["UserResponse"] = {
   timezone: null,
   units: "Metric",
   trackingMode: "Minimal",
+  language: null,
   handicapIndex: null,
   typical18Score: null,
   goalFocus: ["putting"],

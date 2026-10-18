@@ -1,3 +1,4 @@
+using GolfProgress.Api.Localization;
 using GolfProgress.Api.Configuration;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,9 @@ builder.Services.AddOptions<ClientCorsOptions>()
 // configured -- the default -- no CORS headers are sent and browsers stay blocked.
 // Bearer tokens travel in a header, not a cookie, so credentials are not allowed.
 builder.Services.AddCors();
+
+// The API's own texts (micro-wins, next focus, emails) follow Accept-Language.
+builder.Services.AddRequestLocalization(ApiLanguage.Configure);
 builder.Services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>()
     .Configure<IOptions<ClientCorsOptions>>((cors, client) =>
     {
@@ -296,6 +300,8 @@ app.UseHttpsRedirection();
 // Before rate limiting and authentication, so CORS preflight requests are
 // answered without counting against the /auth limits or needing a token.
 app.UseCors();
+
+app.UseRequestLocalization();
 
 app.UseRateLimiter();
 app.UseAuthentication();

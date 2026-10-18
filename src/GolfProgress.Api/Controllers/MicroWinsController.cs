@@ -36,7 +36,7 @@ public sealed class MicroWinsController : ControllerBase
         {
             RoundId = roundId,
             GeneratedCount = wins.Count,
-            Items = wins.Select(ToResponse).ToList()
+            Items = wins.Select(MicroWinResponse.From).ToList()
         });
     }
 
@@ -54,21 +54,6 @@ public sealed class MicroWinsController : ControllerBase
             .OrderBy(mw => mw.CreatedAt)
             .ToListAsync(ct);
 
-        return Ok(items.Select(ToResponse).ToList());
+        return Ok(items.Select(MicroWinResponse.From).ToList());
     }
-
-    private static MicroWinResponse ToResponse(GolfProgress.Domain.Entities.MicroWin mw) => new()
-    {
-        MicroWinId = mw.MicroWinId,
-        UserId = mw.UserId,
-        RoundId = mw.RoundId,
-        Category = mw.Category.ToString(),
-        Metric = mw.Metric,
-        Direction = mw.Direction.ToString(),
-        DeltaValue = mw.DeltaValue,
-        ConfidenceLevel = mw.ConfidenceLevel.ToString(),
-        Title = mw.Title,
-        Message = mw.Message,
-        CreatedAt = mw.CreatedAt
-    };
 }

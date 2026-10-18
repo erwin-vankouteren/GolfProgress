@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router/dom";
 import { createApiClient } from "./api";
 import { App } from "./app/App";
 import { routes } from "./app/routes";
+import { currentLanguage } from "./i18n/language";
 import { Session } from "./session/session";
 import "./theme/tokens.css";
 import "./theme/global.css";
@@ -13,6 +14,7 @@ const session = new Session();
 const api = createApiClient({
   baseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5068",
   tokens: session,
+  language: () => currentLanguage.locale,
 });
 session.attach(api);
 

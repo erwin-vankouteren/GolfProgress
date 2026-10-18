@@ -99,6 +99,7 @@ object Fixtures {
         trackingMode: UserResponse.TrackingMode = UserResponse.TrackingMode.Balanced,
         typical18Score: Int? = 92,
         goalFocus: List<String> = listOf("Putting"),
+        language: String? = null,
     ) = UserResponse(
         userId = userId,
         email = "erwin@example.test",
@@ -106,6 +107,7 @@ object Fixtures {
         timezone = "Europe/Amsterdam",
         units = UserResponse.Units.Metric,
         trackingMode = trackingMode,
+        language = language,
         handicapIndex = 18.4,
         typical18Score = typical18Score,
         goalFocus = goalFocus,

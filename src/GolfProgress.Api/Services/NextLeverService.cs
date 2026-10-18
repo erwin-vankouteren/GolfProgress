@@ -1,5 +1,6 @@
 ﻿using GolfProgress.Domain.Entities;
 using GolfProgress.Api.ErrorHandling;
+using GolfProgress.Api.Localization;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,15 @@ public sealed class NextLeverService
         var baseline = await _db.UserBaselines.AsNoTracking().FirstOrDefaultAsync(b => b.UserId == round.UserId, ct);
         var confidence = baseline?.ConfidenceLevel ?? ConfidenceLevel.Low;
 
+        // In the request's language (Accept-Language).
+        var texts = ApiTexts.Current;
+        (string key, string title, string rec, string rationale, decimal score) Candidate(
+            string key, LeverText lever, decimal? delta, decimal score)
+        {
+            var (title, rec) = texts.Lever(lever);
+            return (key, title, rec, texts.LeverRationale(lever, delta), score);
+        }
+
         // Build "opportunity" candidates (higher = bigger opportunity)
         var candidates = new List<(string key, string title, string rec, string rationale, decimal score)>();
 
@@ -35,13 +45,7 @@ public sealed class NextLeverService
             var delta = baseVal.HasValue ? penalties - baseVal.Value : 0m;
             var score = baseVal.HasValue ? Math.Max(delta, 0m) * 3m : penalties * 1m;
 
-            candidates.Add((
-                "penalties",
-                "Reduce penalty strokes",
-                "Next round: choose the safest target when trouble is possible — one conservative decision can remove a penalty.",
-                baseVal.HasValue ? $"Penalties vs baseline Δ={delta:0.##}" : "Penalties are a high-impact lever.",
-                score
-            ));
+            candidates.Add(Candidate("penalties", LeverText.Penalties, baseVal.HasValue ? delta : null, score));
         }
 
         // Three-putts
@@ -51,13 +55,7 @@ public sealed class NextLeverService
             var delta = baseVal.HasValue ? threePutts - baseVal.Value : 0m;
             var score = baseVal.HasValue ? Math.Max(delta, 0m) * 4m : threePutts * 2m;
 
-            candidates.Add((
-                "three_putts",
-                "Cut down 3‑putts",
-                "Next round: on long putts, aim to finish inside a 1–2 meter circle — pace first, line second.",
-                baseVal.HasValue ? $"3‑putts vs baseline Δ={delta:0.##}" : "Three‑putts are a quick scoring lever.",
-                score
-            ));
+            candidates.Add(Candidate("three_putts", LeverText.ThreePutts, baseVal.HasValue ? delta : null, score));
         }
 
         // Blow-up holes
@@ -67,25 +65,14 @@ public sealed class NextLeverService
             var delta = baseVal.HasValue ? blowUps - baseVal.Value : 0m;
             var score = baseVal.HasValue ? Math.Max(delta, 0m) * 2m : blowUps * 1.5m;
 
-            candidates.Add((
-                "damage_control",
-                "Improve damage control",
-                "Next round: after a mistake, play the next shot for position — your goal is bogey, not hero.",
-                baseVal.HasValue ? $"Blow‑ups vs baseline Δ={delta:0.##}" : "Reducing big holes improves scoring fastest.",
-                score
-            ));
+            candidates.Add(Candidate("damage_control", LeverText.DamageControl, baseVal.HasValue ? delta : null, score));
         }
 
         // If no stats at all
         if (candidates.Count == 0)
         {
-            return (
-                "data_quality",
-                "Add one stat for sharper insights",
-                "Next round: add just one stat (penalties or putts) — you’ll unlock more precise progress insights.",
-                "This round has minimal stats; one extra stat improves recommendation accuracy.",
-                ConfidenceLevel.Low
-            );
+            var dataQuality = Candidate("data_quality", LeverText.DataQuality, null, 0m);
+            return (dataQuality.key, dataQuality.title, dataQuality.rec, dataQuality.rationale, ConfidenceLevel.Low);
         }
 
         var best = candidates.OrderByDescending(c => c.score).First();

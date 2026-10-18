@@ -29,6 +29,8 @@ data class ProfileChanges(
     val units: String? = null,
     val trackingMode: String? = null,
     val goalFocus: List<String>? = null,
+    /** UserResponse.language's name, or null to follow the device. */
+    val language: Change<String?>? = null,
     val handicapIndex: Change<Double?>? = null,
     val typical18Score: Change<Int?>? = null,
 )
@@ -64,6 +66,7 @@ class ApiUserRepository
                     changes.units?.let { put("units", it) }
                     changes.trackingMode?.let { put("trackingMode", it) }
                     changes.goalFocus?.let { areas -> put("goalFocus", buildJsonArray { areas.forEach { add(JsonPrimitive(it)) } }) }
+                    changes.language?.let { put("language", it.value?.let(::JsonPrimitive) ?: JsonNull) }
                     changes.handicapIndex?.let { put("handicapIndex", it.value?.let(::JsonPrimitive) ?: JsonNull) }
                     changes.typical18Score?.let { put("typical18Score", it.value?.let(::JsonPrimitive) ?: JsonNull) }
                 }

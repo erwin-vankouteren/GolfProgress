@@ -3591,6 +3591,14 @@
             "type": "string",
             "nullable": true
           },
+          "language": {
+            "enum": [
+              "English",
+              "Dutch"
+            ],
+            "type": "string",
+            "nullable": true
+          },
           "goalFocus": {
             "type": "array",
             "items": {
@@ -3718,6 +3726,7 @@
           "email",
           "goalFocus",
           "handicapIndex",
+          "language",
           "timezone",
           "trackingMode",
           "typical18Score",
@@ -3757,6 +3766,15 @@
               "Detailed"
             ],
             "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "description": "Known values: English, Dutch. New values may be added at any time; treat any other value as unknown.",
+            "nullable": true,
+            "x-known-values": [
+              "English",
+              "Dutch"
+            ]
           },
           "handicapIndex": {
             "type": "number",

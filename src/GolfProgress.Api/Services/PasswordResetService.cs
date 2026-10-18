@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using GolfProgress.Api.Email;
+using GolfProgress.Api.Localization;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -77,7 +78,9 @@ public sealed class PasswordResetService
         });
         await _db.SaveChangesAsync(ct);
 
-        _outbox.Enqueue(ResetEmail(user.Email, LinkFor(token)));
+        // The language they chose, else the one the request came in: the app they're using.
+        var texts = user.Language is { } language ? ApiTexts.For(language) : ApiTexts.Current;
+        _outbox.Enqueue(ResetEmail(user.Email, LinkFor(token), texts));
     }
 
     /// <summary>The account a link belongs to, or null when it's unknown, used or expired.</summary>
@@ -116,19 +119,10 @@ public sealed class PasswordResetService
     internal string LinkFor(string token) =>
         $"{_options.LinkBaseUrl}{(_options.LinkBaseUrl.Contains('?') ? '&' : '?')}token={Uri.EscapeDataString(token)}";
 
-    private EmailMessage ResetEmail(string to, string link)
+    private EmailMessage ResetEmail(string to, string link, ApiTexts texts)
     {
-        var minutes = _options.TokenLifetimeMinutes;
-        return new EmailMessage(
-            to,
-            "Reset your GolfProgress password",
-            $"Someone asked to reset the password for your GolfProgress account.\n\n" +
-            $"To choose a new password, open this link within {minutes} minutes:\n{link}\n\n" +
-            "If you didn't ask, ignore this email: your password stays as it is.",
-            $"<p>Someone asked to reset the password for your GolfProgress account.</p>" +
-            $"<p>To choose a new password, open this link within {minutes} minutes:<br>" +
-            $"<a href=\"{System.Net.WebUtility.HtmlEncode(link)}\">Reset your password</a></p>" +
-            "<p>If you didn't ask, ignore this email: your password stays as it is.</p>");
+        var (subject, plainText, html) = texts.PasswordResetEmail(link, _options.TokenLifetimeMinutes);
+        return new EmailMessage(to, subject, plainText, html);
     }
 
     internal static string Hash(string token) =>

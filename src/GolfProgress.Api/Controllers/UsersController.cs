@@ -96,6 +96,12 @@ public sealed class UsersController : ControllerBase
             changed |= Update(user.TrackingMode, mode, v => user.TrackingMode = v);
         }
 
+        if (request.Sent(nameof(request.Language)))
+        {
+            AppLanguage? language = UpdateMeRequest.TryParseName<AppLanguage>(request.Language, out var chosen) ? chosen : null;
+            changed |= Update(user.Language, language, v => user.Language = v);
+        }
+
         if (request.Sent(nameof(request.GoalFocus)))
         {
             // Stored by the enum's own spelling, whatever case was sent.
@@ -253,6 +259,7 @@ public sealed class UsersController : ControllerBase
         Timezone = user.Timezone,
         Units = user.Units.ToString(),
         TrackingMode = user.TrackingMode.ToString(),
+        Language = user.Language?.ToString(),
         HandicapIndex = user.HandicapIndex,
         Typical18Score = user.Typical18Score,
         GoalFocus = user.GoalFocus ?? new List<string>(),

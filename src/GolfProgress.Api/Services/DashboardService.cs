@@ -50,25 +50,13 @@ public sealed class DashboardService
                 FitnessConfidence = fs?.ConfidenceLevel.ToString()
             };
 
-            microWins = await _db.MicroWins.AsNoTracking()
+            microWins = (await _db.MicroWins.AsNoTracking()
                 .Where(mw => mw.RoundId == lastRound.RoundId)
                 .OrderBy(mw => mw.CreatedAt)
                 .Take(3)
-                .Select(mw => new MicroWinResponse
-                {
-                    MicroWinId = mw.MicroWinId,
-                    UserId = mw.UserId,
-                    RoundId = mw.RoundId,
-                    Category = mw.Category.ToString(),
-                    Metric = mw.Metric,
-                    Direction = mw.Direction.ToString(),
-                    DeltaValue = mw.DeltaValue,
-                    ConfidenceLevel = mw.ConfidenceLevel.ToString(),
-                    Title = mw.Title,
-                    Message = mw.Message,
-                    CreatedAt = mw.CreatedAt
-                })
-                .ToListAsync(ct);
+                .ToListAsync(ct))
+                .Select(MicroWinResponse.From)
+                .ToList();
 
             var (leverKey, title, rec, rationale, conf) =
                 await _nextLeverSvc.RecommendAsync(lastRound.RoundId, userId, ct);

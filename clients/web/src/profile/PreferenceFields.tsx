@@ -4,6 +4,7 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { unwrap, type Schemas } from "../api";
 import { queryKeys } from "../api/queries";
 import { useApi } from "../app/ApiContext";
+import { deviceLocale, languageChoices, type AppLocale, type LanguageChoice } from "../i18n/language";
 import { messages, type PlainMessage } from "../i18n/messages";
 import {
   goalFocusAreas,
@@ -105,6 +106,54 @@ export function TrackingModeField({
       <p className="hint">
         <FormattedMessage {...messages.canChangeAnyTime} />
       </p>
+    </fieldset>
+  );
+}
+
+/**
+ * Each language by its own name, as language pickers do, so it can be found whatever
+ * the app is showing; `lang` lets screen readers say it in that language.
+ */
+const languageNames: Record<AppLocale, string> = { en: "English", nl: "Nederlands" };
+const localeOfChoice: Record<NonNullable<LanguageChoice>, AppLocale> = { English: "en", Dutch: "nl" };
+
+function LanguageName({ locale }: { locale: AppLocale }) {
+  return <span lang={locale}>{languageNames[locale]}</span>;
+}
+
+/** The device's language is named next to its option, so it's clear what it means here. */
+export function LanguageField({
+  value,
+  onChange,
+}: {
+  value: LanguageChoice;
+  onChange: (choice: LanguageChoice) => void;
+}) {
+  const name = useId();
+  const hintId = useId();
+  return (
+    <fieldset className="choice-group" aria-describedby={hintId}>
+      <Legend label={messages.language} />
+      <p id={hintId} className="hint">
+        <FormattedMessage {...messages.languageHint} />
+      </p>
+      {languageChoices.map((choice) => (
+        <label key={choice ?? "device"} className="choice">
+          <input type="radio" name={name} checked={value === choice} onChange={() => onChange(choice)} />
+          <span className="choice-label">
+            {choice === null ? (
+              <>
+                <FormattedMessage {...messages.languageDevice} />
+                <span className="hint">
+                  <LanguageName locale={deviceLocale()} />
+                </span>
+              </>
+            ) : (
+              <LanguageName locale={localeOfChoice[choice]} />
+            )}
+          </span>
+        </label>
+      ))}
     </fieldset>
   );
 }

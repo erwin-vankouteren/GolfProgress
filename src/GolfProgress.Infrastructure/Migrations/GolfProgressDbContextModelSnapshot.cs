@@ -17,7 +17,7 @@ namespace GolfProgress.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.31")
+                .HasAnnotation("ProductVersion", "8.0.32")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -456,6 +456,10 @@ namespace GolfProgress.Infrastructure.Migrations
 
                     b.Property<decimal?>("HandicapIndex")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");

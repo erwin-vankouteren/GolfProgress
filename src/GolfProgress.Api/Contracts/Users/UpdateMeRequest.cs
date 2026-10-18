@@ -8,8 +8,8 @@ namespace GolfProgress.Api.Contracts.Users;
 
 /// <summary>
 /// PATCH /me (#82). Every field is optional: a field left out of the body is
-/// unchanged. Timezone, handicapIndex and typical18Score are cleared by sending
-/// null; the other fields can't be null.
+/// unchanged. Timezone, language, handicapIndex and typical18Score are cleared by
+/// sending null; the other fields can't be null. A null language follows the device's.
 ///
 /// System.Text.Json only calls a setter for a property that is in the JSON, so each
 /// setter records that its field was sent. That is how a field sent as null is told
@@ -26,6 +26,7 @@ public sealed class UpdateMeRequest : IValidatableObject
     private string? _timezone;
     private string? _units;
     private string? _trackingMode;
+    private string? _language;
     private List<string>? _goalFocus;
     private decimal? _handicapIndex;
     private int? _typical18Score;
@@ -45,6 +46,10 @@ public sealed class UpdateMeRequest : IValidatableObject
 
     [StringEnum(typeof(Enums.TrackingMode))]
     public string? TrackingMode { get => _trackingMode; init => Set(ref _trackingMode, value); }
+
+    /// <summary>The language the apps show and the API writes in; null follows the device's.</summary>
+    [StringEnum(typeof(AppLanguage))]
+    public string? Language { get => _language; init => Set(ref _language, value); }
 
     [StringEnum(typeof(GoalFocusArea))]
     public List<string>? GoalFocus { get => _goalFocus; init => Set(ref _goalFocus, value); }
@@ -77,6 +82,9 @@ public sealed class UpdateMeRequest : IValidatableObject
         if (Sent(nameof(TrackingMode)) && !TryParseName<Enums.TrackingMode>(TrackingMode, out _))
             yield return Error(nameof(TrackingMode),
                 $"TrackingMode must be one of: {string.Join(", ", Enum.GetNames<Enums.TrackingMode>())}.");
+
+        if (Sent(nameof(Language)) && Language is not null && !TryParseName<AppLanguage>(Language, out _))
+            yield return Error(nameof(Language), $"Language must be one of: {string.Join(", ", Enum.GetNames<AppLanguage>())}, or null.");
 
         if (Sent(nameof(GoalFocus)))
         {

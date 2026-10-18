@@ -1,5 +1,6 @@
 ﻿using GolfProgress.Domain.Entities;
 using GolfProgress.Api.ErrorHandling;
+using GolfProgress.Api.Localization;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -92,22 +93,19 @@ public sealed class MicroWinsService
         // The baseline holds 18-hole equivalents, so round values are scaled the
         // same way before comparing; otherwise a 9-hole round always looks like an
         // improvement (#35).
-        var candidates = new List<(string metric, decimal? roundValue, decimal? baseValue, decimal threshold, string titleImproved, string msgImproved, string titleStable, string msgStable)>();
+        var candidates = new List<(string metric, decimal? roundValue, decimal? baseValue, decimal threshold, MicroWinText improved, MicroWinText stable)>();
 
         candidates.Add(("penalties",
             HoleScaling.Per18(round.Penalties, round), baseline?.AvgPenalties, 1m,
-            "Fewer penalties", "You had fewer penalty strokes than your recent average — that’s immediate damage control.",
-            "Penalties held steady", "Penalties stayed under control today — that’s a strong scoring foundation."));
+            MicroWinText.FewerPenalties, MicroWinText.PenaltiesHeldSteady));
 
         candidates.Add(("putts",
             HoleScaling.Per18(round.TotalPutts, round), baseline?.AvgPutts, 2m,
-            "Putting improved", "Your total putts were lower than your recent average — nice progress on the greens.",
-            "Putting held steady", "Putting stayed consistent — stability here usually shows up in scores soon."));
+            MicroWinText.PuttingImproved, MicroWinText.PuttingHeldSteady));
 
         candidates.Add(("blow_up_holes",
             HoleScaling.Per18(round.BlowUpHoles, round), baseline?.AvgBlowUpHoles, 1m,
-            "Fewer blow-up holes", "Your big-mistake holes were lower than usual — that’s real progress even if score didn’t show it.",
-            "Big mistakes contained", "You kept big mistakes from spiraling — that’s a key improvement signal."));
+            MicroWinText.FewerBlowUpHoles, MicroWinText.BigMistakesContained));
 
         // Pick best truthful metric:
         // Prefer: baseline exists AND round value exists AND improved by threshold
@@ -119,7 +117,7 @@ public sealed class MicroWinsService
                 if (delta <= -c.threshold)
                 {
                     return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.StatDelta, c.metric, MicroWinDirection.Improved,
-                        delta, confidence, c.titleImproved, c.msgImproved, now,
+                        delta, confidence, c.improved, now,
                         new { metric = c.metric, baseline = c.baseValue, round = c.roundValue, delta });
                 }
             }
@@ -132,12 +130,12 @@ public sealed class MicroWinsService
         {
             decimal? delta = (baseline != null && fallback.baseValue.HasValue) ? fallback.roundValue.Value - fallback.baseValue.Value : null;
             return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.StatDelta, fallback.metric, MicroWinDirection.Stable,
-                delta, confidence, fallback.titleStable, fallback.msgStable, now,
+                delta, confidence, fallback.stable, now,
                 new { metric = fallback.metric, baseline = fallback.baseValue, round = fallback.roundValue, delta });
         }
 
         return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.Narrative, null, MicroWinDirection.Stable,
-            null, confidence, "Round logged", "You logged the round — that’s how progress becomes visible over time.", now,
+            null, confidence, MicroWinText.RoundLogged, now,
             new { reason = "no_stats_available" });
     }
 
@@ -146,12 +144,12 @@ public sealed class MicroWinsService
         if (reflection != null)
         {
             return NewMicroWin(round.UserId, round.RoundId, MicroWinCategory.Behavior, "reflection", MicroWinDirection.Improved,
-                null, confidence, "Learning captured", "You captured what worked and what to repeat — that speeds up improvement.", now,
+                null, confidence, MicroWinText.LearningCaptured, now,
                 new { reflectionId = reflection.ReflectionId });
         }
 
         return NewMicroWin(round.UserId, round.RoundId, MicroWinCategory.Habit, "logging", MicroWinDirection.Improved,
-            null, confidence, "Consistency win", "Logging rounds consistently makes trends show up faster — nice follow-through.", now,
+            null, confidence, MicroWinText.ConsistencyWin, now,
             new { reason = "reflection_missing" });
     }
 
@@ -162,16 +160,12 @@ public sealed class MicroWinsService
         if (string.IsNullOrWhiteSpace(focus))
         {
             return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.Narrative, null, MicroWinDirection.Stable,
-                null, confidence, "Progress signals matter", "Even when score is noisy, reducing big mistakes and staying consistent is progress.", now,
+                null, confidence, MicroWinText.ProgressSignalsMatter, now,
                 new { reason = "no_focus_area" });
         }
 
-        // PATCH /me stores GoalFocusArea names (#82). Underscores are ignored so the
-        // earlier snake_case spellings (tee_shots) still map.
-        GoalFocusArea? area = Enum.TryParse<GoalFocusArea>(focus.Replace("_", ""), ignoreCase: true, out var parsed)
-            && Enum.IsDefined(parsed)
-                ? parsed
-                : null;
+        // PATCH /me stores GoalFocusArea names (#82).
+        var area = MicroWinTexts.ParseFocus(focus);
 
         var metric = area switch
         {
@@ -182,41 +176,29 @@ public sealed class MicroWinsService
             _ => null
         };
 
-        var label = area switch
-        {
-            GoalFocusArea.TeeShots => "tee shots",
-            GoalFocusArea a => a.ToString().ToLowerInvariant(),
-            null => focus
-        };
+        var label = area is GoalFocusArea known ? ApiTexts.English.FocusLabel(known) : focus;
 
         if (metric == "putts" && round.TotalPutts.HasValue)
             return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.FocusArea, metric, MicroWinDirection.Stable,
                 baseline?.AvgPutts != null ? HoleScaling.Per18(round.TotalPutts, round) - baseline.AvgPutts : null,
-                confidence,
-                "Focus-area check: putting",
-                "You’re prioritizing putting — tracking it consistently is step one to improving it.",
-                now, new { focus, metric });
+                confidence, MicroWinText.FocusPutting, now, new { focus, metric });
 
         if (metric == "penalties" && round.Penalties.HasValue)
             return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.FocusArea, metric, MicroWinDirection.Stable,
                 baseline?.AvgPenalties != null ? HoleScaling.Per18(round.Penalties, round) - baseline.AvgPenalties : null,
-                confidence,
-                "Focus-area check: penalties",
-                "You’re prioritizing penalties — keeping them in view is how they drop over time.",
-                now, new { focus, metric });
+                confidence, MicroWinText.FocusPenalties, now, new { focus, metric });
 
         return NewMicroWin(user.UserId, round.RoundId, MicroWinCategory.FocusArea, metric, MicroWinDirection.Stable,
-            null, confidence,
-            $"Focus-area check: {label}",
-            "You set a focus area — we’ll tie more insights to it as you log more rounds.",
-            now, new { focus, metric });
+            null, confidence, MicroWinText.FocusSet, now, new { focus, metric }, label);
     }
 
     private static MicroWin NewMicroWin(Guid userId, Guid roundId,
         MicroWinCategory category, string? metric, MicroWinDirection direction,
         decimal? delta, ConfidenceLevel confidence,
-        string title, string message, DateTimeOffset createdAt, object evidence)
+        MicroWinText text, DateTimeOffset createdAt, object evidence, string? focusLabel = null)
     {
+        // Stored in English; MicroWinTexts shows it in the reader's language.
+        var (title, message) = MicroWinTexts.Stored(text, confidence, focusLabel);
         return new MicroWin
         {
             MicroWinId = Guid.NewGuid(),
@@ -228,9 +210,7 @@ public sealed class MicroWinsService
             DeltaValue = delta,
             ConfidenceLevel = confidence,
             Title = title,
-            Message = confidence == ConfidenceLevel.Low
-                ? message + " (Lower confidence — add one more stat next time for sharper insights.)"
-                : message,
+            Message = message,
             EvidenceJson = JsonDocument.Parse(JsonSerializer.Serialize(evidence), new JsonDocumentOptions()),
             CreatedAt = createdAt
         };

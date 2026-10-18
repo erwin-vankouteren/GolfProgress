@@ -7,9 +7,17 @@ import { useMe } from "../api/queries";
 import { useApi } from "../app/ApiContext";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
+import { choiceOf, type LanguageChoice } from "../i18n/language";
 import { messages, type PlainMessage } from "../i18n/messages";
 import { useSession } from "../session/SessionContext";
-import { GoalFocusField, SaveStatus, TrackingModeField, UnitsField, useUpdateMe } from "./PreferenceFields";
+import {
+  GoalFocusField,
+  LanguageField,
+  SaveStatus,
+  TrackingModeField,
+  UnitsField,
+  useUpdateMe,
+} from "./PreferenceFields";
 import {
   checkNewPassword,
   preferencesOf,
@@ -242,6 +250,7 @@ function PreferencesSection({ me }: { me: Me }) {
   const online = useOnline();
   const update = useUpdateMe();
   const [values, setValues] = useState<Preferences>(() => preferencesOf(me));
+  const [language, setLanguage] = useState<LanguageChoice>(() => choiceOf(me.language));
   const [formError, setFormError] = useState<string>();
 
   const change = (next: Partial<Preferences>) => {
@@ -253,7 +262,8 @@ function PreferencesSection({ me }: { me: Me }) {
     event.preventDefault();
     if (update.isPending || !online) return;
     setFormError(undefined);
-    update.mutate(values, { onError: (error) => setFormError(saveFailed(error, intl)) });
+    // Saved, the app switches to the language straight away (LanguageProvider).
+    update.mutate({ ...values, language }, { onError: (error) => setFormError(saveFailed(error, intl)) });
   };
 
   return (
@@ -262,6 +272,13 @@ function PreferencesSection({ me }: { me: Me }) {
         <UnitsField value={values.units} onChange={(units) => change({ units })} />
         <TrackingModeField value={values.trackingMode} onChange={(trackingMode) => change({ trackingMode })} />
         <GoalFocusField value={values.goalFocus} onChange={(goalFocus) => change({ goalFocus })} />
+        <LanguageField
+          value={language}
+          onChange={(choice) => {
+            setLanguage(choice);
+            update.reset();
+          }}
+        />
         <SaveStatus saved={update.isSuccess} error={formError} />
         <OfflineHint />
         <div>

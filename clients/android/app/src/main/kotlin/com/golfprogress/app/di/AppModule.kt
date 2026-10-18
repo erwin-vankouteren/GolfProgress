@@ -9,6 +9,7 @@ import com.golfprogress.api.generated.apis.AuthApi
 import com.golfprogress.api.generated.apis.ClientConfigApi
 import com.golfprogress.api.unwrap
 import com.golfprogress.app.BuildConfig
+import com.golfprogress.app.language.AppLocales
 import com.golfprogress.app.session.EncryptedRefreshTokenStore
 import com.golfprogress.app.session.KeystoreTokenCipher
 import com.golfprogress.app.session.RefreshTokenStore
@@ -20,6 +21,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -30,7 +32,31 @@ object AppModule {
     /** The API client for everything after sign-in: its tokens come from the session. */
     @Provides
     @Singleton
-    fun api(session: Session): GolfProgressApi = GolfProgressApi(BuildConfig.API_BASE_URL, session)
+    fun api(
+        session: Session,
+        http: OkHttpClient,
+    ): GolfProgressApi = GolfProgressApi(BuildConfig.API_BASE_URL, session, http)
+
+    /**
+     * Every request asks for the language the app shows, so the API's own texts
+     * (micro-wins, next focus, emails) come in it too.
+     */
+    @Provides
+    @Singleton
+    fun http(
+        @ApplicationContext context: Context,
+    ): OkHttpClient =
+        OkHttpClient
+            .Builder()
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain
+                        .request()
+                        .newBuilder()
+                        .header("Accept-Language", AppLocales.shown(context).tag)
+                        .build(),
+                )
+            }.build()
 
     @Provides
     @Singleton
@@ -39,8 +65,10 @@ object AppModule {
     /** The auth endpoints through a client of their own, without tokens: those calls are anonymous. */
     @Provides
     @Singleton
-    fun tokenRefresher(store: RefreshTokenStore): TokenRefresher =
-        TokenRefresher(GolfProgressApi(BuildConfig.API_BASE_URL, SignedOut).service<AuthApi>(), store)
+    fun tokenRefresher(
+        store: RefreshTokenStore,
+        http: OkHttpClient,
+    ): TokenRefresher = TokenRefresher(GolfProgressApi(BuildConfig.API_BASE_URL, SignedOut, http).service<AuthApi>(), store)
 
     /** The refresh token, encrypted with a Keystore key, in DataStore file "session". */
     @Provides

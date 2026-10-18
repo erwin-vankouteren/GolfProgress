@@ -77,6 +77,7 @@ public class GolfProgressDbContext : DbContext
 
             e.Property(x => x.Units).HasConversion<string>();
             e.Property(x => x.TrackingMode).HasConversion<string>();
+            e.Property(x => x.Language).HasConversion<string>().HasMaxLength(16);
 
             e.Property(x => x.GoalFocus)
                 .HasConversion(stringListConverter, stringListComparer)

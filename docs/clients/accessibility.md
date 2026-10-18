@@ -25,7 +25,28 @@ Human Interface Guidelines and Android's accessibility guidelines.
 
 ## Localisation
 
-The apps ship in English only, but **adding a language must only need translations**:
+The web and Android apps come in **English and Dutch** (iOS is English for now). The user
+chooses in Profile → Preferences → Language: *Same as this device*, *English* or
+*Nederlands*. The choice is saved in the profile (`UserResponse.language`, null for the
+device's language), so it follows the user to their other devices, and the reset email
+uses it too.
+
+| | Web | Android |
+|---|---|---|
+| Translations | `src/i18n/nl.ts`, by message id; `messages.test.ts` checks every message has one with the same placeholders | `res/values-nl/strings.xml`; `StringsTranslationTest` checks the same |
+| Without a choice | The browser's languages: the first one the app has, else English | The device's languages, the same way |
+| Where the choice lives | The profile, and remembered in the browser so the next visit starts in it | The profile, taken over at an account's first sign-in on the device. From Android 13 the system keeps it (and shows it in the phone's settings for the app); before that the app does |
+| The API's own texts | Every request sends `Accept-Language` with the language shown, so micro-wins, "Your next focus" and monthly highlights come in it (`ApiTexts` in the API) | The same |
+
+Language names are written in their own language ("Nederlands", "English") with their
+`lang` / locale set, so a screen reader pronounces each correctly.
+
+**Adding a language:** add it to `AppLanguage` and `ApiTexts` in the API (the compiler
+asks for every text), then `nl.ts`'s counterpart and `localeFor` on the web, and a
+`values-xx/strings.xml` and `locales_config.xml` entry on Android. The tests above fail
+until every message is translated.
+
+Whatever the language, **adding one must only need translations**:
 
 | Rule | Web | iOS | Android |
 |---|---|---|---|
