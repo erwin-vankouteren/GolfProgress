@@ -294,6 +294,11 @@ public sealed class SqlServerPersistenceTests
                 RefreshTokenId = Guid.NewGuid(), UserId = userId, TokenHash = Guid.NewGuid().ToString("N"),
                 CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.AddDays(14)
             });
+            db.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                PasswordResetTokenId = Guid.NewGuid(), UserId = userId, TokenHash = Guid.NewGuid().ToString("N"),
+                CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30)
+            });
             await db.SaveChangesAsync();
         }
 
@@ -332,7 +337,7 @@ public sealed class SqlServerPersistenceTests
                 .SingleAsync();
         }
 
-        Assert.Equal(10, counts.Count); // Users and the nine tables that reference it
+        Assert.Equal(11, counts.Count); // Users and the ten tables that reference it
         return counts;
     }
 
