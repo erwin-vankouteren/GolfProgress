@@ -20,8 +20,14 @@ concurrency:
 jobs:
   deploy:
     name: Build and deploy
-    # Only after a green CI run on main (or when started by hand).
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Only after a green CI run for a push to this repository's main (or when started by
+    # hand). `branches: [main]` alone also matches a pull request from a fork whose branch
+    # is called main, which would deploy the fork's code with the staging credentials.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:

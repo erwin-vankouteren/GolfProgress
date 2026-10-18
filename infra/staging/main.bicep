@@ -52,8 +52,9 @@ resource insights 'Microsoft.Insights/components@2020-02-02' = {
 
 // Jwt__Key (and the email connection string) live here, read by the API's identity.
 // The secrets themselves are added by hand: see the deployment guide.
+// Vault names are at most 24 characters, so no "-staging" here: the resource group says it.
 resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: 'kv-${name}-stg-${suffix}'
+  name: 'kv-${name}-${suffix}'
   location: location
   properties: {
     tenantId: subscription().tenantId

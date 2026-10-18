@@ -221,7 +221,8 @@ machine.
    1, 2 and 4 there are done by the Bicep.
 5. **A deploy identity for GitHub:** an Entra app registration with a federated credential
    for this repository's `staging` environment
-   (`repo:<owner>/golf-progress-api:environment:staging`), the **Website Contributor** role
+   (`repo:erwin-vankouteren/GolfProgress:environment:staging`: the GitHub repository's name,
+   which must match exactly), the **Website Contributor** role
    on the app, and membership of the SQL admin group so it can apply migrations.
 6. **In GitHub,** on the `staging` environment:
    - secrets `AZURE_CLIENT_ID` (the app registration), `AZURE_TENANT_ID`,
