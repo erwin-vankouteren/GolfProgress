@@ -28,8 +28,11 @@ namespace GolfProgress.Api.Contracts.Rounds
         [Range(0, short.MaxValue)] public short? ThreePutts { get; init; }
         [Range(0, short.MaxValue)] public short? BlowUpHoles { get; init; }
 
+        // Nullable so that null means the same as leaving it out: Manual. Clients that
+        // write out every field, as the Android app's generated client does, send null
+        // for one they leave empty, which a non-nullable string would reject as missing.
         [StringEnum(typeof(Enums.RoundSource))]
-        public string Source { get; init; } = "Manual";   // Manual|Import|Coach|Other
+        public string? Source { get; init; } = "Manual";   // Manual|Import|Coach|Other
         public string? Notes { get; init; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

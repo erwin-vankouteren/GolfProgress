@@ -2419,7 +2419,8 @@
               "Lesson",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "venueName": {
             "maxLength": 200,
@@ -2431,7 +2432,8 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "nullable": true
           },
           "primaryGoal": {
             "maxLength": 200,
@@ -2563,7 +2565,8 @@
               "Coach",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "notes": {
             "type": "string",

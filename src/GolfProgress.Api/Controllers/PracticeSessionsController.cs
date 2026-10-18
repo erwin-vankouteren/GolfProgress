@@ -42,9 +42,9 @@ public sealed class PracticeSessionsController : ControllerBase
             UserId = userId,
             PracticedAt = IsoDate.Parse(request.PracticedAt),
             DurationMinutes = request.DurationMinutes,
-            SessionType = Enum.Parse<SessionType>(request.SessionType, ignoreCase: true),
+            SessionType = request.ParsedSessionType,
             VenueName = request.VenueName,
-            Tags = request.Tags.Select(t => t.Trim()).ToList(),
+            Tags = request.TagsOrNone.Select(t => t.Trim()).ToList(),
             PrimaryGoal = request.PrimaryGoal,
             Notes = request.Notes,
             CreatedAt = now
