@@ -6,7 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- usesCleartextTraffic: the debug build talks to a local API over plain HTTP
-         (10.0.2.2 from the emulator); release builds use HTTPS only (#77).
+         (10.0.2.2 from the emulator); release builds use HTTPS only (#77, #118), set per
+         build type in build.gradle.kts.
          Backup: off, and the rules also exclude the session store explicitly, because
          Android 12+ still allows device-to-device transfer with allowBackup="false" (#71). -->
     <application
@@ -18,7 +19,7 @@
         android:supportsRtl="true"
         android:localeConfig="@xml/locales_config"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="${usesCleartextTraffic}">
         <activity
             android:name=".MainActivity"
             android:exported="true"
