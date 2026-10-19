@@ -114,6 +114,11 @@ Every chart has a text alternative (a summary sentence or a table) for screen re
 | Delete account | Explains what is deleted, asks for the password, then deletes everything | `DELETE /me` |
 | About | Version, privacy policy, terms | – |
 
+### Coaching (planned, M5)
+
+Coaches, feedback threads, a Students section for coaches and practice goals:
+[`../coach-access.md`](../coach-access.md) → "Screens".
+
 ## States every screen handles
 
 | State | Behaviour |

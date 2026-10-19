@@ -371,6 +371,7 @@ The GitHub milestones follow these phases:
 | **M2 MVP** | The core features on all three clients, and the API changes they need |
 | **M3 Beta** | Web on staging, TestFlight and Play internal testing; crash reporting, accessibility pass, privacy policy, password reset |
 | **M4 Launch** | Store listings, store review, production release |
+| **M5 Coaching** | Coach access: invitations and sharing, feedback on rounds and practice, practice goals ([`coach-access.md`](coach-access.md)) |
 | **Later** | Offline support, push notifications, and more |
 
 ## Later: offline support
