@@ -11,6 +11,7 @@ import "./AuthPages.css";
 export function WelcomePage() {
   return (
     <AuthFrame>
+      <img src="/favicon.svg" alt="" className="auth-logo" width={64} height={64} />
       <h1>
         <FormattedMessage {...messages.welcomeTitle} />
       </h1>

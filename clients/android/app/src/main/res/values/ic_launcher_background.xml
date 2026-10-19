@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The brand green, color.light.primary in design/tokens.json. -->
+    <color name="ic_launcher_background">#1F6F43</color>
+</resources>

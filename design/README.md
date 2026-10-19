@@ -36,3 +36,21 @@ sync by hand**, and CI fails if they differ from `tokens.json`.
 
 The build checks every pair in both themes and **refuses to generate anything if one
 fails**. When you use two colours together in a new way, add the pair here first.
+
+## The app icon
+
+A rising line that reaches the flag, on the brand green (`color.light.primary`).
+[`app-icon/glyph.svg`](app-icon/glyph.svg) is the source for every platform:
+
+```bash
+node design/build-icons.mjs   # renders the PNGs below; needs Playwright in clients/web
+```
+
+| Client | Files | Notes |
+|---|---|---|
+| Web | `clients/web/public/favicon.svg`, `apple-touch-icon.png`, `icon-*.png`, `manifest.webmanifest` | `favicon.svg` is also the logo in the header and on the welcome page |
+| iOS | `clients/ios/GolfProgress/Resources/Assets.xcassets/AppIcon.appiconset` | One 1024 px PNG without an alpha channel; iOS applies the mask |
+| Android | `clients/android/app/src/main/res/drawable/ic_launcher_*.xml`, `mipmap-anydpi/` | An adaptive vector icon, with a monochrome layer for themed icons. **Not generated**: it copies the glyph's shapes, so change it together with `glyph.svg` |
+| Play Store listing | `design/app-icon/play-store-512.png` | Uploaded by hand in Play Console |
+
+The rendered files are committed, so building a client never needs the script.
