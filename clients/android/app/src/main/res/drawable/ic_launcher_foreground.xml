@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher icon's glyph, mirroring design/app-icon/glyph.svg: change both together.
+     Scaled to 70% so it stays inside the adaptive icon's safe zone (66 of 108 dp) under
+     any launcher mask. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group
+        android:pivotX="512"
+        android:pivotY="512"
+        android:scaleX="0.7"
+        android:scaleY="0.7">
+        <path
+            android:fillColor="#0B3D21"
+            android:pathData="M598,778a96,26 0,1 0,192 0a96,26 0,1 0,-192 0Z" />
+        <path
+            android:pathData="M186,766L354,602L470,682L676,476"
+            android:strokeWidth="60"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M694,778V238"
+            android:strokeWidth="36"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round" />
+        <path
+            android:fillColor="#F5B65A"
+            android:pathData="M712,238L860,302L712,366Z"
+            android:strokeWidth="16"
+            android:strokeColor="#F5B65A"
+            android:strokeLineJoin="round" />
+    </group>
+</vector>

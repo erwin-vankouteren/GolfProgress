@@ -49,6 +49,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.golfprogress.app
         TARGETED_DEVICE_FAMILY: "1"
+        # Resources/Assets.xcassets, rendered by design/build-icons.mjs.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     info:
       path: GolfProgress/Info.plist
       properties:

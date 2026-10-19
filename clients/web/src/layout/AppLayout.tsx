@@ -60,6 +60,7 @@ export function AppLayout() {
             <span aria-hidden="true">☰</span>
           </button>
           <Link to="/" className="app-name">
+            <img src="/favicon.svg" alt="" className="app-logo" width={32} height={32} />
             <FormattedMessage {...messages.appName} />
           </Link>
           <LogRoundLink className="button button--primary">

@@ -21,6 +21,9 @@
 }
 
 .app-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
   font-size: var(--font-size-headline);
   font-weight: var(--font-weight-headline);
   color: var(--color-text-primary);
