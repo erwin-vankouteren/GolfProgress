@@ -25,6 +25,7 @@
 
     <!-- Sign-in (#71) -->
     <string name="session_restoring">Je wordt ingelogd…</string>
+    <string name="session_server_waking">De server wordt opgestart. Dit kan tot een minuut duren.</string>
     <string name="try_again">Opnieuw proberen</string>
     <string name="welcome_body">Zie je vooruitgang, verder dan alleen je score: elke ronde gescoord op uitvoering, schadebeperking, consistentie en gewoontes.</string>
     <string name="auth_create_account">Account aanmaken</string>

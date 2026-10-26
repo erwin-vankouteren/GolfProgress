@@ -79,6 +79,12 @@
 
 .restoring {
   margin: 30vh auto;
+  padding: 0 var(--space-md);
   text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.auth-slow {
+  margin: var(--space-sm) 0 0;
   color: var(--color-text-secondary);
 }

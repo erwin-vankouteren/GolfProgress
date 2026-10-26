@@ -47,6 +47,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.golfprogress.app.R
 import com.golfprogress.app.session.AuthViewModel
+import com.golfprogress.app.session.ServerWakingHint
 import com.golfprogress.app.ui.theme.DesignTokens
 
 /** Welcome, Create account and Sign in (docs/clients/wireframes.md → "Authentication", #71). */
@@ -198,6 +199,7 @@ private fun FormScreen(
                 Text(stringResource(title))
             }
         }
+        ServerWakingHint(waiting = form.isSubmitting, modifier = Modifier.fillMaxWidth())
         if (forgotPassword != null) {
             TextButton(onClick = forgotPassword, modifier = Modifier.heightIn(min = DesignTokens.touchTarget)) {
                 Text(stringResource(R.string.auth_forgot_password))

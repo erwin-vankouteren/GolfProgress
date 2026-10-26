@@ -22,6 +22,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -40,6 +41,10 @@ object AppModule {
     /**
      * Every request asks for the language the app shows, so the API's own texts
      * (micro-wins, next focus, emails) come in it too.
+     *
+     * Reads may take up to 90 seconds rather than OkHttp's 10: staging's serverless
+     * database can take a minute to resume after idling, and the first request after
+     * that (usually the refresh at launch) waits for it. Screens explain the wait.
      */
     @Provides
     @Singleton
@@ -48,6 +53,8 @@ object AppModule {
     ): OkHttpClient =
         OkHttpClient
             .Builder()
+            .readTimeout(90, TimeUnit.SECONDS)
+            .callTimeout(90, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 chain.proceed(
                     chain

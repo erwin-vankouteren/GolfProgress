@@ -1,5 +1,12 @@
 import { unwrap, type AccessTokenProvider, type ApiClient, type Schemas } from "../api";
 
+/**
+ * How long an /auth/* request may take before the app gives up on it. Generous, because
+ * staging's serverless database can take a minute to resume after idling; the screens
+ * explain the wait after a few seconds (useSlow).
+ */
+export const authTimeoutMs = 90_000;
+
 export type SessionState =
   /** Checking whether the refresh cookie still holds a session (at start-up). */
   { status: "restoring" } | { status: "signedOut" } | { status: "signedIn"; userId: string };
@@ -16,6 +23,9 @@ export type SessionState =
  * Restoring after a reload is a refresh: if the cookie is still valid the user is
  * signed straight back in. The API client calls `refreshAccessToken` on a 401 and shares
  * one refresh between concurrent requests.
+ *
+ * No /auth/* request waits longer than `authTimeoutMs`: a refresh that times out settles on
+ * signed out, and a sign-in that times out throws as if the API were unreachable.
  */
 export class Session implements AccessTokenProvider {
   private token: string | null;
@@ -50,10 +60,12 @@ export class Session implements AccessTokenProvider {
 
   async refreshAccessToken(): Promise<string | null> {
     try {
-      const result = await this.client().POST("/auth/refresh", {
-        params: { header: { "X-Refresh-Token-Mode": "cookie" } },
-        credentials: "include",
-      });
+      const result = await this.withTimeout(
+        this.client().POST("/auth/refresh", {
+          params: { header: { "X-Refresh-Token-Mode": "cookie" } },
+          credentials: "include",
+        }),
+      );
       if (!result.response.ok || !result.data) {
         this.clear();
         return null;
@@ -61,7 +73,7 @@ export class Session implements AccessTokenProvider {
       this.accept(result.data);
       return this.token;
     } catch {
-      // Offline or the API is unreachable: treat as signed out rather than hanging.
+      // Offline, unreachable or timed out: treat as signed out rather than hanging.
       this.clear();
       return null;
     }
@@ -74,21 +86,25 @@ export class Session implements AccessTokenProvider {
 
   /** Throws an ApiProblem for a wrong password (401), validation errors (400) or 429. */
   async signIn(email: string, password: string): Promise<void> {
-    const result = await this.client().POST("/auth/login", {
-      body: { email, password },
-      params: { header: { "X-Refresh-Token-Mode": "cookie" } },
-      credentials: "include",
-    });
+    const result = await this.withTimeout(
+      this.client().POST("/auth/login", {
+        body: { email, password },
+        params: { header: { "X-Refresh-Token-Mode": "cookie" } },
+        credentials: "include",
+      }),
+    );
     this.accept(unwrap(result));
   }
 
   /** Throws an ApiProblem for a taken email (409), validation errors (400) or 429. */
   async register(email: string, displayName: string, password: string): Promise<void> {
-    const result = await this.client().POST("/auth/register", {
-      body: { email, displayName, password },
-      params: { header: { "X-Refresh-Token-Mode": "cookie" } },
-      credentials: "include",
-    });
+    const result = await this.withTimeout(
+      this.client().POST("/auth/register", {
+        body: { email, displayName, password },
+        params: { header: { "X-Refresh-Token-Mode": "cookie" } },
+        credentials: "include",
+      }),
+    );
     this.accept(unwrap(result));
   }
 
@@ -99,6 +115,15 @@ export class Session implements AccessTokenProvider {
     } finally {
       this.clear();
     }
+  }
+
+  /** Rejects after `authTimeoutMs`, so a request that never answers can't hang a screen. */
+  private withTimeout<T>(request: Promise<T>): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error("The API didn't answer in time.")), authTimeoutMs);
+    });
+    return Promise.race([request, timeout]).finally(() => clearTimeout(timer));
   }
 
   private accept(auth: Schemas["AuthResponse"]): void {

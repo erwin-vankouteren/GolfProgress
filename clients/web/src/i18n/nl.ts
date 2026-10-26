@@ -31,6 +31,7 @@ export const nl: Record<string, string> = {
     "Deze versie van GolfProgress wordt niet meer ondersteund. Laad de pagina opnieuw voor de nieuwste versie.",
   "update.reload": "Opnieuw laden",
   "session.restoring": "Je wordt ingelogd…",
+  "session.serverWaking": "De server wordt opgestart. Dit kan tot een minuut duren.",
   "welcome.title": "GolfProgress",
   "welcome.body":
     "Zie je vooruitgang, verder dan alleen je score: elke ronde gescoord op uitvoering, schadebeperking, consistentie en gewoontes.",

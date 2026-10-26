@@ -31,6 +31,7 @@ import com.golfprogress.app.language.AppLocales
 import com.golfprogress.app.language.LanguageSync
 import com.golfprogress.app.navigation.MainScreen
 import com.golfprogress.app.profile.OnboardingScreen
+import com.golfprogress.app.session.ServerWakingHint
 import com.golfprogress.app.session.SessionState
 import com.golfprogress.app.session.SessionViewModel
 import com.golfprogress.app.ui.theme.DesignTokens
@@ -102,6 +103,7 @@ private fun RestoringScreen() {
     CenteredColumn {
         CircularProgressIndicator()
         Text(stringResource(R.string.session_restoring), style = MaterialTheme.typography.bodyLarge)
+        ServerWakingHint(waiting = true)
     }
 }
 

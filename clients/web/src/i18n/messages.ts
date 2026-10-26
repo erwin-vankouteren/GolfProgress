@@ -35,6 +35,10 @@ export const plainMessages = defineMessages({
   reload: { id: "update.reload", defaultMessage: "Reload" },
 
   restoringSession: { id: "session.restoring", defaultMessage: "Signing you in…" },
+  serverWaking: {
+    id: "session.serverWaking",
+    defaultMessage: "Waking up the server. This can take up to a minute.",
+  },
   welcomeTitle: { id: "welcome.title", defaultMessage: "GolfProgress" },
   welcomeBody: {
     id: "welcome.body",

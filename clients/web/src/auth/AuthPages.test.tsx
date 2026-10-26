@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -65,7 +65,14 @@ function renderApp(path: string, handlers: Record<string, Handler> = {}) {
 
 const requestTo = (requests: Request[], path: string) => requests.find((r) => new URL(r.url).pathname === path);
 
+/** A request the API never answers, like one waiting on a paused database. */
+const never: Handler = () => new Promise<Response>(() => {});
+
+/** Moves the fake clock on, letting React render what the timers set off. */
+const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
+
 afterEach(() => {
+  vi.useRealTimers();
   localStorage.clear();
   sessionStorage.clear();
 });
@@ -98,6 +105,20 @@ describe("session restore", () => {
       },
     });
 
+    expect(await screen.findByRole("link", { name: "Create account" })).toBeInTheDocument();
+  });
+
+  it("explains a slow restore, then gives up and treats the visitor as signed out", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderApp("/", { "POST /auth/refresh": never });
+
+    expect(await screen.findByText("Signing you in…")).toBeInTheDocument();
+    expect(screen.queryByText(/Waking up the server/)).not.toBeInTheDocument();
+
+    await wait(5_000);
+    expect(screen.getByText(/Waking up the server/)).toBeInTheDocument();
+
+    await wait(90_000);
     expect(await screen.findByRole("link", { name: "Create account" })).toBeInTheDocument();
   });
 });
@@ -185,6 +206,24 @@ describe("sign in", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't reach GolfProgress.");
+  });
+
+  it("explains a slow sign-in, then gives up so the user can try again", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { user } = renderApp("/sign-in", { "POST /auth/login": never });
+
+    await user.type(await screen.findByLabelText("Email"), "erwin@example.test");
+    await user.type(screen.getByLabelText("Password"), "whatever");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(screen.getByRole("button", { name: "Please wait…" })).toBeDisabled();
+    await wait(5_000);
+    expect(screen.getByRole("status")).toHaveTextContent("Waking up the server");
+
+    await wait(90_000);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't reach GolfProgress.");
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+    expect(screen.queryByText(/Waking up the server/)).not.toBeInTheDocument();
   });
 });
 

@@ -23,6 +23,7 @@
 
     <!-- Sign-in (#71) -->
     <string name="session_restoring">Signing you in…</string>
+    <string name="session_server_waking">Waking up the server. This can take up to a minute.</string>
     <string name="try_again">Try again</string>
     <string name="welcome_body">See your progress beyond the score: every round scored on execution, damage control, consistency and habits.</string>
     <string name="auth_create_account">Create account</string>

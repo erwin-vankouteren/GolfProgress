@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router";
 import { FormattedMessage } from "react-intl";
 import { messages } from "../i18n/messages";
 import type { Session, SessionState } from "./session";
+import { useSlow } from "./useSlow";
 
 const SessionContext = createContext<Session | null>(null);
 
@@ -42,9 +43,18 @@ export function PublicOnly() {
 }
 
 function Restoring() {
+  const slow = useSlow(true);
+
   return (
-    <p className="restoring" role="status">
-      <FormattedMessage {...messages.restoringSession} />
-    </p>
+    <div className="restoring" role="status">
+      <p>
+        <FormattedMessage {...messages.restoringSession} />
+      </p>
+      {slow && (
+        <p>
+          <FormattedMessage {...messages.serverWaking} />
+        </p>
+      )}
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { ApiProblem } from "../api";
 import { messages, type PlainMessage } from "../i18n/messages";
 import { useSession } from "../session/SessionContext";
+import { useSlow } from "../session/useSlow";
 import "./AuthPages.css";
 
 /** Welcome, Sign in and Create account (docs/clients/wireframes.md → "Authentication", #69). */
@@ -258,10 +259,19 @@ export function FormError({ message }: { message?: string }) {
 }
 
 export function SubmitButton({ busy, label }: { busy: boolean; label: PlainMessage }) {
+  const slow = useSlow(busy);
+
   return (
-    <button type="submit" className="button button--primary auth-submit" disabled={busy} aria-busy={busy}>
-      <FormattedMessage {...(busy ? messages.working : label)} />
-    </button>
+    <>
+      <button type="submit" className="button button--primary auth-submit" disabled={busy} aria-busy={busy}>
+        <FormattedMessage {...(busy ? messages.working : label)} />
+      </button>
+      {slow && (
+        <p className="auth-slow" role="status">
+          <FormattedMessage {...messages.serverWaking} />
+        </p>
+      )}
+    </>
   );
 }
 
