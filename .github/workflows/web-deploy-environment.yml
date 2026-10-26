@@ -1,0 +1,83 @@
+name: Deploy web to an environment
+
+# Called by web-deploy.yml, once per environment: builds the web app against that
+# environment's API and deploys it to Azure Static Web Apps (#116, #123).
+# Setup, settings and secrets: docs/deployment.md → "Web app".
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: The GitHub environment, which holds the secrets and variables, e.g. production.
+        type: string
+        required: true
+      prefix:
+        description: "Its variables' prefix, e.g. PRODUCTION for PRODUCTION_API_URL."
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars[format('{0}_WEB_URL', inputs.prefix)] }}
+
+    # One deployment per environment at a time; a newer one waits rather than racing it.
+    concurrency:
+      group: deploy-web-${{ inputs.environment }}
+      cancel-in-progress: false
+
+    defaults:
+      run:
+        working-directory: clients/web
+
+    env:
+      API_URL: ${{ vars[format('{0}_API_URL', inputs.prefix)] }}
+
+    steps:
+      - name: Check the environment's variables
+        run: test -n "$API_URL" || { echo "::error::Set the ${{ inputs.prefix }}_API_URL variable on the ${{ inputs.environment }} environment."; exit 1; }
+
+      - name: Check out the commit CI tested
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: clients/web/.nvmrc
+          cache: npm
+          cache-dependency-path: clients/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # The Content Security Policy allows calls to the API's origin and no other.
+      - name: Point the security headers at the API
+        run: |
+          origin=$(node -e "console.log(new URL(process.env.API_URL).origin)")
+          sed -i "s|__API_ORIGIN__|$origin|" public/staticwebapp.config.json
+          grep -q "$origin" public/staticwebapp.config.json
+
+      - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ env.API_URL }}
+          VITE_PRIVACY_POLICY_URL: ${{ vars.PRIVACY_POLICY_URL }}
+          VITE_TERMS_URL: ${{ vars.TERMS_URL }}
+        run: npm run build
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          # Built above; Static Web Apps only uploads it.
+          app_location: clients/web/dist
+          skip_app_build: true
+          skip_api_build: true

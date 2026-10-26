@@ -1,9 +1,8 @@
-name: Deploy API (staging)
+name: Deploy API
 
-# Deploys the API to Azure App Service (staging) after CI passes on main (#115): applies
-# the database migrations, then publishes the app. No stored Azure credentials: GitHub
-# signs in through OpenID Connect as an Entra app with a federated credential.
-# Setup, settings and secrets: docs/deployment.md → "API (staging)".
+# After CI passes on main (#115, #123): to staging, then, once someone approves it, the
+# same commit to production. The approval is a required reviewer on the GitHub
+# environment `production`. Setup: docs/deployment.md → "API".
 on:
   workflow_run:
     workflows: [CI]
@@ -15,88 +14,29 @@ permissions:
   contents: read
   id-token: write # for the OpenID Connect sign-in to Azure
 
-# One deployment at a time; a newer one waits rather than racing it.
-concurrency:
-  group: deploy-api-staging
-  cancel-in-progress: false
-
 jobs:
-  deploy:
-    name: Migrate and deploy
+  staging:
+    name: Staging
     # Only after a green CI run for a push to this repository's main (or when started by
     # hand). `branches: [main]` alone also matches a pull request from a fork whose branch
-    # is called main, which would deploy the fork's code with the staging credentials.
+    # is called main, which would deploy the fork's code with the deployment credentials.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    environment:
-      name: staging
-      url: ${{ vars.STAGING_API_URL }}
+    uses: ./.github/workflows/api-deploy-environment.yml
+    with:
+      environment: staging
+      prefix: STAGING
+    secrets: inherit
 
-    # The migration bundle starts the app to find the database context, and the app refuses
-    # to start without these. Placeholders only: the bundle connects with --connection below.
-    env:
-      ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: Server=placeholder
-      Jwt__Key: placeholder-only-used-to-start-the-migration-bundle
-
-    steps:
-      - name: Check out the commit CI tested
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
-
-      - name: Restore tools
-        run: dotnet tool restore
-
-      - name: Publish
-        run: dotnet publish src/GolfProgress.Api -c Release -o publish
-
-      # A self-contained executable that applies any pending migrations, and only those.
-      - name: Build the migration bundle
-        run: >
-          dotnet ef migrations bundle
-          --project src/GolfProgress.Infrastructure
-          --startup-project src/GolfProgress.Api
-          --configuration Release
-          --output efbundle
-          --force
-
-      - name: Sign in to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      # As the deploy identity, a member of the SQL admin group: the only identity that may
-      # change the schema. The API itself can only read and write data (db/README.md).
-      - name: Apply migrations
-        env:
-          SQL_SERVER: ${{ vars.STAGING_SQL_SERVER }}
-        run: |
-          test -n "$SQL_SERVER" || { echo "::error::Set the STAGING_SQL_SERVER variable on the staging environment."; exit 1; }
-          ./efbundle --connection "Server=tcp:$SQL_SERVER,1433;Initial Catalog=GolfProgressDb;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
-
-      - name: Deploy to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ vars.STAGING_API_APP_NAME }}
-          package: publish
-
-      # App Service starts the new version in a fresh container, and the serverless database
-      # may be waking up; until then the old version or a placeholder 404 answers. The first
-      # deployment took over a minute, so allow three before calling it broken.
-      - name: Check it answers
-        env:
-          API_URL: ${{ vars.STAGING_API_URL }}
-        run: curl --fail --silent --show-error --retry 18 --retry-delay 10 --retry-all-errors "$API_URL/client-config"
+  # Waits for a reviewer to approve it; a run nobody approves expires after 30 days.
+  production:
+    name: Production
+    needs: staging
+    uses: ./.github/workflows/api-deploy-environment.yml
+    with:
+      environment: production
+      prefix: PRODUCTION
+    secrets: inherit
