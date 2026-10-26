@@ -40,13 +40,14 @@ jobs:
       API_URL: ${{ vars[format('{0}_API_URL', inputs.prefix)] }}
 
     steps:
-      - name: Check the environment's variables
-        run: test -n "$API_URL" || { echo "::error::Set the ${{ inputs.prefix }}_API_URL variable on the ${{ inputs.environment }} environment."; exit 1; }
-
+      # First, because the steps below run in clients/web.
       - name: Check out the commit CI tested
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Check the environment's variables
+        run: test -n "$API_URL" || { echo "::error::Set the ${{ inputs.prefix }}_API_URL variable on the ${{ inputs.environment }} environment."; exit 1; }
 
       - name: Set up Node
         uses: actions/setup-node@v4
