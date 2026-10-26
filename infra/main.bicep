@@ -23,7 +23,10 @@ param sqlAdminGroupName string
 @description('That group\'s object id.')
 param sqlAdminGroupObjectId string
 
-@description('A verified Azure Communication Services sender, e.g. DoNotReply@golfprogress.app. Empty: reset emails are only logged.')
+@description('The domain password reset emails come from, e.g. golfprogress.app: creates the email resources and the records to verify it. Empty: no email resources.')
+param emailDomain string = ''
+
+@description('The sender on that domain, e.g. DoNotReply@golfprogress.app. Set it once the domain is verified: it switches sending on. Empty: reset emails are only logged.')
 param emailSenderAddress string = ''
 
 @description('The oldest app versions that may still sign in (GET /client-config); older ones are told to update.')
@@ -38,7 +41,8 @@ param alertEmail string = ''
 var isProduction = environment == 'production'
 var suffix = take(uniqueString(resourceGroup().id), 6)
 var apiName = '${name}-api-${environment}'
-var emailConfigured = !empty(emailSenderAddress)
+var emailResources = !empty(emailDomain)
+var emailConfigured = emailResources && !empty(emailSenderAddress)
 var alertsConfigured = !empty(alertEmail)
 
 // ---------------------------------------------------------------- monitoring
@@ -66,8 +70,8 @@ resource insights 'Microsoft.Insights/components@2020-02-02' = {
 
 // ---------------------------------------------------------------- secrets
 
-// Jwt__Key (and the email connection string) live here, read by the API's identity.
-// The secrets themselves are added by hand: see the deployment guide.
+// Jwt__Key and the email connection string live here, read by the API's identity.
+// Jwt__Key is added by hand (see the deployment guide); the email one by this template.
 // Vault names are at most 24 characters, so no environment here: the resource group says it.
 // Soft-delete retention can't change once a vault exists, so staging keeps its 7 days.
 resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -82,6 +86,55 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     // Production's JWT key can't be purged by mistake, even by an owner. (Once on, it stays on.)
     enablePurgeProtection: isProduction ? true : null
   }
+}
+
+// ---------------------------------------------------------------- email
+
+// Password reset emails (#86, #123) through Azure Communication Services. Two passes:
+// emailDomain creates the domain, whose DNS records (output emailDnsRecords) are added
+// by hand and verified; then emailSenderAddress links it and switches sending on.
+// docs/deployment.md → "Email".
+resource emailService 'Microsoft.Communication/emailServices@2023-04-01' = if (emailResources) {
+  name: '${name}-email-${environment}'
+  location: 'global'
+  properties: { dataLocation: 'Europe' }
+}
+
+resource emailDomainResource 'Microsoft.Communication/emailServices/domains@2023-04-01' = if (emailResources) {
+  parent: emailService
+  name: emailDomain
+  location: 'global'
+  properties: {
+    domainManagement: 'CustomerManaged'
+    // No tracking pixels or rewritten links in a password reset email.
+    userEngagementTracking: 'Disabled'
+  }
+}
+
+resource emailSender 'Microsoft.Communication/emailServices/domains/senderUsernames@2023-04-01' = if (emailResources) {
+  parent: emailDomainResource
+  name: 'DoNotReply'
+  properties: {
+    username: 'DoNotReply'
+    displayName: 'Golf Progress'
+  }
+}
+
+resource communication 'Microsoft.Communication/communicationServices@2023-04-01' = if (emailResources) {
+  name: '${name}-communication-${environment}'
+  location: 'global'
+  properties: {
+    dataLocation: 'Europe'
+    // Linking needs a verified domain, hence the second pass.
+    linkedDomains: emailConfigured ? [emailDomainResource!.id] : []
+  }
+}
+
+// Straight from the resource into the vault: nobody copies this connection string.
+resource emailConnectionString 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (emailConfigured) {
+  parent: vault
+  name: 'email-connection-string'
+  properties: { value: communication!.listKeys().primaryConnectionString }
 }
 
 // ---------------------------------------------------------------- database
@@ -336,3 +389,4 @@ output apiName string = api.name
 output apiUrl string = 'https://${api.properties.defaultHostName}'
 output sqlServer string = sql.properties.fullyQualifiedDomainName
 output vaultName string = vault.name
+output emailDnsRecords object = emailResources ? emailDomainResource!.properties.verificationRecords : {}

@@ -122,10 +122,28 @@ is right on a developer's machine; anywhere else a warning at startup says so.
 | `PasswordReset__TokenLifetimeMinutes` | 30 | How long a reset link works |
 | `PasswordReset__MaxPerHour` | 3 | Reset emails one account can be sent per hour |
 
-Setting up the provider: create an **Email Communication Service** with a custom domain
-(add the DNS records it asks for), connect it to a **Communication Services** resource,
-and copy that resource's connection string. The emails go out from a background queue, so
-a request never waits on the provider; a failed send is logged without the address.
+In Azure, the Bicep sets the provider up (see "API"), in two passes, because a domain
+can only be used once it's verified:
+
+1. Set `emailDomain` (e.g. `golfprogress.app`) in the parameters and deploy. That creates
+   an **Email Communication Service** with the domain and a `DoNotReply` sender ("Golf
+   Progress"), and a **Communication Services** resource. The deployment's output
+   `emailDnsRecords` lists the DNS records to add: a verification TXT and SPF TXT on the
+   domain, and two DKIM CNAMEs. Add a DMARC record too (`_dmarc` TXT `v=DMARC1; p=none`):
+   Gmail and Outlook expect one.
+2. Verify the domain, each record type in turn, and wait until all four say `Verified`:
+
+   ```powershell
+   foreach ($t in 'Domain','SPF','DKIM','DKIM2') { az communication email domain initiate-verification -g <resource-group> --email-service-name golfprogress-email-<env> --domain-name golfprogress.app --verification-type $t }
+   az communication email domain show -g <resource-group> --email-service-name golfprogress-email-<env> --domain-name golfprogress.app --query verificationStates
+   ```
+
+3. Set `emailSenderAddress` (e.g. `DoNotReply@golfprogress.app`) and deploy again. That
+   links the domain, writes the connection string into the vault as
+   `email-connection-string` (nobody copies it), and sets the two `Email__*` settings.
+
+The emails go out from a background queue, so a request never waits on the provider; a
+failed send is logged without the address.
 
 The mobile apps send users to the same web page to choose the new password. Opening the
 link in the apps themselves needs universal links (iOS) and app links (Android) on the
@@ -167,7 +185,9 @@ exists because the web app sits on the bare domain, which needs an alias record 
 Static Web App, and Spaceship has none. The zone holds: `@` A (alias to the Static Web
 App), `@` TXT (its domain validation), `api` CNAME to
 `golfprogress-api-production.azurewebsites.net`, and `asuid.api` TXT (App Service's domain
-verification). It was set up by hand, not by the Bicep.
+verification), plus the email records: `@` TXT (email domain verification and SPF), the two
+`selector*-azurecomm-prod-net._domainkey` DKIM CNAMEs and `_dmarc` TXT (see "Email"). It
+was set up by hand, not by the Bicep.
 
 ## Web app
 
@@ -218,6 +238,7 @@ applies migrations, then deploys.
 | App Service plan (Linux, B1) and app `golfprogress-api-<env>` | .NET 8, HTTPS only, FTP off, always on, system-assigned identity, health check on `/client-config`, every setting below |
 | Azure SQL server and database `GolfProgressDb` | **Microsoft Entra authentication only**, administered by an Entra group. Size and backups as in "Environments" |
 | Key Vault | Holds `jwt-key` (and `email-connection-string`); the app's identity may read secrets and nothing else |
+| With `emailDomain` set (production): an Email Communication Service, its domain and `DoNotReply` sender, and a Communication Services resource | Data kept in Europe; no open or click tracking. See "Email" for the two passes |
 | Application Insights and a Log Analytics workspace | The API's logs, requests and exceptions; IP addresses are masked |
 | With `alertEmail` set (production): an action group, an availability test and two alerts | The test calls `apiUrl` + `/client-config` every 5 minutes from Amsterdam, London and Paris, and checks the certificate has a week left. "API down" fires when two locations fail; "API errors" on more than 10 `5xx` responses in 5 minutes |
 
@@ -275,9 +296,8 @@ telemetry when that last one is set, so nothing leaves a developer's machine.
 migrations as the deploy identity (the API itself can't change the schema), deploys, and
 waits for `/client-config` to answer.
 
-**Email** stays off until `emailSenderAddress` is set in the parameters and the
-`email-connection-string` secret is in the vault (see "Email"); until then reset emails are
-only logged. Production needs it.
+**Email** stays off until the domain is verified and `emailSenderAddress` is set in the
+parameters (see "Email"); until then reset emails are only logged. Production needs it.
 
 ## Restoring the production database
 
