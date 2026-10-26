@@ -318,6 +318,24 @@ you then swap in. Practise it once before launch, and after any change to the ba
    still has the API identity's user, since it's a copy. Delete the old one once you're
    sure.
 
+Last practised 2026-10-26: a point-in-time restore to a drill copy took about 45 minutes
+and matched the live database up to the chosen moment. A drill copy you won't swap in can
+be deleted straight after checking it.
+
+## Costs
+
+[`infra/cost.bicep`](../infra/cost.bicep) watches the whole subscription:
+
+- a **monthly budget** of €50, which emails when the month's forecast goes over it, and
+  when actual cost reaches 80% and 100%;
+- the portal dashboard **Azure costs** (in `rg-golfprogress-production`): this month's
+  cost with forecast and budget, this month by resource group and by service, and last
+  month by resource group. Open a tile to explore it in Cost analysis.
+
+Deploy it with `az deployment sub create -l westeurope -f infra/cost.bicep`; change the
+budget with `-p monthlyBudget=<euros>`. Azure reports costs about a day late, and the
+forecast needs a few days of a month before it means much.
+
 ## Deployment checklist
 
 1. `Jwt__Key` is set: generated as above, unique to this environment, ideally a Key Vault reference.
