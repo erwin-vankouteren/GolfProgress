@@ -161,6 +161,14 @@ sibling subdomains of one domain you own, as in the table. The default
 `*.azurestaticapps.net` and `*.azurewebsites.net` names are each a site of their own, so
 with them sign-in would not survive a reload. Add both custom domains before testing.
 
+**Production DNS** is an Azure DNS zone `golfprogress.app` in `rg-golfprogress-production`
+(the domain itself is registered at Spaceship, whose nameservers point at the zone). It
+exists because the web app sits on the bare domain, which needs an alias record to the
+Static Web App, and Spaceship has none. The zone holds: `@` A (alias to the Static Web
+App), `@` TXT (its domain validation), `api` CNAME to
+`golfprogress-api-production.azurewebsites.net`, and `asuid.api` TXT (App Service's domain
+verification). It was set up by hand, not by the Bicep.
+
 ## Web app
 
 The web app is static files, served by **Azure Static Web Apps** (#116), built against
