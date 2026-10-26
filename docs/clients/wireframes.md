@@ -243,6 +243,46 @@ Profile                               Delete account (confirmation)
   required for App Store and Google Play approval (#84).
 - **Sign out** needs no confirmation.
 
+## Junior belts (planned, M5)
+
+The design, and every other screen: [`../junior-belts.md`](../junior-belts.md) → "Screens".
+
+```
+Belts (junior)                       Take the exam (coach)                New belt (junior, once)
+┌──────────────────────────────────┐ ┌──────────────────────────────────┐ ┌──────────────────────────────────┐
+│ ‹ Profile      Belts             │ │ ‹ Sanne      Blue belt exam      │ │                                  │
+│                                  │ │ Sat 21 Nov · Driving range       │ │                                  │
+│       ┌────────────────┐         │ │ 4 of 6 shown                     │ │         Well done, Sanne!        │
+│       │   GREEN BELT   │         │ │ Putting                          │ │                                  │
+│       └────────────────┘         │ │ Hole 3 of 5 putts from 2 m       │ │       ┌────────────────┐         │
+│   Since 14 Sep 2026 · Coach Mark │ │   [ ✓ Shown ]  [ Not yet ]       │ │       │   BLUE BELT    │         │
+│                                  │ │   Note [_____________________]   │ │       └────────────────┘         │
+│ Next: blue belt exam             │ │ Bunker                           │ │                                  │
+│ Sat 21 Nov · 10:00               │ │ 3 of 5 bunker shots on green     │ │   You showed all 6 skills on     │
+│ Driving range, Hilversum         │ │   [ Shown ]  [ • Not yet ]       │ │   21 November 2026.              │
+│ What you'll show                 │ │   Note [Open the face more___]   │ │                                  │
+│ • Hole 3 of 5 putts from 2 m     │ │ Rules and etiquette              │ │   "Lovely calm putting today.    │
+│ • 3 of 5 bunker shots on green   │ │ Take a correct drop              │ │    On to brown!" · Coach Mark    │
+│ • Take a correct drop            │ │   [ ✓ Shown ]  [ Not yet ]       │ │                                  │
+│ • ... 3 more                   › │ │ ...                              │ │                                  │
+│                                  │ │                                  │ │ [       See your belts        ]  │
+│ Your belts                       │ │ Closing word                     │ │                                  │
+│ Green   14 Sep 2026  Exam    ›   │ │ [______________________________] │ │                                  │
+│ Orange  20 Jun 2026  Exam    ›   │ │ [         Finish exam          ] │ │                                  │
+│ Yellow   2 May 2026  Exam    ›   │ │                                  │ │                                  │
+│ White   15 Mar 2026  Start       │ │                                  │ │                                  │
+└──────────────────────────────────┘ └──────────────────────────────────┘ └──────────────────────────────────┘
+```
+
+- **A belt is never colour alone:** the badge has the belt's colour and its name, and a
+  white belt has an outline.
+- **Shown / Not yet** save as the coach taps them, so a dropped connection on the range
+  loses nothing. *Finish exam* asks for confirmation when a skill has no result yet.
+- **Not yet** results lead with what was shown: "You showed 4 of 6 skills. Work on: …"
+- **New belt** shows once, the next time the junior opens the app after a passed exam.
+- **Desktop:** the Belts screen puts the belt and the coming exam side by side; the coach
+  takes exams on a phone, where the web app works too.
+
 ## States, once for all screens
 
 ```

@@ -1,7 +1,8 @@
 # Coach access and feedback
 
 Golfers invite their coach or golf pro, who then follows their rounds, practice and
-reflections, gives feedback on them, and sets practice goals. The work is planned for
+reflections, gives feedback on them, and sets practice goals. For juniors, coaches also set
+belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch. Nothing of it exists yet.
 
 Background: the product overview (`docs/golfprogress-overview.pdf`, "Coming next").
@@ -252,6 +253,10 @@ Each phase is releasable on its own:
 2. **Practice goals:** goals, linking sessions, and "Did it work?".
 3. **Notifications and the mobile coach workspace:** the digest emails, and the coach
    screens on iOS and Android.
+
+**Junior golfers** and their belt exams build on phase 1, and have their own design:
+[`junior-belts.md`](junior-belts.md). For a junior under 16, the parent invites and removes
+coaches instead of the junior.
 
 ## Open questions
 

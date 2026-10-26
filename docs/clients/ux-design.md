@@ -119,6 +119,10 @@ Every chart has a text alternative (a summary sentence or a table) for screen re
 Coaches, feedback threads, a Students section for coaches and practice goals:
 [`../coach-access.md`](../coach-access.md) → "Screens".
 
+Junior sign-up with a parent's consent, the parent's screens, and belts and exams for
+juniors: [`../junior-belts.md`](../junior-belts.md) → "Screens". Exam results use the same
+wording rules as below: a skill is *shown* or *not yet*, never *failed*.
+
 ## States every screen handles
 
 | State | Behaviour |
