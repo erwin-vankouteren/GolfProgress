@@ -1,9 +1,11 @@
 # GolfProgress terms of use
 
-> **DRAFT for review (#121).** Not legal advice, and not yet published. Fill in every
-> `[bracketed]` item and have it reviewed before publishing it next to the privacy policy.
+<!--
+  Published at https://golfprogress.app/terms by the web app (#121), next to the privacy
+  policy. Update "Last updated" with every change.
+-->
 
-_Last updated: [date of publication]_
+_Last updated: 1 November 2026_
 
 These terms apply when you use GolfProgress, on the web or in the iOS and Android apps.
 By creating an account you agree to them.
@@ -14,15 +16,15 @@ GolfProgress records your golf rounds, reflections and practice, and works out s
 micro-wins and trends from them. Scores and suggestions are guidance for your own
 practice, not professional coaching or medical advice.
 
-During the beta the service may change, be unavailable at times, or lose data despite
-our care. [During the beta, GolfProgress is free.]
+The service may change, be unavailable at times, or lose data despite our care.
+GolfProgress is free.
 
 ## Your account
 
 - Give an email address you can receive mail at, and keep your password to yourself.
-- You're responsible for what happens under your account; tell us at [contact email] if
-  you think someone else has used it.
-- You must be at least [16] years old.
+- You're responsible for what happens under your account; tell us at
+  service@golfprogress.app if you think someone else has used it.
+- You must be at least 16 years old.
 
 ## Your content
 
@@ -51,7 +53,7 @@ these terms limits rights you have as a consumer that can't be limited by law.
 ## Changes and law
 
 We may update these terms and will tell you in the app before significant changes take
-effect. These terms are governed by the law of [country]; disputes go to the courts of
-[place], unless consumer law gives you another option.
+effect. These terms are governed by Dutch law; disputes go to the courts of Rotterdam,
+unless consumer law gives you another option.
 
-Contact: [contact email].
+Contact: service@golfprogress.app.

@@ -17,6 +17,8 @@ import { PublicOnly, RequireSession } from "../session/SessionContext";
 const ProgressPage = lazy(() => import("../progress/ProgressPage").then((m) => ({ default: m.ProgressPage })));
 const ProfilePage = lazy(() => import("../profile/ProfilePage").then((m) => ({ default: m.ProfilePage })));
 const OnboardingPage = lazy(() => import("../profile/OnboardingPage").then((m) => ({ default: m.OnboardingPage })));
+// The privacy policy and terms (#121), with their Markdown renderer.
+const LegalPage = lazy(() => import("../pages/LegalPage").then((m) => ({ default: m.LegalPage })));
 
 const loading = (page: ReactNode) => <Suspense fallback={<Skeleton blocks={3} />}>{page}</Suspense>;
 
@@ -27,6 +29,9 @@ const loading = (page: ReactNode) => <Suspense fallback={<Skeleton blocks={3} />
 export const routes: RouteObject[] = [
   // From the reset email (#86): open whether or not someone is signed in on this browser.
   { path: "reset-password", element: <ResetPasswordPage /> },
+  // Linked from the stores and the apps (#121): open to everyone.
+  { path: "privacy", element: loading(<LegalPage document="privacy" />) },
+  { path: "terms", element: loading(<LegalPage document="terms" />) },
   {
     element: <PublicOnly />,
     children: [

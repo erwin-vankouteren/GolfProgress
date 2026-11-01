@@ -28,8 +28,8 @@ No advertising or analytics SDKs, and no tracking across apps or websites.
 - Is all user data encrypted in transit? **Yes** (HTTPS only; HSTS on the API).
 - Do you provide a way for users to request that their data is deleted? **Yes**, in the
   app (Profile → Delete account). Play also asks for a **web link** where users can ask
-  for deletion: use the web app, where signed-in users can delete their account in
-  Profile, or a page on the website explaining how. **Decide** which URL.
+  for deletion: `https://golfprogress.app/privacy`, whose "Deleting your account" explains
+  how, in the apps and the web app, or by email.
 
 **Data types**
 
@@ -39,7 +39,7 @@ No advertising or analytics SDKs, and no tracking across apps or websites.
 | Personal info → Name | Yes | No | Required | Account management, App functionality |
 | App activity → Other user-generated content (rounds, notes, reflections, practice) | Yes | No | Required | App functionality |
 | App activity → App interactions (activity log) | Yes | No | Required | App functionality, Fraud prevention, security and compliance |
-| App info and performance → Crash logs | Yes | No | Required | App functionality (fixing crashes) |
+| App info and performance → Crash logs | **No** until crash reporting (#119) ships; then Yes | No | Required | App functionality (fixing crashes) |
 | App info and performance → Diagnostics | Yes | No | Required | App functionality |
 | Device or other IDs | **Decide** after #119: only if the crash reporter sends an installation id | No | | |
 | Health and fitness → Fitness info | **Decide:** golf rounds are sports performance; if you treat them as "information about physical exercise", declare them here as well | No | Required | App functionality |
