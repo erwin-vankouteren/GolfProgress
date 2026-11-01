@@ -65,6 +65,11 @@ so it's not a single point of failure.
    - variables `PRIVACY_POLICY_URL` and `TERMS_URL` (repository level, shared with the web
      app): `https://golfprogress.app/privacy` and `https://golfprogress.app/terms`. The
      build refuses to run without them, since Play requires a privacy policy.
+6. **Crash reporting** (#119): the repository-level `SENTRY_ANDROID_DSN`,
+   `SENTRY_ANDROID_PROJECT`, `SENTRY_ORG` and `SENTRY_AUTH_TOKEN`, as in
+   `docs/deployment.md` → "Crash reporting". Without them the build still works, and the
+   app reports nothing. A bundle built by hand (step 3) reports nothing either, unless you
+   add `-PsentryDsn=…`.
 
 ## Releasing
 

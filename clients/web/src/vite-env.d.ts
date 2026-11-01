@@ -10,4 +10,10 @@ interface ImportMetaEnv {
   readonly VITE_PRIVACY_POLICY_URL?: string;
   /** The terms of use's URL, linked from Profile → About. Hidden when unset. */
   readonly VITE_TERMS_URL?: string;
+  /** Sentry's DSN for crash reporting (#119). Without it nothing is reported. */
+  readonly VITE_SENTRY_DSN?: string;
+  /** The environment the reports are filed under, e.g. production. */
+  readonly VITE_SENTRY_ENVIRONMENT?: string;
+  /** The release they're filed under; the deploy passes the commit. */
+  readonly VITE_SENTRY_RELEASE?: string;
 }

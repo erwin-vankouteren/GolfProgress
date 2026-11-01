@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.sentry)
 }
 
 android {
@@ -29,6 +30,8 @@ android {
         // Profile → About links (#113); each is hidden while empty. None exist before M3.
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"\"")
         buildConfigField("String", "TERMS_URL", "\"\"")
+        // Crash reporting (#119): off while empty, so debug builds and tests report nothing.
+        buildConfigField("String", "SENTRY_DSN", "\"\"")
 
         // Plain HTTP only to reach a local API from the emulator; see the release build type.
         manifestPlaceholders["usesCleartextTraffic"] = "true"
@@ -61,6 +64,7 @@ android {
             buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl ?: "http://10.0.2.2:5068"}\"")
             buildConfigField("String", "PRIVACY_POLICY_URL", "\"${findProperty("privacyPolicyUrl") ?: ""}\"")
             buildConfigField("String", "TERMS_URL", "\"${findProperty("termsUrl") ?: ""}\"")
+            buildConfigField("String", "SENTRY_DSN", "\"${findProperty("sentryDsn") ?: ""}\"")
 
             // HTTPS only. -PallowCleartext=true exists solely to try a minified build against a
             // local API (docs/clients/android-release.md); the release workflow never sets it.
@@ -82,6 +86,22 @@ android {
         // Compose UI tests run on the JVM with Robolectric: no emulator needed in CI.
         unitTests.isIncludeAndroidResources = true
     }
+}
+
+// Sentry's plugin only for the R8 mapping (#119): it gives each release build an id and,
+// with SENTRY_AUTH_TOKEN, SENTRY_ORG and SENTRY_PROJECT set (the release workflow), uploads
+// the mapping under it, so crash reports show readable stack traces. Everything else it can
+// do, such as adding the SDK or rewriting bytecode, is off: the SDK is a dependency below.
+sentry {
+    includeProguardMapping = true
+    autoUploadProguardMapping = System.getenv("SENTRY_AUTH_TOKEN") != null
+    uploadNativeSymbols = false
+    includeNativeSources = false
+    includeSourceContext = false
+    includeDependenciesReport = false
+    telemetry = false
+    tracingInstrumentation { enabled = false }
+    autoInstallation { enabled = false }
 }
 
 ktlint {
@@ -107,6 +127,8 @@ dependencies {
     implementation(libs.datastore.preferences)
     // Charts on Progress (#109), as docs/architecture.md chose.
     implementation(libs.vico.compose.m3)
+    // Crash reporting (#119); the core SDK alone, as the app has no native code.
+    implementation(libs.sentry.android.core)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

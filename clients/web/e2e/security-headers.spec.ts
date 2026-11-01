@@ -14,9 +14,12 @@ const config = JSON.parse(readFileSync(new URL("../public/staticwebapp.config.js
 
 const userId = "3f2b8c1e-5d4a-4b6f-9e2d-1a7c8b9d0e1f";
 
-/** The deploy workflow puts the API's origin in; the e2e API is same-origin. */
+/** The deploy workflow puts the API's and Sentry's origins in; the e2e API is same-origin, and reports nothing. */
 const headers = Object.fromEntries(
-  Object.entries(config.globalHeaders).map(([name, value]) => [name, value.replace("__API_ORIGIN__", "")]),
+  Object.entries(config.globalHeaders).map(([name, value]) => [
+    name,
+    value.replace("__API_ORIGIN__", "").replace("__SENTRY_ORIGIN__", ""),
+  ]),
 );
 
 async function serveWithHeaders(page: Page) {
@@ -103,7 +106,9 @@ test("the security headers are all there, and deep links fall back to the app", 
     "Strict-Transport-Security",
     "X-Content-Type-Options",
   ]);
-  expect(config.globalHeaders["Content-Security-Policy"]).toContain("connect-src 'self' __API_ORIGIN__");
+  expect(config.globalHeaders["Content-Security-Policy"]).toContain(
+    "connect-src 'self' __API_ORIGIN__ __SENTRY_ORIGIN__;",
+  );
   expect(config.globalHeaders["Content-Security-Policy"]).toContain("frame-ancestors 'none'");
 });
 

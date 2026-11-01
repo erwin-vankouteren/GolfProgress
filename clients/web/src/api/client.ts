@@ -17,6 +17,17 @@ export interface ApiClientOptions {
    * next focus) come in it too.
    */
   language?: () => string;
+  /** Called for every 5xx response, for crash reporting (#119). */
+  onServerError?: (error: ServerError) => void;
+}
+
+/** A 5xx response: the request, and the `traceId` that finds it in the API's logs. */
+export interface ServerError {
+  method: string;
+  /** The path without its query, e.g. /me/rounds/3f2b…. */
+  path: string;
+  status: number;
+  traceId?: string;
 }
 
 /**
@@ -34,12 +45,31 @@ export function createApiClient(options: ApiClientOptions) {
     baseUrl: options.baseUrl,
     fetch: createAuthFetch(options.tokens, options.fetch),
   });
-  const { language } = options;
+  const { language, onServerError } = options;
   if (language) {
     client.use({
       onRequest({ request }) {
         request.headers.set("Accept-Language", language());
         return request;
+      },
+    });
+  }
+  if (onServerError) {
+    client.use({
+      async onResponse({ request, response }) {
+        if (response.status < 500) return undefined;
+        const body: unknown = await response
+          .clone()
+          .json()
+          .catch(() => undefined);
+        const traceId = (body as { traceId?: unknown } | undefined)?.traceId;
+        onServerError({
+          method: request.method,
+          path: new URL(request.url).pathname,
+          status: response.status,
+          traceId: typeof traceId === "string" ? traceId : undefined,
+        });
+        return undefined;
       },
     });
   }

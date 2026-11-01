@@ -321,8 +321,9 @@ localisation system from the start, English first.
 
 ## Observability and privacy
 
-- **Crash and error reporting** in each client, sending no personal data. The `traceId`
-  of failed requests is attached, so a client error can be matched to the API's logs.
+- **Crash and error reporting** in each client through Sentry's EU region (#119),
+  sending no personal data. 5xx responses are reported with their `traceId`, so a client
+  error can be matched to the API's logs. Setup: `docs/deployment.md` → "Crash reporting".
 - **API telemetry** through Application Insights.
 - **Privacy:** both stores require a privacy policy and a data declaration (App Store
   privacy labels, Google Play data safety form). The app stores golf statistics and an

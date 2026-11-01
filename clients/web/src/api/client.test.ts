@@ -128,6 +128,27 @@ describe("errors", () => {
     expect(problem.status).toBe(502);
     expect(problem.message).toBe("Request failed with status 502");
   });
+
+  it("reports a 5xx with its traceId, and leaves the response for the caller", async () => {
+    const onServerError = vi.fn();
+    const { fetch } = fakeFetch(() => json(500, { title: "Server error", status: 500, traceId: "00-abc" }));
+    const api = createApiClient({ baseUrl, tokens: tokens(), fetch, onServerError });
+
+    const result = await api.GET("/me/rounds", { params: { query: { skip: 0, take: 20 } } });
+
+    expect(onServerError).toHaveBeenCalledWith({ method: "GET", path: "/me/rounds", status: 500, traceId: "00-abc" });
+    expect(() => unwrap(result)).toThrow(ApiProblem);
+  });
+
+  it("doesn't report a 4xx", async () => {
+    const onServerError = vi.fn();
+    const { fetch } = fakeFetch(() => json(404, { status: 404 }));
+    const api = createApiClient({ baseUrl, tokens: tokens(), fetch, onServerError });
+
+    await api.GET("/me");
+
+    expect(onServerError).not.toHaveBeenCalled();
+  });
 });
 
 describe("access token refresh", () => {

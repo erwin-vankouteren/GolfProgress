@@ -220,14 +220,52 @@ its environment's API.
 - **Deep links:** any path that isn't a file falls back to `index.html`, so a link to a
   round opens the app on that round.
 - **Security headers** on every response: a Content Security Policy that allows scripts,
-  styles and fonts from the app itself and calls to the API's origin only (the workflow
-  writes `<PREFIX>_API_URL`'s origin in place of `__API_ORIGIN__`), no framing, no
-  plugins; `X-Content-Type-Options: nosniff`; `Referrer-Policy:
+  styles and fonts from the app itself, and calls only to the API's origin and Sentry's
+  (the workflow writes them in place of `__API_ORIGIN__` and `__SENTRY_ORIGIN__`; see
+  "Crash reporting" below), no framing, no plugins; `X-Content-Type-Options: nosniff`; `Referrer-Policy:
   strict-origin-when-cross-origin`; a `Permissions-Policy` turning off camera, microphone,
   location and payment; and HSTS. `e2e/security-headers.spec.ts` runs the app under the
   same headers and fails on any policy violation.
 
-Adding crash reporting (#119) means adding its ingest origin to `connect-src`.
+## Crash reporting
+
+The web and Android apps report crashes and API errors to **Sentry**, in its EU region
+(#119): one organisation, a project per app (`golfprogress-web`, `golfprogress-android`),
+each with the environments `staging` and `production`. A 5xx report carries the API's
+`traceId` as the tag `api.traceId`: search for it in Application Insights to see the
+request on the API's side. What a report contains, and leaves out:
+`docs/legal/store-declarations.md` → "Crash reports".
+
+Reporting is off in any build without a DSN, so local builds and tests send nothing.
+
+**Setup, once:**
+
+1. Create the Sentry organisation with **EU (Frankfurt)** as its data storage location
+   (it can't be moved later), and the two projects: platform *React* and *Android*.
+2. In each project's **Settings → Security & Privacy**, switch on **Prevent Storing of IP
+   Addresses**, and leave **Data Scrubber** on.
+3. Create an **organisation auth token** (Settings → Developer Settings → Organization
+   Tokens) for uploading source maps and R8 mappings.
+4. In GitHub, at repository level:
+   - variables `SENTRY_WEB_DSN` and `SENTRY_ANDROID_DSN`: each project's DSN (Settings →
+     Client Keys). A DSN isn't a secret: it ends up in the app anyway;
+   - variables `SENTRY_ORG` (the organisation's slug), `SENTRY_WEB_PROJECT` and
+     `SENTRY_ANDROID_PROJECT` (the projects' slugs);
+   - secret `SENTRY_AUTH_TOKEN`: the token from step 3.
+
+**What the deploys do with it:**
+
+- **Web** (`web-deploy-environment.yml`): builds with the DSN, the environment's name and
+  the commit as the release; adds the DSN's origin to the Content Security Policy's
+  `connect-src` in place of `__SENTRY_ORIGIN__`; uploads the source maps with debug ids;
+  then deletes them from the files it deploys.
+- **Android** (`android-release.yml`): builds with `-PsentryDsn`, and Sentry's Gradle
+  plugin uploads the R8 mapping under an id it writes into the bundle. Reports use the
+  environment `production` and the release `com.golfprogress.app@<versionName>+<versionCode>`.
+
+Without the token both still report, with unreadable stack traces, and the workflow
+warns. Play Console also shows crashes (Android vitals), with the mapping uploaded there
+too, but without the `traceId`.
 
 ## API
 

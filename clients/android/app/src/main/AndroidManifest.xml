@@ -22,6 +22,9 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
+        <!-- Crash reporting starts in GolfProgressApplication, only when the build has a DSN (#119). -->
+        <meta-data android:name="io.sentry.auto-init" android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
