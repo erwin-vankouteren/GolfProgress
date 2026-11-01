@@ -185,8 +185,12 @@ exists because the web app sits on the bare domain, which needs an alias record 
 Static Web App, and Spaceship has none. The zone holds: `@` A (alias to the Static Web
 App), `@` TXT (its domain validation), `api` CNAME to
 `golfprogress-api-production.azurewebsites.net`, and `asuid.api` TXT (App Service's domain
-verification), plus the email records: `@` TXT (email domain verification and SPF), the two
-`selector*-azurecomm-prod-net._domainkey` DKIM CNAMEs and `_dmarc` TXT (see "Email"). It
+verification), plus the email records: `@` TXT (email domain verification, and SPF for both
+Azure Communication Services and Spacemail), the two
+`selector*-azurecomm-prod-net._domainkey` DKIM CNAMEs and `_dmarc` TXT (see "Email"), and
+for the mailboxes at Spacemail, `@` MX (`mx1` and `mx2.spacemail.com`) and the
+`spacemail._domainkey` DKIM TXT. Keep the nameservers at Spaceship pointing at this zone:
+add any record Spacemail asks for here instead. It
 was set up by hand, not by the Bicep.
 
 ## Web app
