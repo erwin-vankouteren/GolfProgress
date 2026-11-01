@@ -87,7 +87,7 @@ app's own terms (`clients/web/src/i18n/nl.ts`).
 
 ## Screenshots
 
-Phone screenshots in  and  (1080 × 1920, JPEG, as Play
+Phone screenshots in `design/store/screenshots/en` and `nl` (1080 × 1920, JPEG, as Play
 refuses alpha), in this order: the dashboard, a round's score and micro-wins, Log round,
 Progress (last 3 months, scrolled to the latest rounds) and Practice. They're of a release
 build against staging, signed in as a demo golfer with four months of rounds, practice
