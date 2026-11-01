@@ -205,7 +205,8 @@ its environment's API.
    - secret `AZURE_STATIC_WEB_APPS_API_TOKEN`: the Static Web App's deployment token;
    - variable `<PREFIX>_API_URL`: the API, e.g. `https://api.golfprogress.app`;
    - variable `<PREFIX>_WEB_URL`: the web app, e.g. `https://golfprogress.app`;
-   - variables `PRIVACY_POLICY_URL` and `TERMS_URL` once they're published (#121): one
+   - variables `PRIVACY_POLICY_URL` and `TERMS_URL`, `https://golfprogress.app/privacy` and
+     `/terms`, which the web app serves from `docs/legal` (#121): one
      pair for both environments, at repository level.
 3. The API's `webOrigin` parameter is the web app's origin: it sets CORS and the
    `/reset-password` link.

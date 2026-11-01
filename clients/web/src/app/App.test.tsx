@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
@@ -25,10 +25,10 @@ function fakeApi(minimumWeb: string | "error" = "1.0.0") {
   });
 }
 
-function renderApp({ path = "/", appVersion = "1.0.0", minimumWeb = "1.0.0" as string } = {}) {
+function renderApp({ path = "/", appVersion = "1.0.0", minimumWeb = "1.0.0" as string, signedIn = true } = {}) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   const api = fakeApi(minimumWeb);
-  const session = new Session({ accessToken: "token", userId: "user-1" });
+  const session = new Session(signedIn ? { accessToken: "token", userId: "user-1" } : undefined);
   session.attach(api);
   render(
     <App api={api} session={session} appVersion={appVersion}>
@@ -91,6 +91,31 @@ describe("app shell", () => {
     renderApp({ path: "/nowhere" });
 
     expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeInTheDocument();
+  });
+});
+
+describe("privacy policy and terms (#121)", () => {
+  it("shows the privacy policy without signing in", async () => {
+    renderApp({ path: "/privacy", signedIn: false });
+
+    expect(await screen.findByRole("heading", { level: 1, name: "GolfProgress privacy policy" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Deleting your account" })).toBeInTheDocument();
+  });
+
+  it("shows the terms, linking to the privacy policy's page", async () => {
+    renderApp({ path: "/terms", signedIn: false });
+
+    expect(await screen.findByRole("heading", { level: 1, name: "GolfProgress terms of use" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "privacy policy" })).toHaveAttribute("href", "/privacy");
+  });
+
+  it("has no [placeholders] left to fill in", async () => {
+    for (const path of ["/privacy", "/terms"]) {
+      renderApp({ path, signedIn: false });
+      const text = await screen.findByRole("main");
+      expect(text.textContent).not.toMatch(/\[[^\]]*\]/);
+      cleanup();
+    }
   });
 });
 

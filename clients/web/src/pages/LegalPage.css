@@ -1,0 +1,37 @@
+.legal {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg) var(--space-xxxl);
+}
+
+.legal-header {
+  margin-bottom: var(--space-xl);
+  font-weight: 600;
+}
+
+.legal-text {
+  line-height: 1.6;
+}
+
+.legal-text h2 {
+  margin-top: var(--space-xxl);
+}
+
+/* The "what we store" table: scrolls sideways on a phone rather than widening the page. */
+.legal-text table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.legal-text th,
+.legal-text td {
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal-text th {
+  background: var(--color-surface-variant);
+}

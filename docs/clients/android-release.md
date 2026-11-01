@@ -1,14 +1,15 @@
 # Android release builds
 
-How the Android app gets from a tag to Google Play's internal testing track (#118).
-`.github/workflows/android-release.yml` does it for a tag such as `android-v1.2.0`, or
-when started by hand.
+How the Android app gets from a tag to Google Play (#118, #125).
+`.github/workflows/android-release.yml` builds it against the production API and
+uploads it to the internal testing track, for a tag such as `android-v1.2.0`, or when
+started by hand. Once tested there, the same bundle is promoted to production.
 
 ## What a release build is
 
 | | Debug | Release |
 |---|---|---|
-| API | `http://10.0.2.2:5068`, the API on the development machine | `-PapiBaseUrl`, the staging API for now |
+| API | `http://10.0.2.2:5068`, the API on the development machine | `-PapiBaseUrl`, the production API in the release workflow |
 | Plain HTTP | Allowed, for that local API | **Refused**: HTTPS only (`usesCleartextTraffic=false`) |
 | R8 | Off | Shrinks code and resources, and obfuscates; `mapping.txt` restores names |
 | Signing | The debug key | The upload key, from the environment |
@@ -35,19 +36,35 @@ so it's not a single point of failure.
    ```
 
 3. **The first upload by hand.** Play only accepts uploads through its API once the app
-   has a first release: build the bundle locally (below, with the upload key and
-   `-PapiBaseUrl`) and upload `app-release.aab` to **Testing → Internal testing**.
+   has a first release. Build the bundle locally, signed with the upload key and against
+   production, with `versionCode` 1 so the workflow's later uploads are higher:
+
+   ```powershell
+   cd clients/android
+   $env:ANDROID_KEYSTORE_PATH = "C:\path\to\upload.jks"
+   $env:ANDROID_KEY_ALIAS = "upload"
+   $env:ANDROID_KEYSTORE_PASSWORD = Read-Host "Keystore password"
+   $env:ANDROID_KEY_PASSWORD = Read-Host "Key password"
+   ./gradlew :app:bundleRelease -PversionCode=1 -PversionName=1.0.0 `
+     "-PapiBaseUrl=https://api.golfprogress.app" `
+     "-PprivacyPolicyUrl=https://golfprogress.app/privacy" "-PtermsUrl=https://golfprogress.app/terms"
+   ```
+
+   Then upload `app/build/outputs/bundle/release/app-release.aab` to **Testing → Internal
+   testing**.
 4. **A service account for uploads:** in Google Cloud, create a service account with a JSON
    key. In Play Console → **Users and permissions**, invite its email with **Release to
    testing tracks** for this app only.
-5. **In GitHub,** create the environment **`play-internal`** and give it:
+5. **In GitHub,** create the environment **`play`** and give it:
    - secret `ANDROID_UPLOAD_KEYSTORE_BASE64`: the key file, base64-encoded (step 2);
    - secrets `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`upload`) and
      `ANDROID_KEY_PASSWORD`;
    - secret `PLAY_SERVICE_ACCOUNT_JSON`: the service account's JSON key;
-   - variable `STAGING_API_URL`: the staging API, `https://…`. The build refuses anything
-     else;
-   - variables `PRIVACY_POLICY_URL` and `TERMS_URL` once they're published (#121).
+   - variable `PLAY_API_URL`: the production API, `https://api.golfprogress.app`. The build
+     refuses anything but `https://`;
+   - variables `PRIVACY_POLICY_URL` and `TERMS_URL` (repository level, shared with the web
+     app): `https://golfprogress.app/privacy` and `https://golfprogress.app/terms`. The
+     build refuses to run without them, since Play requires a privacy policy.
 
 ## Releasing
 
@@ -60,6 +77,11 @@ The workflow runs the Android tests and builds the signed bundle. It uploads the
 internal testing together with R8's mapping file, so Play Console shows readable stack
 traces, and keeps the mapping as a workflow artifact for 90 days. Testers on the internal
 track get the update within minutes.
+
+**To production:** once it works on the internal track, open the release in Play Console
+and **Promote release → Production**, with a staged rollout (e.g. 20%, then 100% after a
+few days without new crashes). The bundle is the same one, so it isn't rebuilt. Play
+reviews the first production release, which can take a few days.
 
 `versionCode` is this workflow's run number. If Play already has a higher one, e.g. from
 the manual first upload, the upload is refused: run the workflow again until it passes, or

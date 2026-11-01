@@ -1,20 +1,21 @@
 # GolfProgress privacy policy
 
-> **DRAFT for review (#121).** Not legal advice, and not yet published. Fill in every
-> `[bracketed]` item, have it reviewed, then publish it at a stable URL and set that URL
-> in the apps (`VITE_PRIVACY_POLICY_URL` for the web, `PRIVACY_POLICY_URL` for Android)
-> and in both store listings. Keep it in step with `docs/architecture.md` →
-> "Observability and privacy" and "Deleting an account".
+<!--
+  Published at https://golfprogress.app/privacy by the web app (#121), and linked from the
+  apps and both store listings. Keep it in step with docs/architecture.md → "Observability
+  and privacy" and "Deleting an account", and with store-declarations.md; update "Last
+  updated" with every change.
+-->
 
-_Last updated: [date of publication]_
+_Last updated: 1 November 2026_
 
 GolfProgress helps you see your progress at golf beyond the score. This policy explains
 what we store, why, how long we keep it, and how you can see, change or delete it.
 
 ## Who we are
 
-GolfProgress is provided by [name of person or company], [address], [country]
-("we", "us"). Contact us about privacy at [privacy email address].
+GolfProgress is provided by Resolit B.V., Gedempte Zalmhaven 257, 3011 BT Rotterdam, the
+Netherlands ("we", "us"). Contact us about privacy at service@golfprogress.app.
 
 ## What we store, and why
 
@@ -28,7 +29,6 @@ GolfProgress is provided by [name of person or company], [address], [country]
 | Sign-in sessions | A hash of each device's sign-in token, and when it expires | To keep you signed in, and to sign you out everywhere when you change or reset your password or delete your account |
 | Password reset links | A hash of the link's token, valid for 30 minutes | To let you reset a forgotten password |
 | An activity log | That a round was logged or a score computed, with dates and ids, never your notes or reflections | To understand and fix problems, and to protect the service |
-| Crash and error reports | The app version, device model and operating system, what went wrong, and a request id, never your email, notes or reflections | To find and fix crashes |
 | Technical logs | The time and path of requests and, briefly, your IP address to limit repeated sign-in attempts | To keep the service secure and working |
 
 We do **not** show ads, sell or share your data for advertising, or track you across other
@@ -36,19 +36,17 @@ apps and websites. The apps use no advertising or analytics SDKs.
 
 **Legal basis** (if you are in the EU or UK): we process your account, rounds,
 reflections and practice to provide the service you signed up for (performance of a
-contract). We keep logs, the activity log and crash reports because we have a
+contract). We keep logs and the activity log because we have a
 legitimate interest in keeping the service secure and working.
 
 ## Who processes it for us
 
-- **Microsoft Azure** hosts the service and its database in [region, e.g. West Europe],
-  sends password reset emails (Azure Communication Services) and keeps the technical logs
-  (Application Insights, with IP addresses masked).
-- **[Crash reporting provider, e.g. Sentry]** receives crash and error reports
-  ([region]).
+- **Microsoft Azure** hosts the service and its database in the Netherlands (West
+  Europe), with backup copies in Ireland (North Europe), sends password reset emails
+  (Azure Communication Services, in Europe) and keeps the technical logs (Application
+  Insights, with IP addresses masked).
 
-They process the data only on our behalf. [If data leaves the EU/EEA: state the
-safeguard, e.g. the provider's Standard Contractual Clauses.]
+They process the data only on our behalf, and all of it stays in the EU.
 
 ## How long we keep it
 
@@ -56,10 +54,10 @@ safeguard, e.g. the provider's Standard Contractual Clauses.]
 - The activity log: 365 days, then it's deleted automatically.
 - Sign-in sessions: until they expire (14 days without use) or are revoked.
 - Password reset links: they stop working after 30 minutes or when used.
-- Technical logs: 30 days.
-- Crash reports: [the provider's retention, e.g. 90 days].
-- Database backups follow the hosting's backup retention ([e.g. 7 days]) and are then
-  overwritten; we don't edit backups.
+- Technical logs: 90 days.
+- Database backups: 35 days, and a few longer-term copies (weekly for 5 weeks, monthly for
+  12 months) to recover from mistakes nobody noticed sooner. They are then deleted; we
+  don't edit backups.
 
 ## Deleting your account
 
@@ -78,14 +76,14 @@ our service. We use no other cookies, and no tracking or analytics cookies.
 ## Your rights
 
 You can see and change your details in the app, and delete your account there. You can
-also ask us, at [privacy email address], for a copy of your data, to correct it, to
+also ask us, at service@golfprogress.app, for a copy of your data, to correct it, to
 restrict or object to how we use it, or to delete it. If you are in the EU or UK you can
 complain to a data protection authority, in the Netherlands the Autoriteit
-Persoonsgegevens ([or the authority where you are]).
+Persoonsgegevens, or the authority where you live.
 
 ## Children
 
-GolfProgress is not meant for children under [16]. We don't knowingly collect their data.
+GolfProgress is not meant for children under 16. We don't knowingly collect their data.
 
 ## Changes
 

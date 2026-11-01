@@ -1,7 +1,8 @@
-name: Android release (internal testing)
+name: Android release
 
-# Builds the signed release app bundle and uploads it to Google Play's internal testing
-# track (#118), for a tag such as android-v1.2.0 or when started by hand.
+# Builds the signed release app bundle against the production API and uploads it to
+# Google Play's internal testing track (#118), for a tag such as android-v1.2.0 or when
+# started by hand. Once tested there, it's promoted to production in Play Console (#125).
 # Setup, secrets and variables: docs/clients/android-release.md.
 on:
   push:
@@ -20,7 +21,7 @@ jobs:
     name: Build and upload
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: play-internal
+    environment: play
 
     defaults:
       run:
@@ -62,11 +63,13 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          API_URL: ${{ vars.STAGING_API_URL }}
+          API_URL: ${{ vars.PLAY_API_URL }}
           PRIVACY_POLICY_URL: ${{ vars.PRIVACY_POLICY_URL }}
           TERMS_URL: ${{ vars.TERMS_URL }}
         run: |
-          case "$API_URL" in https://*) ;; *) echo "::error::Set STAGING_API_URL to the staging API's https:// address."; exit 1;; esac
+          case "$API_URL" in https://*) ;; *) echo "::error::Set PLAY_API_URL to the production API's https:// address."; exit 1;; esac
+          # Play rejects an app without a privacy policy, and the app links to both.
+          test -n "$PRIVACY_POLICY_URL" -a -n "$TERMS_URL" || { echo "::error::Set the PRIVACY_POLICY_URL and TERMS_URL variables."; exit 1; }
           if [[ "$GITHUB_REF" == refs/tags/android-v* ]]; then name="${GITHUB_REF#refs/tags/android-v}"; else name="0.0.${{ github.run_number }}"; fi
           ./gradlew :app:bundleRelease \
             -PversionCode=${{ github.run_number }} \
