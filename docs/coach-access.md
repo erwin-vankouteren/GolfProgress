@@ -3,7 +3,8 @@
 Golfers invite their coach or golf pro, who then follows their rounds, practice and
 reflections, gives feedback on them, and sets practice goals. For juniors, coaches also set
 belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
-milestone **M5 Coaching**, after the public launch. Nothing of it exists yet.
+milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
+**M6 Juniors**. Nothing of it exists yet.
 
 Background: the product overview (`docs/golfprogress-overview.pdf`, "Coming next").
 The rest of the system is in [`architecture.md`](architecture.md), and the existing screens

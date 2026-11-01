@@ -3,7 +3,7 @@
 Junior golfers (*jeugdspelers*) work towards **belts**, as in judo: white, yellow, orange,
 green, blue, brown and black. Their coach sets an **exam** for the next belt, takes it with
 the junior on the range or the course, and awards the belt when the junior shows every
-skill it asks for. The work is planned for milestone **M5 Coaching**, after
+skill it asks for. The work is planned for milestone **M6 Juniors**, after
 [coach access](coach-access.md), which it builds on. Nothing of it exists yet.
 
 The rest of the system is in [`architecture.md`](architecture.md), and the existing screens

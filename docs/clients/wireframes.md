@@ -243,7 +243,7 @@ Profile                               Delete account (confirmation)
   required for App Store and Google Play approval (#84).
 - **Sign out** needs no confirmation.
 
-## Junior belts (planned, M5)
+## Junior belts (planned, M6)
 
 The design, and every other screen: [`../junior-belts.md`](../junior-belts.md) → "Screens".
 
