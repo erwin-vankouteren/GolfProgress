@@ -11,6 +11,7 @@ import com.golfprogress.api.generated.models.MonthlyTimelinePointResponse
 import com.golfprogress.app.ui.common.currentLocale
 import com.golfprogress.app.ui.theme.LocalPalette
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
@@ -30,6 +31,7 @@ import com.patrykandpatrick.vico.compose.common.ProvideVicoTheme
 import com.patrykandpatrick.vico.compose.common.VicoTheme
 import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
+import com.patrykandpatrick.vico.compose.common.data.ExtraStore
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -57,6 +59,27 @@ private fun TokenChartTheme(content: @Composable () -> Unit) {
     ProvideVicoTheme(theme, content)
 }
 
+// The x-axis labels, kept in the chart's model next to the points they label. Read from
+// the composable's parameters instead, they change as soon as the period does, while Vico
+// still draws the previous model, which may have more points than there are new labels.
+private val timelineDates = ExtraStore.Key<List<String>>()
+private val monthStarts = ExtraStore.Key<List<String>>()
+
+/**
+ * An x-axis label from the model's [labels]. Vico refuses a blank label, so a value
+ * without one (which the model's own labels shouldn't produce) shows a dash.
+ */
+private fun axisLabel(
+    context: CartesianMeasuringContext,
+    labels: ExtraStore.Key<List<String>>,
+    x: Double,
+    format: (String) -> String,
+): String =
+    context.model.extraStore
+        .getOrNull(labels)
+        ?.getOrNull(x.toInt())
+        ?.let(format) ?: "–"
+
 /** Fitness score per round (0–100, start axis), and strokes as a dashed line on the end axis. */
 @Composable
 fun TimelineChart(
@@ -65,10 +88,11 @@ fun TimelineChart(
     modifier: Modifier = Modifier,
 ) {
     val producer = remember { CartesianChartModelProducer() }
-    LaunchedEffect(chart) {
+    LaunchedEffect(chart, dates) {
         producer.runTransaction {
             lineModel { series(chart.fitness.map { it.first }, chart.fitness.map { it.second }) }
             if (chart.strokes.isNotEmpty()) lineModel { series(chart.strokes.map { it.first }, chart.strokes.map { it.second }) }
+            extras { it[timelineDates] = dates }
         }
     }
     val locale = currentLocale()
@@ -115,8 +139,8 @@ fun TimelineChart(
                 verticalAxisPosition = Axis.Position.Vertical.End,
             )
         val dateFormatter =
-            CartesianValueFormatter { _, x, _ ->
-                dates.getOrNull(x.toInt())?.let { LocalDate.parse(it).format(shortDate) } ?: " "
+            CartesianValueFormatter { context, x, _ ->
+                axisLabel(context, timelineDates, x) { LocalDate.parse(it).format(shortDate) }
             }
         val layers = if (chart.strokes.isEmpty()) arrayOf(fitness) else arrayOf(fitness, strokes)
         CartesianChartHost(
@@ -142,7 +166,10 @@ fun MonthlyChart(
     val averaged = items.mapIndexedNotNull { i, item -> item.fitnessAvg?.let { i to it } }
     val producer = remember { CartesianChartModelProducer() }
     LaunchedEffect(items) {
-        producer.runTransaction { columnModel { series(averaged.map { it.first }, averaged.map { it.second }) } }
+        producer.runTransaction {
+            columnModel { series(averaged.map { it.first }, averaged.map { it.second }) }
+            extras { it[monthStarts] = items.map { item -> item.monthStart } }
+        }
     }
     val locale = currentLocale()
     val month = remember(locale) { DateTimeFormatter.ofPattern("MMM", locale) }
@@ -170,8 +197,8 @@ fun MonthlyChart(
                     bottomAxis =
                         HorizontalAxis.rememberBottom(
                             valueFormatter =
-                                CartesianValueFormatter { _, x, _ ->
-                                    items.getOrNull(x.toInt())?.let { LocalDate.parse(it.monthStart).format(month) } ?: " "
+                                CartesianValueFormatter { context, x, _ ->
+                                    axisLabel(context, monthStarts, x) { LocalDate.parse(it).format(month) }
                                 },
                         ),
                 ),
