@@ -87,7 +87,9 @@ app's own terms (`clients/web/src/i18n/nl.ts`).
 
 ## Screenshots
 
-Phone screenshots, 2 to 8, portrait (9:16, e.g. 1080 × 1920), of the Android app with
-realistic data, in this order: the dashboard with a fitness score; a round's score with
-its pillars and micro-wins; Log round; Progress; Practice. The Dutch listing can use
-screenshots of the app in Dutch.
+Phone screenshots in  and  (1080 × 1920, JPEG, as Play
+refuses alpha), in this order: the dashboard, a round's score and micro-wins, Log round,
+Progress (last 3 months, scrolled to the latest rounds) and Practice. They're of a release
+build against staging, signed in as a demo golfer with four months of rounds, practice
+and reflections, with Android's demo-mode status bar (9:41, full battery and signal).
+Retake them when those screens change.
