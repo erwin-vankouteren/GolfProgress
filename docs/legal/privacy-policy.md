@@ -30,6 +30,7 @@ Netherlands ("we", "us"). Contact us about privacy at service@golfprogress.app.
 | Password reset links | A hash of the link's token, valid for 30 minutes | To let you reset a forgotten password |
 | An activity log | That a round was logged or a score computed, with dates and ids, never your notes or reflections | To understand and fix problems, and to protect the service |
 | Technical logs | The time and path of requests and, briefly, your IP address to limit repeated sign-in attempts | To keep the service secure and working |
+| Crash and error reports | When the app crashes or the service fails: what went wrong and where in the code, the app version, device model and operating system, the screens just before it, and a request id. No name, email address, account or device id, IP address, notes or reflections | To find and fix bugs |
 
 We do **not** show ads, sell or share your data for advertising, or track you across other
 apps and websites. The apps use no advertising or analytics SDKs.
@@ -45,8 +46,10 @@ legitimate interest in keeping the service secure and working.
   Europe), with backup copies in Ireland (North Europe), sends password reset emails
   (Azure Communication Services, in Europe) and keeps the technical logs (Application
   Insights, with IP addresses masked).
+- **Sentry** (Functional Software, Inc.) receives the crash and error reports and stores
+  them in its EU region, in Germany.
 
-They process the data only on our behalf, and all of it stays in the EU.
+They process the data only on our behalf, and store it in the EU.
 
 ## How long we keep it
 
@@ -55,6 +58,7 @@ They process the data only on our behalf, and all of it stays in the EU.
 - Sign-in sessions: until they expire (14 days without use) or are revoked.
 - Password reset links: they stop working after 30 minutes or when used.
 - Technical logs: 90 days.
+- Crash and error reports: up to 90 days.
 - Database backups: 35 days, and a few longer-term copies (weekly for 5 weeks, monthly for
   12 months) to recover from mistakes nobody noticed sooner. They are then deleted; we
   don't edit backups.

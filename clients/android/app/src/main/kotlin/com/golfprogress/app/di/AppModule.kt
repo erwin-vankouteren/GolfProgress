@@ -10,6 +10,7 @@ import com.golfprogress.api.generated.apis.ClientConfigApi
 import com.golfprogress.api.unwrap
 import com.golfprogress.app.BuildConfig
 import com.golfprogress.app.language.AppLocales
+import com.golfprogress.app.monitoring.ServerErrorInterceptor
 import com.golfprogress.app.session.EncryptedRefreshTokenStore
 import com.golfprogress.app.session.KeystoreTokenCipher
 import com.golfprogress.app.session.RefreshTokenStore
@@ -45,6 +46,8 @@ object AppModule {
      * Reads may take up to 90 seconds rather than OkHttp's 10: staging's serverless
      * database can take a minute to resume after idling, and the first request after
      * that (usually the refresh at launch) waits for it. Screens explain the wait.
+     *
+     * A 5xx is reported for crash reporting (#119), with the API's traceId.
      */
     @Provides
     @Singleton
@@ -63,7 +66,8 @@ object AppModule {
                         .header("Accept-Language", AppLocales.shown(context).tag)
                         .build(),
                 )
-            }.build()
+            }.addInterceptor(ServerErrorInterceptor())
+            .build()
 
     @Provides
     @Singleton

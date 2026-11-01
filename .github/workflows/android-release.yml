@@ -66,17 +66,25 @@ jobs:
           API_URL: ${{ vars.PLAY_API_URL }}
           PRIVACY_POLICY_URL: ${{ vars.PRIVACY_POLICY_URL }}
           TERMS_URL: ${{ vars.TERMS_URL }}
+          # Crash reporting (#119): the DSN turns it on, and with the token Sentry's plugin
+          # uploads the R8 mapping. Either may be left unset: no reports, or unreadable ones.
+          SENTRY_DSN: ${{ vars.SENTRY_ANDROID_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_ANDROID_PROJECT }}
         run: |
           case "$API_URL" in https://*) ;; *) echo "::error::Set PLAY_API_URL to the production API's https:// address."; exit 1;; esac
           # Play rejects an app without a privacy policy, and the app links to both.
           test -n "$PRIVACY_POLICY_URL" -a -n "$TERMS_URL" || { echo "::error::Set the PRIVACY_POLICY_URL and TERMS_URL variables."; exit 1; }
           if [[ "$GITHUB_REF" == refs/tags/android-v* ]]; then name="${GITHUB_REF#refs/tags/android-v}"; else name="0.0.${{ github.run_number }}"; fi
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then unset SENTRY_AUTH_TOKEN; test -z "$SENTRY_DSN" || echo "::warning::No SENTRY_AUTH_TOKEN secret: crash reports will show obfuscated stack traces."; fi
           ./gradlew :app:bundleRelease \
             -PversionCode=${{ github.run_number }} \
             -PversionName="$name" \
             -PapiBaseUrl="$API_URL" \
             -PprivacyPolicyUrl="$PRIVACY_POLICY_URL" \
-            -PtermsUrl="$TERMS_URL"
+            -PtermsUrl="$TERMS_URL" \
+            -PsentryDsn="$SENTRY_DSN"
 
       - name: Upload to the internal testing track
         uses: r0adkll/upload-google-play@v1

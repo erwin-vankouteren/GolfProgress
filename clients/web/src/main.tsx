@@ -6,15 +6,24 @@ import { createApiClient } from "./api";
 import { App } from "./app/App";
 import { routes } from "./app/routes";
 import { currentLanguage } from "./i18n/language";
+import { reactErrorHandler, reportServerError, startCrashReporting } from "./monitoring/crashReporting";
 import { Session } from "./session/session";
 import "./theme/tokens.css";
 import "./theme/global.css";
+
+// First, so it sees any error from here on (#119).
+startCrashReporting({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.VITE_SENTRY_ENVIRONMENT,
+  release: import.meta.env.VITE_SENTRY_RELEASE ?? `golfprogress-web@${__APP_VERSION__}`,
+});
 
 const session = new Session();
 const api = createApiClient({
   baseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5068",
   tokens: session,
   language: () => currentLanguage.locale,
+  onServerError: reportServerError,
 });
 session.attach(api);
 
@@ -22,7 +31,10 @@ session.attach(api);
 // "Signing you in…" until this settles.
 void session.restore();
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById("root")!, {
+  onUncaughtError: reactErrorHandler(),
+  onCaughtError: reactErrorHandler(),
+}).render(
   <StrictMode>
     <App api={api} session={session} appVersion={__APP_VERSION__}>
       <RouterProvider router={createBrowserRouter(routes)} />

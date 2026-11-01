@@ -21,6 +21,8 @@ junit = "6.1.3"
 junit4 = "4.13.2"
 robolectric = "4.17"
 vico = "3.3.1"
+sentry = "8.60.0"
+sentry-gradle = "6.23.0"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
@@ -56,6 +58,7 @@ datastore-preferences = { module = "androidx.datastore:datastore-preferences", v
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }
+sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -66,3 +69,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-gradle" }
+sentry = { id = "io.sentry.android.gradle", version.ref = "sentry-gradle" }

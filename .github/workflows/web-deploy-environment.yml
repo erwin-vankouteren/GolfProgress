@@ -38,6 +38,9 @@ jobs:
 
     env:
       API_URL: ${{ vars[format('{0}_API_URL', inputs.prefix)] }}
+      # Crash reporting (#119), one Sentry project for both environments; off while unset.
+      SENTRY_DSN: ${{ vars.SENTRY_WEB_DSN }}
+      SENTRY_RELEASE: golfprogress-web@${{ github.event.workflow_run.head_sha || github.sha }}
 
     steps:
       # First, because the steps below run in clients/web.
@@ -59,11 +62,12 @@ jobs:
       - name: Install
         run: npm ci
 
-      # The Content Security Policy allows calls to the API's origin and no other.
+      # The Content Security Policy allows calls to the API's origin and Sentry's, and no other.
       - name: Point the security headers at the API
         run: |
           origin=$(node -e "console.log(new URL(process.env.API_URL).origin)")
-          sed -i "s|__API_ORIGIN__|$origin|" public/staticwebapp.config.json
+          sentry=$(node -e "console.log(process.env.SENTRY_DSN ? new URL(process.env.SENTRY_DSN).origin : '')")
+          sed -i "s|__API_ORIGIN__|$origin|; s|__SENTRY_ORIGIN__|$sentry|" public/staticwebapp.config.json
           grep -q "$origin" public/staticwebapp.config.json
 
       - name: Build
@@ -71,7 +75,27 @@ jobs:
           VITE_API_BASE_URL: ${{ env.API_URL }}
           VITE_PRIVACY_POLICY_URL: ${{ vars.PRIVACY_POLICY_URL }}
           VITE_TERMS_URL: ${{ vars.TERMS_URL }}
+          VITE_SENTRY_DSN: ${{ env.SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: ${{ inputs.environment }}
+          VITE_SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
         run: npm run build
+
+      # Readable stack traces in crash reports: the source maps go to Sentry, marked with
+      # debug ids that match them to the deployed files. Skipped without the auth token.
+      - name: Upload the source maps to Sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_WEB_PROJECT }}
+        if: env.SENTRY_DSN != ''
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then echo "::warning::No SENTRY_AUTH_TOKEN secret: crash reports will show minified stack traces."; exit 0; fi
+          npx --yes @sentry/cli@3.8.0 sourcemaps inject dist
+          npx --yes @sentry/cli@3.8.0 sourcemaps upload --release "$SENTRY_RELEASE" dist
+
+      # Never served: they'd publish the source.
+      - name: Remove the source maps
+        run: find dist -name '*.map' -delete
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
