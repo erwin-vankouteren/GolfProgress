@@ -61,7 +61,9 @@ export function AppLayout() {
           </button>
           <Link to="/" className="app-name">
             <img src="/favicon.svg" alt="" className="app-logo" width={32} height={32} />
-            <FormattedMessage {...messages.appName} />
+            <span className="app-name-text">
+              <FormattedMessage {...messages.appName} />
+            </span>
           </Link>
           <LogRoundLink className="button button--primary">
             <FormattedMessage {...messages.logRound} />

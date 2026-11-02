@@ -266,6 +266,80 @@ async function expectNoViolations(page: Page) {
   ).toEqual([]);
 }
 
+/** Nothing scrolls sideways, so the page reflows (WCAG 1.4.10). */
+async function expectNoHorizontalScroll(page: Page) {
+  const overflow = await page.evaluate(() => {
+    const width = document.documentElement.clientWidth;
+    return [...document.querySelectorAll("body *")]
+      .filter((el) => {
+        const box = el.getBoundingClientRect();
+        // A data table may scroll inside its own box; WCAG allows that.
+        return box.width > 0 && box.right > width + 1 && !el.closest(".table-scroll");
+      })
+      .slice(0, 5)
+      .map((el) => `${el.tagName.toLowerCase()}${el.className ? `.${String(el.className).split(" ")[0]}` : ""}`);
+  });
+  expect(overflow).toEqual([]);
+}
+
+/** Every control can be reached with Tab, and shows where the focus is (WCAG 2.1.1, 2.4.7). */
+async function expectVisibleFocusOnTab(page: Page) {
+  const missing: string[] = [];
+  for (let i = 0; i < 60; i++) {
+    await page.keyboard.press("Tab");
+    const focused = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || el === document.body) return null;
+      const style = getComputedStyle(el);
+      const ringed =
+        (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) || style.boxShadow !== "none";
+      // A visually hidden input shows its focus on its label instead (rating options).
+      const shownByLabel = !!el.closest("label") && el.getBoundingClientRect().width <= 1;
+      // A date field's last stop is Chrome's calendar button, which draws its own ring.
+      const ownRing = el instanceof HTMLInputElement && el.type === "date";
+      const text = (el.textContent || el.getAttribute("aria-label") || el.id).trim().slice(0, 30);
+      return { name: `${el.tagName.toLowerCase()} "${text}"`, ok: ringed || shownByLabel || ownRing };
+    });
+    if (!focused) break;
+    if (!focused.ok && !missing.includes(focused.name)) missing.push(focused.name);
+  }
+  expect(missing).toEqual([]);
+}
+
+const everyPage = [
+  ...signedOutPages.map(([path]) => [path, false] as const),
+  ...signedInPages.map(([path]) => [path, true] as const),
+];
+
+// A 320 px wide window is a 1280 px screen at 400% zoom; Dutch has the longest labels.
+for (const locale of ["en-GB", "nl-NL"]) {
+  test.describe(`at 320 px wide, ${locale}`, () => {
+    test.use({ locale, viewport: { width: 320, height: 640 } });
+
+    for (const [path, signedIn] of everyPage) {
+      test(`${signedIn ? "signed in" : "signed out"}: ${path}`, async ({ page }) => {
+        await mockApi(page, signedIn);
+        await page.goto(path);
+        await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+        await expect(page.getByRole("status", { name: /Loading|Laden/ })).toHaveCount(0);
+        await expectNoHorizontalScroll(page);
+      });
+    }
+  });
+}
+
+test.describe("keyboard", () => {
+  for (const [path, signedIn] of everyPage) {
+    test(`${signedIn ? "signed in" : "signed out"}: ${path}`, async ({ page }) => {
+      await mockApi(page, signedIn);
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+      await expect(page.getByRole("status", { name: "Loading…" })).toHaveCount(0);
+      await expectVisibleFocusOnTab(page);
+    });
+  }
+});
+
 for (const colorScheme of ["light", "dark"] as const) {
   test.describe(`${colorScheme} mode`, () => {
     test.use({ colorScheme });
