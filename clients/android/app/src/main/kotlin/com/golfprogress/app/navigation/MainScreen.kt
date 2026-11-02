@@ -21,13 +21,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -183,13 +187,26 @@ private fun RowScope.BottomItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    // Log round's tab is shorter than its screen title, so it fits in Dutch too (#293).
+    val label = stringResource(if (destination == Destination.LogRound) R.string.tab_log_round else destination.title)
     NavigationBarItem(
         selected = selected,
         onClick = onClick,
         icon = { Icon(icon, contentDescription = null) },
-        label = { Text(stringResource(destination.title)) },
+        label = {
+            // Five tabs share the width, so their labels grow to 1.3× at most and stay on one
+            // line rather than breaking mid-word at large font sizes (#120). TalkBack reads them
+            // in full, and every screen's own text still scales all the way.
+            val density = LocalDensity.current
+            val fontScale = density.fontScale.coerceAtMost(MAX_TAB_LABEL_SCALE)
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
+                Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        },
     )
 }
+
+private const val MAX_TAB_LABEL_SCALE = 1.3f
 
 private val roundIdArgument = navArgument(RoundFormViewModel.ROUND_ID) { type = NavType.StringType }
 

@@ -10,6 +10,8 @@
     <string name="section_progress">Progress</string>
     <string name="section_profile">Profile</string>
     <string name="log_round">Log round</string>
+    <!-- The bottom bar tab: short, as five tabs share the width. -->
+    <string name="tab_log_round">Log round</string>
     <string name="open_profile">Profile</string>
     <string name="navigate_back">Back</string>
 

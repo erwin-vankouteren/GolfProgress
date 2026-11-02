@@ -12,6 +12,7 @@
     <string name="section_progress">Voortgang</string>
     <string name="section_profile">Profiel</string>
     <string name="log_round">Ronde invoeren</string>
+    <string name="tab_log_round">Invoeren</string>
     <string name="open_profile">Profiel</string>
     <string name="navigate_back">Terug</string>
 
