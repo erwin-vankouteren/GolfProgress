@@ -45,7 +45,7 @@ so it's not a single point of failure.
    $env:ANDROID_KEY_ALIAS = "upload"
    $env:ANDROID_KEYSTORE_PASSWORD = Read-Host "Keystore password"
    $env:ANDROID_KEY_PASSWORD = Read-Host "Key password"
-   ./gradlew :app:bundleRelease -PversionCode=1 -PversionName=1.0.0 `
+   ./gradlew :app:bundleRelease "-PversionCode=1" "-PversionName=1.0.0" `
      "-PapiBaseUrl=https://api.golfprogress.app" `
      "-PprivacyPolicyUrl=https://golfprogress.app/privacy" "-PtermsUrl=https://golfprogress.app/terms"
    ```
