@@ -56,7 +56,8 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
-      # versionCode: this workflow's run number, so every upload is higher than the last.
+      # versionCode: this workflow's run number plus 100, so every upload is higher than the
+      # last, and than the first upload by hand (versionCode 1).
       # versionName: the tag without "android-v", or the run number when started by hand.
       - name: Build the release bundle
         env:
@@ -79,7 +80,7 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/android-v* ]]; then name="${GITHUB_REF#refs/tags/android-v}"; else name="0.0.${{ github.run_number }}"; fi
           if [ -z "$SENTRY_AUTH_TOKEN" ]; then unset SENTRY_AUTH_TOKEN; test -z "$SENTRY_DSN" || echo "::warning::No SENTRY_AUTH_TOKEN secret: crash reports will show obfuscated stack traces."; fi
           ./gradlew :app:bundleRelease \
-            -PversionCode=${{ github.run_number }} \
+            -PversionCode=$(( ${{ github.run_number }} + 100 )) \
             -PversionName="$name" \
             -PapiBaseUrl="$API_URL" \
             -PprivacyPolicyUrl="$PRIVACY_POLICY_URL" \

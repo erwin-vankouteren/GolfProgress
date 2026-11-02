@@ -13,7 +13,7 @@ started by hand. Once tested there, the same bundle is promoted to production.
 | Plain HTTP | Allowed, for that local API | **Refused**: HTTPS only (`usesCleartextTraffic=false`) |
 | R8 | Off | Shrinks code and resources, and obfuscates; `mapping.txt` restores names |
 | Signing | The debug key | The upload key, from the environment |
-| `versionCode` / `versionName` | 1 / 1.0.0 | `-PversionCode` (the workflow's run number) / `-PversionName` (the tag without `android-v`) |
+| `versionCode` / `versionName` | 1 / 1.0.0 | `-PversionCode` (the workflow's run number plus 100) / `-PversionName` (the tag without `android-v`) |
 | Privacy policy and terms links | Hidden | `-PprivacyPolicyUrl`, `-PtermsUrl` |
 
 The upload key comes from four environment variables: `ANDROID_KEYSTORE_PATH`,
@@ -88,9 +88,10 @@ and **Promote release → Production**, with a staged rollout (e.g. 20%, then 10
 few days without new crashes). The bundle is the same one, so it isn't rebuilt. Play
 reviews the first production release, which can take a few days.
 
-`versionCode` is this workflow's run number. If Play already has a higher one, e.g. from
-the manual first upload, the upload is refused: run the workflow again until it passes, or
-upload once more by hand with a higher `-PversionCode`.
+`versionCode` is this workflow's run number plus 100, which keeps it above the manual
+first upload's 1. If Play ever has a higher one, e.g. from another upload by hand, the
+upload is refused: run the workflow again until it passes, or upload once more by hand
+with a higher `-PversionCode`.
 
 ## Checking a release build locally
 
