@@ -5,7 +5,7 @@
   policy. Update "Last updated" with every change.
 -->
 
-_Last updated: 1 November 2026_
+_Last updated: 2 November 2026_
 
 These terms apply when you use GolfProgress, on the web or in the iOS and Android apps.
 By creating an account you agree to them.
@@ -17,7 +17,13 @@ micro-wins and trends from them. Scores and suggestions are guidance for your ow
 practice, not professional coaching or medical advice.
 
 The service may change, be unavailable at times, or lose data despite our care.
-GolfProgress is free.
+
+## Price
+
+GolfProgress is free during its launch period. We may later offer paid features or a
+subscription. If we do, we'll tell you in the app at least 30 days beforehand, you'll
+only ever pay if you choose to subscribe, and you'll keep access to the rounds and other
+data you've entered.
 
 ## Your account
 
