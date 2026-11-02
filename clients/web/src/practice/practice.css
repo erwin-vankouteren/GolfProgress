@@ -43,11 +43,15 @@
 
 .tag-entry {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
+/* A small base width, as an input's default (about 20 characters) and a long Dutch button
+   label would otherwise make the whole form wider than a phone at 400% zoom. */
 .tag-entry input {
-  flex: 1;
+  flex: 1 1 8rem;
+  width: 8rem;
   min-width: 0;
 }
 

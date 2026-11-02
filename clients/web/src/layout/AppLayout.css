@@ -98,7 +98,7 @@
 /* Narrow screens: the sidebar becomes a menu opened from the header. */
 @media (max-width: 900px) {
   .app-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "header"
       "main";
@@ -125,5 +125,18 @@
 
   .app-main {
     padding: var(--space-lg);
+  }
+}
+
+/* Phone width at 400% zoom: the logo stands for the name, which screen readers still read,
+   so Log round stays on the same line as the menu button (WCAG 1.4.10). */
+@media (max-width: 26rem) {
+  .app-name-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
