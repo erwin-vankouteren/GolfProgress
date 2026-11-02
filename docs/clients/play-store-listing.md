@@ -11,6 +11,9 @@ app's own terms (`clients/web/src/i18n/nl.ts`).
 | Field | Value |
 |---|---|
 | App name | GolfProgress |
+| Price | Free. Paid features may come later as an in-app subscription (terms of use → "Price"); Play doesn't let a free app become a paid download |
+| Contains ads | No |
+| In-app purchases | No, until a subscription exists |
 | Category | Sports |
 | Tags | Golf, Sports tracker |
 | Contact email | service@golfprogress.app |
@@ -50,6 +53,9 @@ app's own terms (`clients/web/src/i18n/nl.ts`).
 > PRIVATE BY DESIGN
 > No ads and no tracking, and your data is never sold. It's stored in the EU, and you can delete your account at any time in the app.
 >
+> FREE DURING THE LAUNCH
+> GolfProgress is free while we launch. If paid features come later, you'll hear about it in the app at least 30 days ahead, and you'll keep access to everything you've entered.
+>
 > In English and Dutch. Use the same account on Android and on the web at golfprogress.app.
 
 ## Nederlands
@@ -82,6 +88,9 @@ app's own terms (`clients/web/src/i18n/nl.ts`).
 >
 > PRIVACY VOOROP
 > Geen advertenties en geen tracking, en je gegevens worden nooit verkocht. Ze worden in de EU opgeslagen, en je kunt je account altijd in de app verwijderen.
+>
+> GRATIS TIJDENS DE LANCERING
+> GolfProgress is gratis zolang we lanceren. Komen er later betaalde functies, dan hoor je dat minstens 30 dagen van tevoren in de app, en je houdt toegang tot alles wat je hebt ingevoerd.
 >
 > In het Nederlands en Engels. Gebruik hetzelfde account op Android en op het web via golfprogress.app.
 
