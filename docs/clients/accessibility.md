@@ -12,7 +12,7 @@ Human Interface Guidelines and Android's accessibility guidelines.
 | # | Check | Web | iOS | Android |
 |---|---|---|---|---|
 | 1 | **Contrast:** text 4.5:1, graphics and input borders 3:1, in light and dark | Use token colours only | Use `DesignTokens.Colors` only | Use the theme and `DesignTokens` only |
-| 2 | **Text scales** with the user's setting and nothing is cut off at the largest size | `rem` sizes from the tokens; check at 200% browser zoom | Dynamic Type text styles; check at the largest accessibility size | `sp` sizes; check at 200% font scale |
+| 2 | **Text scales** with the user's setting and nothing is cut off at the largest size | `rem` sizes from the tokens; check at 200% browser zoom | Dynamic Type text styles; check at the largest accessibility size | `sp` sizes; check at 200% font scale. The bottom bar's labels stop growing at 1.3× and stay on one line, as five tabs share the width (`MainScreen.kt`) |
 | 3 | **Screen readers** announce every control with a name, role and state | Semantic HTML first; `aria-*` only where HTML can't say it | `accessibilityLabel` on icon-only controls | `contentDescription` on icon-only controls |
 | 4 | **Charts and images** have a text alternative: a one-sentence summary, plus a table where data matters | Summary text + "Show as table" | `accessibilityChartDescriptor` / summary label | Content description with the summary |
 | 5 | **Headings** mark each screen's title and sections | `<h1>`–`<h3>` in order | `.accessibilityAddTraits(.isHeader)` where the title isn't a navigation title | `Modifier.semantics { heading() }` |
