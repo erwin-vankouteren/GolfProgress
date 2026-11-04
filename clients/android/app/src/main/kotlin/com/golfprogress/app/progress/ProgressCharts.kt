@@ -10,8 +10,10 @@ import androidx.compose.ui.unit.dp
 import com.golfprogress.api.generated.models.MonthlyTimelinePointResponse
 import com.golfprogress.app.ui.common.currentLocale
 import com.golfprogress.app.ui.theme.LocalPalette
+import com.patrykandpatrick.vico.compose.cartesian.AutoScrollCondition
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
+import com.patrykandpatrick.vico.compose.cartesian.Scroll
 import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
@@ -26,6 +28,7 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesian
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.common.ProvideVicoTheme
 import com.patrykandpatrick.vico.compose.common.VicoTheme
@@ -152,6 +155,7 @@ fun TimelineChart(
                     bottomAxis = HorizontalAxis.rememberBottom(valueFormatter = dateFormatter),
                 ),
             modelProducer = producer,
+            scrollState = rememberLatestFirstScrollState(),
             modifier = modifier.clearAndSetSemantics {},
         )
     }
@@ -203,6 +207,7 @@ fun MonthlyChart(
                         ),
                 ),
             modelProducer = producer,
+            scrollState = rememberLatestFirstScrollState(),
             modifier = modifier.clearAndSetSemantics {},
         )
     }
@@ -219,3 +224,16 @@ fun mediumDate(
     iso: String,
     locale: java.util.Locale,
 ): String = LocalDate.parse(iso).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
+
+/**
+ * Opens a chart that's wider than the screen at its latest data, and goes back there when a
+ * longer period adds data (#294). A shorter period keeps it at the end anyway, as the scroll
+ * position can't pass the new end.
+ */
+@Composable
+private fun rememberLatestFirstScrollState() =
+    rememberVicoScrollState(
+        initialScroll = Scroll.Absolute.End,
+        autoScroll = Scroll.Absolute.End,
+        autoScrollCondition = AutoScrollCondition.OnModelGrowth,
+    )
