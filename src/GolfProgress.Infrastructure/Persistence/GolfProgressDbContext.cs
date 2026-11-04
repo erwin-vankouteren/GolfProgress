@@ -23,6 +23,8 @@ public class GolfProgressDbContext : DbContext
     public DbSet<EventLog> Events => Set<EventLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<CoachInvitation> CoachInvitations => Set<CoachInvitation>();
+    public DbSet<CoachLink> CoachLinks => Set<CoachLink>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -314,6 +316,53 @@ public class GolfProgressDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Coach invitations (#184): looked up by hash, and by golfer for the open ones.
+        modelBuilder.Entity<CoachInvitation>(e =>
+        {
+            e.ToTable("CoachInvitations");
+            e.HasKey(x => x.CoachInvitationId);
+            e.Ignore(x => x.IsOpen);
+
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasIndex(x => new { x.GolferId, x.Email });
+
+            e.Property(x => x.Email).IsRequired().HasMaxLength(256);
+            e.Property(x => x.TokenHash).IsRequired().HasMaxLength(200);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
+
+            e.HasOne(x => x.Golfer)
+                .WithMany()
+                .HasForeignKey(x => x.GolferId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // A coach's access to a golfer (#184). Both ends reference Users, which SQL Server
+        // can't cascade from twice, so neither cascades: AccountDeletionService removes a
+        // deleted user's links from either side.
+        modelBuilder.Entity<CoachLink>(e =>
+        {
+            e.ToTable("CoachLinks");
+            e.HasKey(x => x.CoachLinkId);
+
+            // One active link per golfer and coach; ended ones stay as history.
+            e.HasIndex(x => new { x.GolferId, x.CoachId })
+                .IsUnique()
+                .HasFilter("[EndedAt] IS NULL");
+            e.HasIndex(x => x.CoachId);
+
+            e.Property(x => x.EndedBy).HasConversion<string>().HasMaxLength(16);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
+
+            e.HasOne(x => x.Golfer)
+                .WithMany()
+                .HasForeignKey(x => x.GolferId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Coach)
+                .WithMany()
+                .HasForeignKey(x => x.CoachId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 

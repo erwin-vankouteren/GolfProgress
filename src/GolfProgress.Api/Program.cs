@@ -276,6 +276,12 @@ builder.Services.AddSingleton<GolfProgress.Api.Email.ChannelEmailOutbox>();
 builder.Services.AddSingleton<GolfProgress.Api.Email.IEmailOutbox>(sp => sp.GetRequiredService<GolfProgress.Api.Email.ChannelEmailOutbox>());
 builder.Services.AddHostedService<GolfProgress.Api.Email.EmailSendingWorker>();
 builder.Services.AddScoped<GolfProgress.Api.Services.PasswordResetService>();
+// Coach invitations (#184), sent through the same outbox.
+builder.Services.AddOptions<GolfProgress.Api.Services.CoachInvitationOptions>()
+    .Bind(builder.Configuration.GetSection(GolfProgress.Api.Services.CoachInvitationOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddScoped<GolfProgress.Api.Services.CoachInvitationService>();
 
 var app = builder.Build();
 

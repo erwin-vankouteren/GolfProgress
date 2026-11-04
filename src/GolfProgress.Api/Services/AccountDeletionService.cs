@@ -41,6 +41,13 @@ public sealed class AccountDeletionService
         // at its next refresh.
         _db.RefreshTokens.RemoveRange(await _db.RefreshTokens.Where(x => x.UserId == userId).ToListAsync(ct));
         _db.PasswordResetTokens.RemoveRange(await _db.PasswordResetTokens.Where(x => x.UserId == userId).ToListAsync(ct));
+        // Coaching (#184): the user's invitations, and their links as golfer or as coach.
+        // Links don't cascade from either end, so both sides are removed here.
+        // Invitations sent to the user's address go too: they hold it.
+        var address = user.Email?.Trim().ToLowerInvariant();
+        _db.CoachInvitations.RemoveRange(await _db.CoachInvitations
+            .Where(x => x.GolferId == userId || (address != null && x.Email == address)).ToListAsync(ct));
+        _db.CoachLinks.RemoveRange(await _db.CoachLinks.Where(x => x.GolferId == userId || x.CoachId == userId).ToListAsync(ct));
         _db.Users.Remove(user);
 
         // One save, so one transaction: the account is deleted entirely or not at all.

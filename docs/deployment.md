@@ -121,6 +121,10 @@ is right on a developer's machine; anywhere else a warning at startup says so.
 | `PasswordReset__LinkBaseUrl` | `http://localhost:5173/reset-password` | **Set per environment:** the web app's reset page, e.g. `https://staging.golfprogress.app/reset-password`. The token is added as `?token=` |
 | `PasswordReset__TokenLifetimeMinutes` | 30 | How long a reset link works |
 | `PasswordReset__MaxPerHour` | 3 | Reset emails one account can be sent per hour |
+| `CoachInvitations__LinkBaseUrl` | The reset page's origin + `/coach-invitation` | The web app's page for a coach invitation (#184); `infra/main.bicep` sets it from `webOrigin`. The token is added as `?token=` |
+| `CoachInvitations__LifetimeDays` | 7 | How long an invitation link works |
+| `CoachInvitations__MaxCoaches` | 3 | Coaches a golfer can have, active and invited together |
+| `CoachInvitations__MaxPerDay` | 10 | Invitation emails a golfer can send a day |
 
 In Azure, the Bicep sets the provider up (see "API"), in two passes, because a domain
 can only be used once it's verified:
@@ -288,7 +292,7 @@ applies migrations, then deploys.
 The app settings it sets: `ASPNETCORE_ENVIRONMENT` (`Staging` or `Production`),
 `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, `Jwt__Key` and `Email__ConnectionString` as
 Key Vault references, the passwordless connection string, `Cors__AllowedOrigins__0` and
-`PasswordReset__LinkBaseUrl` from `webOrigin`, `ClientConfig__MinimumVersions__*` from
+`PasswordReset__LinkBaseUrl` and `CoachInvitations__LinkBaseUrl` from `webOrigin`, `ClientConfig__MinimumVersions__*` from
 `minimumVersions`, and `APPLICATIONINSIGHTS_CONNECTION_STRING`. The API only sends
 telemetry when that last one is set, so nothing leaves a developer's machine.
 

@@ -299,6 +299,15 @@ public sealed class SqlServerPersistenceTests
                 PasswordResetTokenId = Guid.NewGuid(), UserId = userId, TokenHash = Guid.NewGuid().ToString("N"),
                 CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30)
             });
+            // Coaching (#184): an invitation, and a link with the user on each side.
+            db.CoachInvitations.Add(new CoachInvitation
+            {
+                CoachInvitationId = Guid.NewGuid(), GolferId = userId, Email = "coach@example.test",
+                TokenHash = Guid.NewGuid().ToString("N"), CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.AddDays(7)
+            });
+            db.CoachLinks.AddRange(
+                new CoachLink { CoachLinkId = Guid.NewGuid(), GolferId = userId, CoachId = otherUserId, CreatedAt = DateTimeOffset.UtcNow },
+                new CoachLink { CoachLinkId = Guid.NewGuid(), GolferId = otherUserId, CoachId = userId, CreatedAt = DateTimeOffset.UtcNow });
             await db.SaveChangesAsync();
         }
 
@@ -319,25 +328,33 @@ public sealed class SqlServerPersistenceTests
         }
     }
 
-    /// <summary>Rows referencing <paramref name="userId"/>, in every table with a UserId column.</summary>
+    /// <summary>
+    /// Rows referencing <paramref name="userId"/>: the user itself, and every column with a
+    /// foreign key to Users, whatever it's called (UserId, GolferId, CoachId).
+    /// </summary>
     private async Task<Dictionary<string, int>> RowsPerTableAsync(Guid userId)
     {
         await using var db = _sql.CreateContext();
         var counts = new Dictionary<string, int>();
+        var users = db.Model.FindEntityType(typeof(User))!;
 
-        foreach (var entity in db.Model.GetEntityTypes())
+        var columns = db.Model.GetEntityTypes()
+            .SelectMany(e => e.GetForeignKeys()
+                .Where(fk => fk.PrincipalEntityType == users)
+                .Select(fk => (Table: e.GetTableName()!, Column: fk.Properties.Single().GetColumnName())))
+            .Append((Table: users.GetTableName()!, Column: "UserId"));
+
+        foreach (var (table, column) in columns)
         {
-            if (entity.FindProperty("UserId") is not { } property) continue;
-
-            var table = entity.GetTableName()!;
             // Identifiers can't be parameters; these come from the EF model, not input.
-            var sql = $"SELECT COUNT(*) AS Value FROM [{table}] WHERE [{property.GetColumnName()}] = @userId";
-            counts[table] = await db.Database
+            var sql = $"SELECT COUNT(*) AS Value FROM [{table}] WHERE [{column}] = @userId";
+            counts[$"{table}.{column}"] = await db.Database
                 .SqlQueryRaw<int>(sql, new SqlParameter("@userId", userId))
                 .SingleAsync();
         }
 
-        Assert.Equal(11, counts.Count); // Users and the ten tables that reference it
+        // Users, the ten tables with a UserId, and coaching's three columns.
+        Assert.Equal(14, counts.Count);
         return counts;
     }
 

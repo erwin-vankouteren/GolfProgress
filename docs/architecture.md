@@ -372,9 +372,11 @@ Users delete their account in the app (Profile → Delete account), as both stor
 | The activity log (rounds logged, scores computed, and so on) | `Events` |
 | Sign-in sessions on every device | `RefreshTokens` |
 | Password reset links | `PasswordResetTokens` |
+| Coach invitations they sent, and those sent to their address | `CoachInvitations` |
+| Their coaches' access to them, and their access as a coach to others | `CoachLinks` |
 
 Nothing is kept: no row in any table references the user afterwards, which a SQL Server
-test checks for every table with a `UserId` column. The API's log keeps one line,
+test checks for every column with a foreign key to `Users`. The API's log keeps one line,
 "Account {id} deleted", whose id is a random GUID with nothing left to link it to.
 Database backups follow the hosting's retention and are not edited.
 
