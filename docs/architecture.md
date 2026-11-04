@@ -183,6 +183,34 @@ Micro-wins are a snapshot of the moment they were generated, so only the edited 
 are regenerated. `POST /rounds/{id}/compute` and `/micro-wins/generate` still recompute one
 round on request.
 
+## Choosing the next focus
+
+"Your next focus" (`/rounds/{id}/next-lever`, and on the dashboard) picks one of three
+stats from the round: penalties, three-putts or blow-up holes, each per 18 holes and
+compared with the current baseline. It takes the first that applies (#292, #299):
+
+| # | When | Focus | Reason shown |
+|---|---|---|---|
+| 1 | A stat is **2 or more above the baseline** | That stat (the most worse, weighted) | Its difference from the baseline |
+| 2 | The golfer's **goal focus area** (Preferences, in their order) has a stat, and it occurred in the round | That stat, whether it got worse, held level or **improved** | Worse: the difference. Otherwise "You chose putting as one of your goals", or "Better than your average — keep going with your goal: putting" |
+| 3 | A stat got worse; without a baseline, any stat that occurred | The one that got most worse, weighted (or cost the most) | The difference, or why the stat matters |
+| 4 | Nothing got worse, but some stat occurred | The one that cost the most strokes, **also when it went down** | "Penalties went down, but still cost you the most strokes — keep going" |
+| 5 | No penalties, three-putts or blow-ups | "Keep it steady" | All at or better than the baseline |
+
+Goal areas map to Putting → three-putts, Penalties → penalties, Consistency → blow-up
+holes; Tee shots has no stat here yet. A goal whose stat was 0 is skipped: there's
+nothing to work on.
+
+Why this order: a large setback (1) is the most useful thing to act on next round,
+whatever the goal. Otherwise the golfer's own choice (2) wins, as working on one thing
+for a while beats a focus that jumps between stats every round, and an improving goal
+gets encouragement rather than being dropped. A stat that improved can still be the
+biggest cost (4), so it isn't excluded, but it's never presented as having got worse.
+
+A coach's practice goal with a focus area (M5, [coach-access.md](coach-access.md)) will
+come before step 1 while it's active, since it's set for weeks. Deliberately not done
+(yet): keeping the same focus for a number of rounds regardless of the stats.
+
 ## Authentication
 
 The API issues a short-lived **access token** (JWT, 15 minutes) and a long-lived

@@ -66,11 +66,59 @@ public sealed class NextLeverTests : IAsyncLifetime
         Assert.Equal("three_putts", lever.LeverKey);
     }
 
-    private async Task<LeverPayload> LeverFor(short penalties, short threePutts, short blowUps)
+    [Fact]
+    public async Task AStatThatWentDown_IsStillTheFocus_WhenItCostTheMost()
+    {
+        var lever = await LeverFor(penalties: 1, threePutts: 0, blowUps: 0);
+
+        // Penalties went down, but they're the only strokes this round lost (#299).
+        Assert.Equal("penalties", lever.LeverKey);
+        Assert.Equal("Penalties went down, but still cost you the most strokes — keep going.", lever.Rationale);
+    }
+
+    [Fact]
+    public async Task TheGolfersGoal_OutranksAStatThatGotSlightlyWorse()
+    {
+        var lever = await LeverFor(penalties: 3, threePutts: 1, blowUps: 1, goals: ["Putting"]);
+
+        Assert.Equal("three_putts", lever.LeverKey);
+        Assert.Equal("You chose putting as one of your goals.", lever.Rationale);
+    }
+
+    [Fact]
+    public async Task TheGolfersGoal_StaysTheFocus_WhenItImproved()
+    {
+        var lever = await LeverFor(penalties: 1, threePutts: 2, blowUps: 1, goals: ["Penalties"]);
+
+        Assert.Equal("penalties", lever.LeverKey);
+        Assert.Equal("Better than your average — keep going with your goal: penalties.", lever.Rationale);
+    }
+
+    [Fact]
+    public async Task AStatFarAboveTheBaseline_OutranksTheGolfersGoal()
+    {
+        var lever = await LeverFor(penalties: 6, threePutts: 1, blowUps: 1, goals: ["Putting"]);
+
+        Assert.Equal("penalties", lever.LeverKey);
+        Assert.StartsWith("Penalties vs baseline", lever.Rationale);
+    }
+
+    [Fact]
+    public async Task AGoalWithoutAStat_IsSkipped()
+    {
+        // Tee shots have no lever yet, and a goal whose stat was 0 has nothing to work on.
+        var lever = await LeverFor(penalties: 0, threePutts: 3, blowUps: 1, goals: ["TeeShots", "Penalties"]);
+
+        Assert.Equal("three_putts", lever.LeverKey);
+    }
+
+    private async Task<LeverPayload> LeverFor(short penalties, short threePutts, short blowUps, List<string>? goals = null)
     {
         var roundId = Guid.NewGuid();
         await _factory.WithDbAsync(async db =>
         {
+            if (goals is not null)
+                (await db.Users.FindAsync(_userId))!.GoalFocus = goals;
             var round = TestWorld.NewRound(roundId, _userId, 88);
             round.PlayedAt = new DateOnly(2026, 5, 6);
             round.Penalties = penalties;

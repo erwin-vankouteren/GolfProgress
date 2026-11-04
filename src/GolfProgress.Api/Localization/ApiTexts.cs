@@ -71,6 +71,12 @@ public abstract class ApiTexts
     /// <param name="delta">The round against the baseline; null when there's no baseline yet.</param>
     public abstract string LeverRationale(LeverText lever, decimal? delta);
 
+    /// <summary>Why the golfer's goal area is the focus: it went down (keep going) or held level.</summary>
+    public abstract string LeverGoalRationale(GoalFocusArea area, bool improved);
+
+    /// <summary>Why a stat that went down is still the focus: it cost the most strokes.</summary>
+    public abstract string LeverKeepGoingRationale(LeverText lever);
+
     // ------------------------------------------------------------ monthly review
 
     public abstract string RoundsLogged(int count);
@@ -156,6 +162,18 @@ internal sealed class EnglishTexts : ApiTexts
         (LeverText.DataQuality, _) => "This round has minimal stats; one extra stat improves recommendation accuracy.",
         (LeverText.HoldSteady, decimal) => "Penalties, 3‑putts and blow‑ups were all at or better than your baseline.",
         (LeverText.HoldSteady, null) => "No penalties, 3‑putts or blow‑ups to work on in this round.",
+        _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
+    };
+
+    public override string LeverGoalRationale(GoalFocusArea area, bool improved) => improved
+        ? $"Better than your average — keep going with your goal: {FocusLabel(area)}."
+        : $"You chose {FocusLabel(area)} as one of your goals.";
+
+    public override string LeverKeepGoingRationale(LeverText lever) => lever switch
+    {
+        LeverText.Penalties => "Penalties went down, but still cost you the most strokes — keep going.",
+        LeverText.ThreePutts => "3‑putts went down, but still cost you the most strokes — keep going.",
+        LeverText.DamageControl => "Blow‑ups went down, but still cost you the most strokes — keep going.",
         _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
     };
 
@@ -258,6 +276,18 @@ internal sealed class DutchTexts : ApiTexts
         (LeverText.DataQuality, _) => "Deze ronde heeft weinig statistieken; één extra statistiek maakt de aanbeveling nauwkeuriger.",
         (LeverText.HoldSteady, decimal) => "Strafslagen, drie‑putts en uitschieters waren allemaal gelijk aan of beter dan je basislijn.",
         (LeverText.HoldSteady, null) => "Geen strafslagen, drie‑putts of uitschieters om aan te werken in deze ronde.",
+        _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
+    };
+
+    public override string LeverGoalRationale(GoalFocusArea area, bool improved) => improved
+        ? $"Beter dan je gemiddelde — ga zo door met je doel: {FocusLabel(area)}."
+        : $"Je koos {FocusLabel(area)} als een van je doelen.";
+
+    public override string LeverKeepGoingRationale(LeverText lever) => lever switch
+    {
+        LeverText.Penalties => "Strafslagen gingen omlaag, maar kostten je nog de meeste slagen — ga zo door.",
+        LeverText.ThreePutts => "Drie‑putts gingen omlaag, maar kostten je nog de meeste slagen — ga zo door.",
+        LeverText.DamageControl => "Uitschieters gingen omlaag, maar kostten je nog de meeste slagen — ga zo door.",
         _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
     };
 
