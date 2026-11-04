@@ -64,6 +64,12 @@ No advertising or analytics SDKs, and no tracking across apps or websites.
 
 Data is processed ephemerally? **No** for all of the above: it's stored.
 
+**Advertising ID** (Policy → App content): Does your app use advertising ID? **No.** The
+release build asks only for internet access and network state; no library adds the
+`com.google.android.gms.permission.AD_ID` permission. Recheck the merged manifest
+(`app/build/intermediates/merged_manifest/release`) when adding a library, especially an
+analytics or ads SDK.
+
 ## App Store: App Privacy ("nutrition label")
 
 **Do you or your third-party partners collect data from this app?** Yes.
