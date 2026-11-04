@@ -22,7 +22,7 @@ public enum MicroWinText
 }
 
 /// <summary>The "next focus" recommendations, by their lever key.</summary>
-public enum LeverText { Penalties, ThreePutts, DamageControl, DataQuality }
+public enum LeverText { Penalties, ThreePutts, DamageControl, DataQuality, HoldSteady }
 
 /// <summary>
 /// Every sentence the API writes for people to read, in each language the apps come in. Requests choose one with Accept-Language (see
@@ -140,6 +140,8 @@ internal sealed class EnglishTexts : ApiTexts
             "Next round: after a mistake, play the next shot for position — your goal is bogey, not hero."),
         LeverText.DataQuality => ("Add one stat for sharper insights",
             "Next round: add just one stat (penalties or putts) — you’ll unlock more precise progress insights."),
+        LeverText.HoldSteady => ("Keep it steady",
+            "Next round: stick with the same targets and routine — they’re working."),
         _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
     };
 
@@ -152,6 +154,8 @@ internal sealed class EnglishTexts : ApiTexts
         (LeverText.DamageControl, decimal d) => $"Blow‑ups vs baseline Δ={d.ToString("0.##", Culture)}",
         (LeverText.DamageControl, null) => "Reducing big holes improves scoring fastest.",
         (LeverText.DataQuality, _) => "This round has minimal stats; one extra stat improves recommendation accuracy.",
+        (LeverText.HoldSteady, decimal) => "Penalties, 3‑putts and blow‑ups were all at or better than your baseline.",
+        (LeverText.HoldSteady, null) => "No penalties, 3‑putts or blow‑ups to work on in this round.",
         _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
     };
 
@@ -238,6 +242,8 @@ internal sealed class DutchTexts : ApiTexts
             "Volgende ronde: speel na een fout de volgende slag op positie — je doel is een bogey, geen heldendaad."),
         LeverText.DataQuality => ("Voeg één statistiek toe voor scherpere inzichten",
             "Volgende ronde: voeg één statistiek toe (strafslagen of putts) — dan krijg je preciezere inzichten in je vooruitgang."),
+        LeverText.HoldSteady => ("Houd het vast",
+            "Volgende ronde: houd dezelfde doelen en routine aan — ze werken."),
         _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
     };
 
@@ -250,6 +256,8 @@ internal sealed class DutchTexts : ApiTexts
         (LeverText.DamageControl, decimal d) => $"Uitschieters t.o.v. basislijn Δ={d.ToString("0.##", Culture)}",
         (LeverText.DamageControl, null) => "Minder grote holes verbetert je score het snelst.",
         (LeverText.DataQuality, _) => "Deze ronde heeft weinig statistieken; één extra statistiek maakt de aanbeveling nauwkeuriger.",
+        (LeverText.HoldSteady, decimal) => "Strafslagen, drie‑putts en uitschieters waren allemaal gelijk aan of beter dan je basislijn.",
+        (LeverText.HoldSteady, null) => "Geen strafslagen, drie‑putts of uitschieters om aan te werken in deze ronde.",
         _ => throw new ArgumentOutOfRangeException(nameof(lever), lever, null),
     };
 
