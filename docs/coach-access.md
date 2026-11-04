@@ -117,6 +117,7 @@ and a period of at most 8 weeks.
   It's shown with a confidence level, like every other number in the app: with two rounds
   and no putts tracked, it says it can't tell yet.
 - The golfer can mark a goal done, or dismiss it. Goals need practice to be shared.
+- **Next focus:** while a goal with a focus area is active, its stat is the golfer's next focus, ahead of everything else ([architecture.md → "Choosing the next focus"](architecture.md#choosing-the-next-focus), #299).
 - Golfers can't create goals themselves in this milestone (see Open questions).
 
 ### Notifications (N4)
