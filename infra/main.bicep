@@ -240,6 +240,7 @@ var baseSettings = [
   }
   { name: 'Cors__AllowedOrigins__0', value: webOrigin }
   { name: 'PasswordReset__LinkBaseUrl', value: '${webOrigin}/reset-password' }
+  { name: 'CoachInvitations__LinkBaseUrl', value: '${webOrigin}/coach-invitation' }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }
   { name: 'ClientConfig__MinimumVersions__Ios', value: minimumVersions.ios }
   { name: 'ClientConfig__MinimumVersions__Android', value: minimumVersions.android }

@@ -22,6 +22,99 @@ namespace GolfProgress.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("GolfProgress.Domain.Entities.CoachInvitation", b =>
+                {
+                    b.Property<Guid>("CoachInvitationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("sysutcdatetime()");
+
+                    b.Property<DateTimeOffset?>("DeclinedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("GolferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("SharePractice")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShareReflections")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("CoachInvitationId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("GolferId", "Email");
+
+                    b.ToTable("CoachInvitations", (string)null);
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.CoachLink", b =>
+                {
+                    b.Property<Guid>("CoachLinkId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("sysutcdatetime()");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("EndedBy")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<Guid>("GolferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("SharePractice")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShareReflections")
+                        .HasColumnType("bit");
+
+                    b.HasKey("CoachLinkId");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("GolferId", "CoachId")
+                        .IsUnique()
+                        .HasFilter("[EndedAt] IS NULL");
+
+                    b.ToTable("CoachLinks", (string)null);
+                });
+
             modelBuilder.Entity("GolfProgress.Domain.Entities.EventLog", b =>
                 {
                     b.Property<Guid>("EventLogId")
@@ -539,6 +632,36 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("UserBaselines", (string)null);
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.CoachInvitation", b =>
+                {
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Golfer")
+                        .WithMany()
+                        .HasForeignKey("GolferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Golfer");
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.CoachLink", b =>
+                {
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Golfer")
+                        .WithMany()
+                        .HasForeignKey("GolferId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Coach");
+
+                    b.Navigation("Golfer");
                 });
 
             modelBuilder.Entity("GolfProgress.Domain.Entities.EventLog", b =>

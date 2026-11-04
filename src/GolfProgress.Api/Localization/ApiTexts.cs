@@ -88,7 +88,20 @@ public abstract class ApiTexts
 
     public abstract (string Subject, string PlainText, string Html) PasswordResetEmail(string link, int minutes);
 
+    /// <summary>A golfer's invitation to a coach (#184): who, what they'll see, and the link.</summary>
+    public abstract (string Subject, string PlainText, string Html) CoachInvitationEmail(
+        string golferName, string link, int days, bool shareReflections, bool sharePractice);
+
     protected static string Html(string text) => System.Net.WebUtility.HtmlEncode(text);
+
+    /// <summary>"a", "a and b", "a, b and c": the items that aren't null.</summary>
+    protected static string JoinList(IEnumerable<string?> items, string and)
+    {
+        var present = items.OfType<string>().ToList();
+        return present.Count <= 1
+            ? string.Concat(present)
+            : $"{string.Join(", ", present.Take(present.Count - 1))} {and} {present[^1]}";
+    }
 }
 
 internal sealed class EnglishTexts : ApiTexts
@@ -198,6 +211,27 @@ internal sealed class EnglishTexts : ApiTexts
         $"<p>To choose a new password, open this link within {minutes} minutes:<br>" +
         $"<a href=\"{Html(link)}\">Reset your password</a></p>" +
         "<p>If you didn't ask, ignore this email: your password stays as it is.</p>");
+
+    public override (string Subject, string PlainText, string Html) CoachInvitationEmail(
+        string golferName, string link, int days, bool shareReflections, bool sharePractice)
+    {
+        var shared = JoinList(new[]
+        {
+            "their rounds and progress",
+            shareReflections ? "their reflections and notes" : null,
+            sharePractice ? "their practice sessions" : null,
+        }, "and");
+        var intro = $"{golferName} tracks their golf with GolfProgress, and has invited you to be their coach.";
+        var sees = $"If you accept, you'll see {shared}.";
+        var how = $"To accept or decline, open this link within {days} days. You'll need a GolfProgress account " +
+                  "with this email address, which you can create from the link.";
+        var ignore = $"If you don't know {golferName}, you can ignore this email.";
+        return (
+            $"{golferName} invited you to be their coach on GolfProgress",
+            $"{intro}\n\n{sees}\n\n{how}\n{link}\n\n{ignore}",
+            $"<p>{Html(intro)}</p><p>{Html(sees)}</p><p>{Html(how)}<br>" +
+            $"<a href=\"{Html(link)}\">View the invitation</a></p><p>{Html(ignore)}</p>");
+    }
 }
 
 internal sealed class DutchTexts : ApiTexts
@@ -320,4 +354,25 @@ internal sealed class DutchTexts : ApiTexts
         $"<p>Open deze link binnen {minutes} minuten om een nieuw wachtwoord te kiezen:<br>" +
         $"<a href=\"{Html(link)}\">Wachtwoord opnieuw instellen</a></p>" +
         "<p>Heb je dit niet zelf gevraagd? Negeer deze e-mail dan: je wachtwoord blijft zoals het is.</p>");
+
+    public override (string Subject, string PlainText, string Html) CoachInvitationEmail(
+        string golferName, string link, int days, bool shareReflections, bool sharePractice)
+    {
+        var shared = JoinList(new[]
+        {
+            "de rondes en voortgang",
+            shareReflections ? "de reflecties en notities" : null,
+            sharePractice ? "de trainingen" : null,
+        }, "en");
+        var intro = $"{golferName} houdt zijn of haar golf bij met GolfProgress, en heeft je uitgenodigd als coach.";
+        var sees = $"Als je accepteert, zie je {shared} van {golferName}.";
+        var how = $"Open deze link binnen {days} dagen om te accepteren of af te wijzen. Je hebt een GolfProgress-account " +
+                  "met dit e-mailadres nodig; die kun je via de link aanmaken.";
+        var ignore = $"Ken je {golferName} niet? Dan kun je deze e-mail negeren.";
+        return (
+            $"{golferName} heeft je uitgenodigd als coach op GolfProgress",
+            $"{intro}\n\n{sees}\n\n{how}\n{link}\n\n{ignore}",
+            $"<p>{Html(intro)}</p><p>{Html(sees)}</p><p>{Html(how)}<br>" +
+            $"<a href=\"{Html(link)}\">Bekijk de uitnodiging</a></p><p>{Html(ignore)}</p>");
+    }
 }
