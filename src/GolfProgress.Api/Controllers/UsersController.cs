@@ -56,7 +56,7 @@ public sealed class UsersController : ControllerBase
 
         if (user is null) return NotFound();
 
-        return Ok(ToResponse(user));
+        return Ok(ToResponse(user, await HasStudentsAsync(user.UserId, ct)));
     }
 
     // PATCH /me
@@ -128,7 +128,7 @@ public sealed class UsersController : ControllerBase
             await _db.SaveChangesAsync(ct);
         }
 
-        return Ok(ToResponse(user));
+        return Ok(ToResponse(user, await HasStudentsAsync(user.UserId, ct)));
     }
 
     // POST /me/password
@@ -251,7 +251,11 @@ public sealed class UsersController : ControllerBase
         return true;
     }
 
-    private static UserResponse ToResponse(User user) => new()
+    // Clients show the Students section from this (#199).
+    private Task<bool> HasStudentsAsync(Guid userId, CancellationToken ct) =>
+        _db.CoachLinks.AnyAsync(l => l.CoachId == userId && l.EndedAt == null, ct);
+
+    private static UserResponse ToResponse(User user, bool hasStudents) => new()
     {
         UserId = user.UserId,
         Email = user.Email,
@@ -264,6 +268,7 @@ public sealed class UsersController : ControllerBase
         Typical18Score = user.Typical18Score,
         GoalFocus = user.GoalFocus ?? new List<string>(),
         CreatedAt = user.CreatedAt,
-        UpdatedAt = user.UpdatedAt
+        UpdatedAt = user.UpdatedAt,
+        HasStudents = hasStudents
     };
 }

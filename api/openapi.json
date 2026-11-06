@@ -482,6 +482,51 @@
         }
       }
     },
+    "/me/coaches": {
+      "get": {
+        "tags": [
+          "CoachInvitations"
+        ],
+        "operationId": "listCoaches",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The access token is missing, invalid or expired. Refresh it and retry once.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/me/coach-invitations": {
       "post": {
         "tags": [
@@ -576,6 +621,90 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The access token is missing, invalid or expired. Refresh it and retry once.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/coach-invitations/preview": {
+      "post": {
+        "tags": [
+          "CoachInvitations"
+        ],
+        "operationId": "previewCoachInvitation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoachInvitationTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachInvitationPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found",
@@ -754,6 +883,82 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The access token is missing, invalid or expired. Refresh it and retry once.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/coach/students": {
+      "get": {
+        "tags": [
+          "CoachStudents"
+        ],
+        "operationId": "listStudents",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total number of the caller's students.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentResponse"
+                  }
                 }
               }
             }
@@ -2709,6 +2914,31 @@
         },
         "additionalProperties": false
       },
+      "CoachInvitationPreviewResponse": {
+        "required": [
+          "expiresAt",
+          "golferDisplayName",
+          "sharePractice",
+          "shareReflections"
+        ],
+        "type": "object",
+        "properties": {
+          "golferDisplayName": {
+            "type": "string"
+          },
+          "shareReflections": {
+            "type": "boolean"
+          },
+          "sharePractice": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "CoachInvitationResponse": {
         "required": [
           "coachInvitationId",
@@ -2758,6 +2988,58 @@
             "maxLength": 200,
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoachResponse": {
+        "required": [
+          "coachLinkId",
+          "createdAt",
+          "displayName",
+          "sharePractice",
+          "shareReflections"
+        ],
+        "type": "object",
+        "properties": {
+          "coachLinkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "shareReflections": {
+            "type": "boolean"
+          },
+          "sharePractice": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoachesResponse": {
+        "required": [
+          "coaches",
+          "invitations"
+        ],
+        "type": "object",
+        "properties": {
+          "coaches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachResponse"
+            }
+          },
+          "invitations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachInvitationResponse"
+            }
           }
         },
         "additionalProperties": false
@@ -3974,6 +4256,42 @@
         },
         "additionalProperties": false
       },
+      "StudentResponse": {
+        "required": [
+          "displayName",
+          "golferId",
+          "lastActivityOn",
+          "sharePractice",
+          "shareReflections",
+          "unreadReplies"
+        ],
+        "type": "object",
+        "properties": {
+          "golferId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "lastActivityOn": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "unreadReplies": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "shareReflections": {
+            "type": "boolean"
+          },
+          "sharePractice": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateMeRequest": {
         "type": "object",
         "properties": {
@@ -4139,6 +4457,7 @@
           "email",
           "goalFocus",
           "handicapIndex",
+          "hasStudents",
           "language",
           "timezone",
           "trackingMode",
@@ -4212,6 +4531,9 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "hasStudents": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

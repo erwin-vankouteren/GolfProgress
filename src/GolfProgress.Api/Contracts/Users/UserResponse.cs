@@ -24,5 +24,7 @@ namespace GolfProgress.Api.Contracts.Users
         public DateTimeOffset CreatedAt { get; init; }
         public DateTimeOffset UpdatedAt { get; init; }
 
+        /// <summary>Whether someone's invitation made this user their coach (#199).</summary>
+        public bool HasStudents { get; init; }
     }
 }

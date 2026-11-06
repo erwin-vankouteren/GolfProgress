@@ -141,6 +141,35 @@ public sealed class CoachInvitationService
         return true;
     }
 
+    /// <summary>The golfer's active coaches, and their invitations that can still be accepted.</summary>
+    public async Task<(IReadOnlyList<CoachLink> Coaches, IReadOnlyList<CoachInvitation> Invitations)> ListAsync(
+        Guid golferId, CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var links = await _db.CoachLinks.Include(l => l.Coach)
+            .Where(l => l.GolferId == golferId && l.EndedAt == null).ToListAsync(ct);
+        var invitations = await _db.CoachInvitations
+            .Where(i => i.GolferId == golferId && i.AcceptedAt == null && i.DeclinedAt == null
+                        && i.CancelledAt == null && i.ExpiresAt > now)
+            .ToListAsync(ct);
+
+        return (links.OrderBy(l => l.CreatedAt).ToList(), invitations.OrderByDescending(i => i.CreatedAt).ToList());
+    }
+
+    /// <summary>
+    /// What the signed-in coach is invited to, under the same rules as accepting, so a
+    /// forwarded link doesn't show the golfer's name to someone else.
+    /// </summary>
+    public async Task<(CoachInvitation? Invitation, User? Golfer, CoachInvitationProblem? Problem)> PreviewAsync(
+        Guid coachId, string token, CancellationToken ct)
+    {
+        var (invitation, _, problem) = await OpenInvitationForAsync(coachId, token, ct);
+        if (problem is not null) return (null, null, problem);
+
+        var golfer = await _db.Users.FirstAsync(u => u.UserId == invitation!.GolferId, ct);
+        return (invitation, golfer, null);
+    }
+
     /// <summary>
     /// The signed-in coach accepts: the invitation is used up and the link created, in one
     /// save. Accepting again while already linked returns the existing link.
