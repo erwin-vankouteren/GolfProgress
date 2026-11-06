@@ -250,6 +250,72 @@ public sealed class CoachInvitationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task TheInvitedCoach_SeesWhoInvitesAndWhatTheyShare_BeforeDeciding()
+    {
+        await InviteAsync("coach@example.test", sharePractice: false);
+        var token = TokenFrom(_outbox.Sent.Single());
+
+        var preview = await Client(_coachId).PostAsJsonAsync("/coach-invitations/preview", new { token });
+
+        Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
+        var offered = (await preview.Content.ReadFromJsonAsync<PreviewPayload>())!;
+        Assert.Equal("Sam", offered.GolferDisplayName);
+        Assert.True(offered.ShareReflections);
+        Assert.False(offered.SharePractice);
+
+        // Looking at it doesn't use it up.
+        Assert.Equal(HttpStatusCode.OK,
+            (await Client(_coachId).PostAsJsonAsync("/coach-invitations/accept", new { token })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await Client(_coachId).PostAsJsonAsync("/coach-invitations/preview", new { token })).StatusCode);
+    }
+
+    [Fact]
+    public async Task AForwardedLink_DoesntShowTheGolfersName()
+    {
+        await InviteAsync("coach@example.test");
+        var token = TokenFrom(_outbox.Sent.Single());
+
+        var preview = await Client(_strangerId).PostAsJsonAsync("/coach-invitations/preview", new { token });
+
+        Assert.Equal(HttpStatusCode.Forbidden, preview.StatusCode);
+        Assert.DoesNotContain("Sam", await preview.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await Client(_coachId).PostAsJsonAsync("/coach-invitations/preview", new { token = "unknown" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task TheGolfer_SeesTheirCoachesAndOpenInvitations()
+    {
+        await InviteAsync("coach@example.test", shareReflections: false);
+        await Client(_coachId).PostAsJsonAsync("/coach-invitations/accept", new { token = TokenFrom(_outbox.Sent.Single()) });
+        await InviteAsync("pending@example.test", sharePractice: false);
+        var cancelled = (await (await InviteAsync("cancelled@example.test")).Content.ReadFromJsonAsync<InvitationPayload>())!;
+        await Client(_golferId).DeleteAsync($"/me/coach-invitations/{cancelled.CoachInvitationId}");
+        var expired = (await (await InviteAsync("expired@example.test")).Content.ReadFromJsonAsync<InvitationPayload>())!;
+        await _base.WithDbAsync(async db =>
+        {
+            var stored = await db.CoachInvitations.SingleAsync(i => i.CoachInvitationId == expired.CoachInvitationId);
+            stored.ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+            await db.SaveChangesAsync();
+        });
+
+        var list = (await Client(_golferId).GetFromJsonAsync<CoachesPayload>("/me/coaches"))!;
+
+        var coach = Assert.Single(list.Coaches);
+        Assert.False(coach.ShareReflections);
+        Assert.True(coach.SharePractice);
+        var invitation = Assert.Single(list.Invitations);
+        Assert.Equal("pending@example.test", invitation.Email);
+        Assert.False(invitation.SharePractice);
+
+        // Only the caller's own: being someone's coach doesn't make them your coach.
+        var theirs = (await Client(_coachId).GetFromJsonAsync<CoachesPayload>("/me/coaches"))!;
+        Assert.Empty(theirs.Coaches);
+        Assert.Empty(theirs.Invitations);
+    }
+
+    [Fact]
     public async Task EveryEndpoint_NeedsASignedInUser()
     {
         var anonymous = _factory.CreateClient();
@@ -258,6 +324,9 @@ public sealed class CoachInvitationTests : IAsyncLifetime
             (await anonymous.PostAsJsonAsync("/me/coach-invitations", new { email = "coach@example.test" })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await anonymous.DeleteAsync($"/me/coach-invitations/{Guid.NewGuid()}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/me/coaches")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await anonymous.PostAsJsonAsync("/coach-invitations/preview", new { token = "x" })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await anonymous.PostAsJsonAsync("/coach-invitations/accept", new { token = "x" })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,
@@ -294,6 +363,12 @@ public sealed class CoachInvitationTests : IAsyncLifetime
     }
 
     private sealed record InvitationPayload(Guid CoachInvitationId, string Email, bool ShareReflections, bool SharePractice, bool Resent);
+
+    private sealed record PreviewPayload(string GolferDisplayName, bool ShareReflections, bool SharePractice);
+
+    private sealed record CoachPayload(Guid CoachLinkId, string DisplayName, bool ShareReflections, bool SharePractice);
+
+    private sealed record CoachesPayload(IReadOnlyList<CoachPayload> Coaches, IReadOnlyList<InvitationPayload> Invitations);
 
     private sealed record AcceptedPayload(Guid CoachLinkId, Guid GolferId, string GolferDisplayName, bool ShareReflections, bool SharePractice);
 }

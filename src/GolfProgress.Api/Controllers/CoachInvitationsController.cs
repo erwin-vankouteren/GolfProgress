@@ -9,8 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace GolfProgress.Api.Controllers;
 
 /// <summary>
-/// Coach invitations (#184, docs/coach-access.md → "Inviting a coach"): the golfer invites
-/// and cancels; the coach, signed in with the invited address, accepts or declines.
+/// Coach invitations (#184, docs/coach-access.md → "Inviting a coach"): the golfer invites,
+/// lists and cancels; the coach, signed in with the invited address, sees what's offered,
+/// then accepts or declines.
 /// </summary>
 [Authorize]
 [ApiController]
@@ -19,6 +20,28 @@ public sealed class CoachInvitationsController : ControllerBase
     private readonly CoachInvitationService _invitations;
 
     public CoachInvitationsController(CoachInvitationService invitations) => _invitations = invitations;
+
+    // GET /me/coaches
+    //
+    // Active coaches, and invitations that can still be accepted.
+    [HttpGet("/me/coaches", Name = "listCoaches")]
+    [ProducesResponseType<CoachesResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<CoachesResponse>> ListCoaches(CancellationToken ct)
+    {
+        var (coaches, invitations) = await _invitations.ListAsync(User.GetUserId(), ct);
+        return Ok(new CoachesResponse
+        {
+            Coaches = coaches.Select(link => new CoachResponse
+            {
+                CoachLinkId = link.CoachLinkId,
+                DisplayName = CoachInvitationService.DisplayNameOf(link.Coach),
+                ShareReflections = link.ShareReflections,
+                SharePractice = link.SharePractice,
+                CreatedAt = link.CreatedAt,
+            }).ToList(),
+            Invitations = invitations.Select(i => ToResponse(i, resent: false)).ToList(),
+        });
+    }
 
     // POST /me/coach-invitations
     //
@@ -53,6 +76,30 @@ public sealed class CoachInvitationsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Cancel(Guid id, CancellationToken ct) =>
         await _invitations.CancelAsync(User.GetUserId(), id, ct) ? NoContent() : NotFound();
+
+    // POST /coach-invitations/preview
+    //
+    // Who invites and what they share, under the same rules as accepting. A POST, so the
+    // token stays out of URLs and request logs.
+    [HttpPost("/coach-invitations/preview", Name = "previewCoachInvitation")]
+    [ProducesResponseType<CoachInvitationPreviewResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CoachInvitationPreviewResponse>> Preview(
+        [FromBody] CoachInvitationTokenRequest request, CancellationToken ct)
+    {
+        var (invitation, golfer, problem) = await _invitations.PreviewAsync(User.GetUserId(), request.Token, ct);
+        if (problem is { } p) return ProblemFor(p);
+
+        return Ok(new CoachInvitationPreviewResponse
+        {
+            GolferDisplayName = CoachInvitationService.DisplayNameOf(golfer!),
+            ShareReflections = invitation!.ShareReflections,
+            SharePractice = invitation.SharePractice,
+            ExpiresAt = invitation.ExpiresAt,
+        });
+    }
 
     // POST /coach-invitations/accept
     //
