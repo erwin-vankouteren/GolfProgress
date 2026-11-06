@@ -11,6 +11,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import com.golfprogress.app.coaching.CoachesScreen
+import com.golfprogress.app.coaching.CoachesViewModel
 import com.golfprogress.app.dashboard.DashboardContent
 import com.golfprogress.app.dashboard.DashboardState
 import com.golfprogress.app.practice.LogPracticeScreen
@@ -31,6 +33,7 @@ import com.golfprogress.app.rounds.RoundFormScreen
 import com.golfprogress.app.rounds.RoundFormViewModel
 import com.golfprogress.app.rounds.RoundsListScreen
 import com.golfprogress.app.rounds.RoundsListViewModel
+import com.golfprogress.app.testing.FakeCoachingRepository
 import com.golfprogress.app.testing.FakePracticeRepository
 import com.golfprogress.app.testing.FakeProgressRepository
 import com.golfprogress.app.testing.FakeRoundsRepository
@@ -161,6 +164,17 @@ class AccessibilityChecksTest {
     fun profile() {
         val viewModel = ProfileViewModel(FakeUserRepository())
         check { ProfileScreen(onSignOut = {}, viewModel = viewModel) }
+    }
+
+    @Test
+    fun coaches() {
+        val coaching =
+            FakeCoachingRepository(
+                coaches = listOf(Fixtures.coach()),
+                invitations = mutableListOf(Fixtures.coachInvitation()),
+            )
+        val viewModel = CoachesViewModel(coaching)
+        check { CoachesScreen(viewModel = viewModel) }
     }
 
     @Test

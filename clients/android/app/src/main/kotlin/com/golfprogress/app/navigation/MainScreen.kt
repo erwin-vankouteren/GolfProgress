@@ -41,6 +41,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.golfprogress.app.R
+import com.golfprogress.app.coaching.CoachesScreen
 import com.golfprogress.app.dashboard.DashboardScreen
 import com.golfprogress.app.practice.LogPracticeScreen
 import com.golfprogress.app.practice.PracticeDetailScreen
@@ -76,6 +77,7 @@ enum class Destination(
     PracticeDetail("practice/{sessionId}", R.string.practice_session, tab = false),
     Progress("progress", R.string.section_progress, tab = true),
     Profile("profile", R.string.section_profile, tab = false),
+    Coaches("profile/coaches", R.string.coaches_title, tab = false),
 }
 
 /** The bottom bar, in order: the centre item is Log round. */
@@ -174,7 +176,10 @@ fun MainScreen(
                     arguments = listOf(navArgument(PracticeDetailViewModel.SESSION_ID) { type = NavType.StringType }),
                 ) { PracticeDetailScreen(onDeleted = { navController.popBackStack() }) }
                 composable(Destination.Progress.route) { ProgressScreen(onLogRound = logRound) }
-                composable(Destination.Profile.route) { ProfileScreen(onSignOut = onSignOut) }
+                composable(Destination.Profile.route) {
+                    ProfileScreen(onSignOut = onSignOut, onOpenCoaches = { navController.navigate(Destination.Coaches.route) })
+                }
+                composable(Destination.Coaches.route) { CoachesScreen() }
             }
         }
     }

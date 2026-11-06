@@ -1,6 +1,9 @@
 package com.golfprogress.app.testing
 
 import com.golfprogress.api.ApiProblem
+import com.golfprogress.api.generated.models.CoachInvitationResponse
+import com.golfprogress.api.generated.models.CoachResponse
+import com.golfprogress.api.generated.models.CoachesResponse
 import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.CreateReflectionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
@@ -16,6 +19,7 @@ import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.RoundTimelinePointResponse
 import com.golfprogress.api.generated.models.UserBaselineResponse
 import com.golfprogress.api.generated.models.UserResponse
+import com.golfprogress.app.data.CoachingRepository
 import com.golfprogress.app.data.DashboardRepository
 import com.golfprogress.app.data.Page
 import com.golfprogress.app.data.PracticeRepository
@@ -49,6 +53,41 @@ class FakeDashboardRepository(
     }
 
     override suspend fun fitnessScore(roundId: UUID): FitnessScoreResponse? = scores[roundId]
+}
+
+/**
+ * Coaches and invitations in memory. [failWith] makes inviting and cancelling throw, and
+ * [listFailsWith] the list.
+ */
+class FakeCoachingRepository(
+    var coaches: List<CoachResponse> = emptyList(),
+    val invitations: MutableList<CoachInvitationResponse> = mutableListOf(),
+    var listFailsWith: Exception? = null,
+) : CoachingRepository {
+    val invited = mutableListOf<Triple<String, Boolean, Boolean>>()
+    var failWith: Exception? = null
+
+    override suspend fun coaches(): CoachesResponse {
+        listFailsWith?.let { throw it }
+        return CoachesResponse(coaches, invitations.toList())
+    }
+
+    override suspend fun invite(
+        email: String,
+        shareReflections: Boolean,
+        sharePractice: Boolean,
+    ): CoachInvitationResponse {
+        failWith?.let { throw it }
+        invited += Triple(email, shareReflections, sharePractice)
+        val invitation = Fixtures.coachInvitation(email, shareReflections, sharePractice)
+        invitations += invitation
+        return invitation
+    }
+
+    override suspend fun cancelInvitation(id: UUID) {
+        failWith?.let { throw it }
+        invitations.removeAll { it.coachInvitationId == id }
+    }
 }
 
 /**
@@ -188,6 +227,8 @@ object FakeRepositories {
         private set
     lateinit var progress: FakeProgressRepository
         private set
+    lateinit var coaching: FakeCoachingRepository
+        private set
 
     fun reset() {
         dashboard = FakeDashboardRepository()
@@ -195,6 +236,7 @@ object FakeRepositories {
         rounds = FakeRoundsRepository()
         practice = FakePracticeRepository()
         progress = FakeProgressRepository()
+        coaching = FakeCoachingRepository()
     }
 
     init {
@@ -219,6 +261,9 @@ object FakeRepositoryModule {
 
     @Provides
     fun progress(): ProgressRepository = FakeRepositories.progress
+
+    @Provides
+    fun coaching(): CoachingRepository = FakeRepositories.coaching
 }
 
 /** Practice sessions in memory, newest first; creating answers id 8. */

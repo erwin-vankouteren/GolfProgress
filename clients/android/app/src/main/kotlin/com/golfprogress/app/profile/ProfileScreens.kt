@@ -329,6 +329,7 @@ fun OnboardingScreen(
 @Composable
 fun ProfileScreen(
     onSignOut: () -> Unit,
+    onOpenCoaches: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(),
     online: Boolean = isOnline(),
 ) {
@@ -352,6 +353,7 @@ fun ProfileScreen(
                 PreferencesCard(state, viewModel, online)
             }
         }
+        CoachesCard(onOpenCoaches)
         // The account and About need nothing from GET /me: signing out always works.
         AccountCard(state, viewModel, onSignOut, online)
         AboutCard()
@@ -475,6 +477,16 @@ private fun PreferencesCard(
         }
         Problem(state.preferencesProblem)
         SaveButton(R.string.save, state.preferencesSaving, online, viewModel::savePreferences)
+    }
+}
+
+@Composable
+private fun CoachesCard(onOpen: () -> Unit) {
+    SectionCard(R.string.coaches_title) {
+        Hint(stringResource(R.string.coaches_intro))
+        OutlinedButton(onClick = onOpen, modifier = Modifier.heightIn(min = DesignTokens.touchTarget)) {
+            Text(stringResource(R.string.open_coaches))
+        }
     }
 }
 
