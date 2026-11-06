@@ -420,4 +420,11 @@
     <string name="cancel_invitation_of">Uitnodiging aan %1$s annuleren</string>
     <string name="invitation_sent">Uitnodiging verstuurd naar %1$s.</string>
     <string name="invitation_resent">Uitnodiging opnieuw verstuurd naar %1$s. Alleen de nieuwste link werkt.</string>
+    <string name="coach_always_sees">Ziet altijd je rondes en voortgang.</string>
+    <string name="change_sharing_failed">Kon niet wijzigen wat je coach ziet. Probeer het opnieuw.</string>
+    <string name="remove_coach">Verwijderen</string>
+    <string name="remove_coach_of">%1$s verwijderen</string>
+    <string name="remove_coach_title">Deze coach verwijderen?</string>
+    <string name="remove_coach_body">Je coach verliest direct de toegang. De feedback die je hebt gekregen blijft staan.</string>
+    <string name="remove_coach_failed">Deze coach kon niet worden verwijderd. Probeer het opnieuw.</string>
 </resources>

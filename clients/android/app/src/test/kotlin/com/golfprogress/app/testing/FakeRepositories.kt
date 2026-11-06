@@ -88,6 +88,22 @@ class FakeCoachingRepository(
         failWith?.let { throw it }
         invitations.removeAll { it.coachInvitationId == id }
     }
+
+    override suspend fun changeSharing(
+        linkId: UUID,
+        shareReflections: Boolean,
+        sharePractice: Boolean,
+    ): CoachResponse {
+        failWith?.let { throw it }
+        val changed = coaches.first { it.coachLinkId == linkId }.copy(shareReflections = shareReflections, sharePractice = sharePractice)
+        coaches = coaches.map { if (it.coachLinkId == linkId) changed else it }
+        return changed
+    }
+
+    override suspend fun removeCoach(linkId: UUID) {
+        failWith?.let { throw it }
+        coaches = coaches.filterNot { it.coachLinkId == linkId }
+    }
 }
 
 /**

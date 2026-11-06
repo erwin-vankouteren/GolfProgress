@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.golfprogress.api.generated.models.CoachInvitationResponse
 import com.golfprogress.api.generated.models.CoachResponse
 import com.golfprogress.app.R
+import com.golfprogress.app.ui.common.ConfirmDialog
 import com.golfprogress.app.ui.common.Load
 import com.golfprogress.app.ui.common.LoadError
 import com.golfprogress.app.ui.common.SectionCard
@@ -76,7 +77,7 @@ fun CoachesScreen(
                 val active = coaches.value.coaches
                 val pending = coaches.value.invitations
                 if (active.isEmpty() && pending.isEmpty()) Text(stringResource(R.string.coaches_empty))
-                if (active.isNotEmpty()) ActiveCoaches(active)
+                if (active.isNotEmpty()) ActiveCoaches(active, state, viewModel, online)
                 if (pending.isNotEmpty()) PendingInvitations(pending, state, viewModel, online)
             }
         }
@@ -100,16 +101,62 @@ private fun Hint(text: String) {
 }
 
 @Composable
-private fun ActiveCoaches(coaches: List<CoachResponse>) {
+private fun ActiveCoaches(
+    coaches: List<CoachResponse>,
+    state: CoachesState,
+    viewModel: CoachesViewModel,
+    online: Boolean,
+) {
     SectionCard(R.string.coaches_active) {
         coaches.forEach { coach ->
-            Column {
-                Text(coach.displayName, style = MaterialTheme.typography.bodyLarge)
-                Hint(sharedText(coach.shareReflections, coach.sharePractice))
+            Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)) {
+                Text(coach.displayName, style = MaterialTheme.typography.titleMedium)
+                Hint(stringResource(R.string.coach_always_sees))
+                val enabled = online && coach.coachLinkId !in state.changing
+                ShareRow(R.string.share_reflections, R.string.share_reflections_hint, coach.shareReflections, enabled) {
+                    viewModel.changeSharing(coach, it, coach.sharePractice)
+                }
+                ShareRow(R.string.share_practice, R.string.share_practice_hint, coach.sharePractice, enabled) {
+                    viewModel.changeSharing(coach, coach.shareReflections, it)
+                }
+                val removeLabel = stringResource(R.string.remove_coach_of, coach.displayName)
+                OutlinedButton(
+                    onClick = { viewModel.askRemove(coach.coachLinkId) },
+                    enabled = online,
+                    modifier =
+                        Modifier
+                            .heightIn(min = DesignTokens.touchTarget)
+                            .semantics { contentDescription = removeLabel },
+                ) { Text(stringResource(R.string.remove_coach)) }
             }
         }
+        state.changeProblem?.let { ErrorText(actionProblemText(it, R.string.change_sharing_failed)) }
+    }
+
+    if (state.confirmRemove != null) {
+        ConfirmDialog(
+            title = R.string.remove_coach_title,
+            body = R.string.remove_coach_body,
+            confirm = R.string.remove_coach,
+            busy = state.removing,
+            error = state.removeProblem?.let { actionProblemText(it, R.string.remove_coach_failed) },
+            onConfirm = viewModel::confirmRemove,
+            onDismiss = viewModel::cancelRemove,
+        )
     }
 }
+
+@Composable
+private fun actionProblemText(
+    problem: CancelProblem,
+    @StringRes failed: Int,
+): String =
+    stringResource(
+        when (problem) {
+            CancelProblem.Failed -> failed
+            CancelProblem.CantConnect -> R.string.auth_cant_connect
+        },
+    )
 
 @Composable
 private fun PendingInvitations(
@@ -135,16 +182,7 @@ private fun PendingInvitations(
                 ) { Text(stringResource(R.string.cancel)) }
             }
         }
-        state.cancelProblem?.let {
-            ErrorText(
-                stringResource(
-                    when (it) {
-                        CancelProblem.Failed -> R.string.cancel_invitation_failed
-                        CancelProblem.CantConnect -> R.string.auth_cant_connect
-                    },
-                ),
-            )
-        }
+        state.cancelProblem?.let { ErrorText(actionProblemText(it, R.string.cancel_invitation_failed)) }
     }
 }
 
