@@ -13,6 +13,8 @@
 | Name (display name) | Create account, Profile | Yes | Shown in the app |
 | Golf rounds, notes, reflections, practice sessions | Entered by the user | Yes | The service itself |
 | Profile details (handicap, typical score, preferences) | Profile | Yes | The service itself |
+| The coach's email address, on an invitation (#183) | Typed in by the golfer | Yes, to the golfer who invites | Sending the invitation |
+| Coach links: who coaches whom, and what's shared | Invitations being accepted | Yes | The service itself |
 | Activity log (round logged, score computed; ids and dates only) | The API | Yes | App functionality, security |
 | Crash and error reports (app version, device model, OS, stack trace, request id) | Crash reporting (#119), see below | No: no user, account or install id is attached | Fixing crashes |
 
@@ -39,6 +41,22 @@ payment details, health records. No data is sold or shared with third parties; A
 the crash reporting provider act on our behalf, which neither store counts as sharing.
 No advertising or analytics SDKs, and no tracking across apps or websites.
 
+### Sharing with a coach
+
+A golfer can let a coach, another user, see their display name, rounds, scores and
+progress, and if they choose, their reflections, notes and practice. Only after the golfer
+invites that coach by email and chooses what to share, and the coach accepts; never
+their email address. See the privacy policy, "Sharing with your coach".
+
+Google's "sharing" is transferring data to a third party, meaning an organisation other
+than us or our service providers, and it excepts transfers from "a specific
+user-initiated action, where the user reasonably expects the data to be shared". An
+individual coach the golfer invites, on a screen listing what they'll see, fits that
+exception, so the form stays **not shared**. Apple's label has no question about data
+visible to other users; only the data types count, and those are already declared.
+Recheck this if coaches ever become organisations (academies) or are found another way
+than by the golfer's own invitation.
+
 ## Google Play: data safety form
 
 **Data collection and security**
@@ -53,7 +71,7 @@ No advertising or analytics SDKs, and no tracking across apps or websites.
 
 | Category → type | Collected | Shared | Required or optional | Purposes |
 |---|---|---|---|---|
-| Personal info → Email address | Yes | No | Required | Account management, App functionality |
+| Personal info → Email address (the user's, and optionally the address of a coach they invite) | Yes | No | Required | Account management, App functionality |
 | Personal info → Name | Yes | No | Required | Account management, App functionality |
 | App activity → Other user-generated content (rounds, notes, reflections, practice) | Yes | No | Required | App functionality |
 | App activity → App interactions (activity log) | Yes | No | Required | App functionality, Fraud prevention, security and compliance |
@@ -78,13 +96,16 @@ analytics or ads SDK.
 
 | Data type | Linked to the user | Used for tracking | Purposes |
 |---|---|---|---|
-| Contact Info → Email Address | Yes | No | App Functionality |
+| Contact Info → Email Address (including a coach's, typed in on an invitation) | Yes | No | App Functionality |
 | Contact Info → Name | Yes | No | App Functionality |
 | User Content → Other User Content (rounds, notes, reflections, practice) | Yes | No | App Functionality |
 | Usage Data → Product Interaction (activity log) | Yes | No | App Functionality |
 | Diagnostics → Crash Data | No | No | App Functionality |
 | Diagnostics → Performance Data | No | No | App Functionality |
 | Health & Fitness → Fitness | **Decide**, as for Google Play | No | App Functionality |
+
+Neither store's **Contacts** type applies to a coach's address: it's typed in by hand, and
+the apps don't read the phone's address book.
 
 Apple also requires in-app account deletion for apps with sign-up: done (#84,
 Profile → Delete account).
@@ -96,3 +117,5 @@ Profile → Delete account).
 - [ ] Crash reporting (#119) is configured as described in "Crash reports" above, with
       Prevent Storing of IP Addresses switched on in both Sentry projects.
 - [ ] The **Decide** items above are settled.
+- [ ] Before coaching is released: the data safety form and App Privacy answers above are
+      entered in Play Console and App Store Connect.

@@ -5,7 +5,7 @@
   policy. Update "Last updated" with every change.
 -->
 
-_Last updated: 2 November 2026_
+_Last updated: 6 November 2026_
 
 These terms apply when you use GolfProgress, on the web or in the iOS and Android apps.
 By creating an account you agree to them.
@@ -35,9 +35,25 @@ data you've entered.
 ## Your content
 
 What you enter (rounds, notes, reflections, practice) stays yours. You give us
-permission to store and process it only to provide the service to you, as described in
-the [privacy policy](privacy-policy.md). Don't enter anything unlawful or anyone else's
-personal data.
+permission to store and process it only to provide the service to you, including showing
+it to a coach you invite, as described in the [privacy policy](privacy-policy.md). Don't
+enter anything unlawful or anyone else's personal data, apart from the email address of
+someone you invite as your coach.
+
+## Coaches
+
+You can invite your coach to follow your progress, and you choose what they see. Only
+invite someone who would expect it. Coaches are independent people you choose: we don't
+employ, check or recommend them, and their advice is theirs, not ours.
+
+If you accept an invitation to coach someone:
+
+- Use what you see only to coach that golfer.
+- Keep it confidential. Don't pass it on, publish it, or use it for marketing, unless the
+  golfer has agreed.
+- Stop using it when the coaching ends, and delete any copy you made, unless the law
+  requires you to keep it.
+- You're responsible for how you use it, including under privacy law.
 
 ## Acceptable use
 
