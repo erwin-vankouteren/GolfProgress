@@ -5,6 +5,7 @@ using System.Text.Json;
 using GolfProgress.Api.Email;
 using GolfProgress.Api.Localization;
 using GolfProgress.Domain.Entities;
+using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -157,6 +158,56 @@ public sealed class CoachInvitationService
     }
 
     /// <summary>
+    /// The golfer changes what a coach sees, from the coach's next request on (#189). Null
+    /// when it isn't an active link of theirs.
+    /// </summary>
+    public async Task<CoachLink?> ChangeSharingAsync(
+        Guid golferId, Guid linkId, bool? shareReflections, bool? sharePractice, CancellationToken ct)
+    {
+        var link = await _db.CoachLinks.Include(l => l.Coach).FirstOrDefaultAsync(
+            l => l.CoachLinkId == linkId && l.GolferId == golferId && l.EndedAt == null, ct);
+        if (link is null) return null;
+
+        var reflections = shareReflections ?? link.ShareReflections;
+        var practice = sharePractice ?? link.SharePractice;
+        if (reflections == link.ShareReflections && practice == link.SharePractice) return link;
+
+        link.ShareReflections = reflections;
+        link.SharePractice = practice;
+        _db.Events.Add(Event(golferId, "CoachSharingChanged", link.CoachLinkId, DateTimeOffset.UtcNow,
+            new { coachLinkId = link.CoachLinkId, shareReflections = reflections, sharePractice = practice }));
+        await _db.SaveChangesAsync(ct);
+        return link;
+    }
+
+    /// <summary>The golfer removes a coach; false when it isn't an active link of theirs.</summary>
+    public async Task<bool> RemoveCoachAsync(Guid golferId, Guid linkId, CancellationToken ct) =>
+        await EndAsync(await _db.CoachLinks.FirstOrDefaultAsync(
+            l => l.CoachLinkId == linkId && l.GolferId == golferId && l.EndedAt == null, ct), CoachLinkEndedBy.Golfer, ct);
+
+    /// <summary>The coach stops coaching a golfer; false when they don't coach them.</summary>
+    public async Task<bool> StopCoachingAsync(Guid coachId, Guid golferId, CancellationToken ct) =>
+        await EndAsync(await _db.CoachLinks.FirstOrDefaultAsync(
+            l => l.CoachId == coachId && l.GolferId == golferId && l.EndedAt == null, ct), CoachLinkEndedBy.Coach, ct);
+
+    /// <summary>
+    /// Ends a link. It stays as history, and isn't reused: inviting the same coach again
+    /// creates a new one. In the golfer's log, as it's their data that was shared.
+    /// </summary>
+    private async Task<bool> EndAsync(CoachLink? link, CoachLinkEndedBy endedBy, CancellationToken ct)
+    {
+        if (link is null) return false;
+
+        var now = DateTimeOffset.UtcNow;
+        link.EndedAt = now;
+        link.EndedBy = endedBy;
+        _db.Events.Add(Event(link.GolferId, "CoachLinkEnded", link.CoachLinkId, now,
+            new { coachLinkId = link.CoachLinkId, endedBy = endedBy.ToString() }));
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>
     /// What the signed-in coach is invited to, under the same rules as accepting, so a
     /// forwarded link doesn't show the golfer's name to someone else.
     /// </summary>
@@ -254,13 +305,13 @@ public sealed class CoachInvitationService
 
     private static string Normalise(string email) => email.Trim().ToLowerInvariant();
 
-    private static EventLog Event(Guid userId, string type, Guid invitationId, DateTimeOffset now, object? payload = null) => new()
+    private static EventLog Event(Guid userId, string type, Guid relatedId, DateTimeOffset now, object? payload = null) => new()
     {
         EventLogId = Guid.NewGuid(),
         UserId = userId,
         EventType = type,
-        RelatedId = invitationId,
-        PayloadJson = JsonDocument.Parse(JsonSerializer.Serialize(payload ?? new { coachInvitationId = invitationId })),
+        RelatedId = relatedId,
+        PayloadJson = JsonDocument.Parse(JsonSerializer.Serialize(payload ?? new { coachInvitationId = relatedId })),
         CreatedAt = now,
     };
 

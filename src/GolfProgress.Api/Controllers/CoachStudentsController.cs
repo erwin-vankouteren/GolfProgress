@@ -18,8 +18,13 @@ namespace GolfProgress.Api.Controllers;
 public sealed class CoachStudentsController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
+    private readonly CoachInvitationService _invitations;
 
-    public CoachStudentsController(GolfProgressDbContext db) => _db = db;
+    public CoachStudentsController(GolfProgressDbContext db, CoachInvitationService invitations)
+    {
+        _db = db;
+        _invitations = invitations;
+    }
 
     // GET /coach/students?skip=0&take=20
     //
@@ -82,4 +87,14 @@ public sealed class CoachStudentsController : ControllerBase
             .Take(take)
             .ToList());
     }
+
+    // DELETE /coach/students/{golferId}
+    //
+    // The coach stops coaching a golfer (#189). 404, so it doesn't reveal whether a golfer
+    // exists, when the caller doesn't coach them.
+    [HttpDelete("/coach/students/{golferId:guid}", Name = "stopCoaching")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> StopCoaching(Guid golferId, CancellationToken ct) =>
+        await _invitations.StopCoachingAsync(User.GetUserId(), golferId, ct) ? NoContent() : NotFound();
 }

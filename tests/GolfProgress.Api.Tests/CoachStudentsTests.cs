@@ -1,4 +1,6 @@
 using GolfProgress.Domain.Entities;
+using GolfProgress.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -104,16 +106,104 @@ public sealed class CoachStudentsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TheList_NeedsASignedInUser() =>
-        Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateClient().GetAsync("/coach/students")).StatusCode);
+    public async Task TheGolfer_ChangesWhatACoachSees_LeavingOutWhatTheyDontMention()
+    {
+        var linkId = await LinkAsync(_annId, _coachId);
+        var golfer = TestWorld.ClientFor(_factory, _annId);
 
-    private Task LinkAsync(
-        Guid golferId, Guid coachId, bool shareReflections = true, bool sharePractice = true, DateTimeOffset? endedAt = null) =>
-        _factory.WithDbAsync(async db =>
+        var changed = await golfer.PatchAsJsonAsync($"/me/coaches/{linkId}", new { sharePractice = false });
+
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+        var student = Assert.Single(await StudentsOfAsync(_coachId));
+        Assert.True(student.ShareReflections);
+        Assert.False(student.SharePractice);
+
+        // Saving the same again logs nothing new.
+        await golfer.PatchAsJsonAsync($"/me/coaches/{linkId}", new { sharePractice = false });
+        await _factory.WithDbAsync(async db =>
+            Assert.Equal(1, await db.Events.CountAsync(e => e.UserId == _annId && e.EventType == "CoachSharingChanged")));
+    }
+
+    [Fact]
+    public async Task TheGolfer_RemovesACoach_WhoLosesAccessAtOnce_AndCanBeInvitedAgain()
+    {
+        var linkId = await LinkAsync(_annId, _coachId);
+        var golfer = TestWorld.ClientFor(_factory, _annId);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await golfer.DeleteAsync($"/me/coaches/{linkId}")).StatusCode);
+
+        Assert.Empty(await StudentsOfAsync(_coachId));
+        Assert.False(await HasStudentsAsync(_coachId));
+        await _factory.WithDbAsync(async db =>
+        {
+            var link = await db.CoachLinks.SingleAsync();
+            Assert.Equal(CoachLinkEndedBy.Golfer, link.EndedBy);
+            Assert.NotNull(link.EndedAt);
+            Assert.True(await db.Events.AnyAsync(e => e.UserId == _annId && e.EventType == "CoachLinkEnded"));
+        });
+
+        var again = await golfer.PostAsJsonAsync("/me/coach-invitations", new { email = "coach@example.test" });
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+    }
+
+    [Fact]
+    public async Task TheCoach_StopsCoaching_AndTheGolferSeesThemGone()
+    {
+        await LinkAsync(_annId, _coachId);
+
+        var stopped = await TestWorld.ClientFor(_factory, _coachId).DeleteAsync($"/coach/students/{_annId}");
+
+        Assert.Equal(HttpStatusCode.NoContent, stopped.StatusCode);
+        var coaches = await TestWorld.ClientFor(_factory, _annId).GetFromJsonAsync<CoachesPayload>("/me/coaches");
+        Assert.Empty(coaches!.Coaches);
+        await _factory.WithDbAsync(async db =>
+            Assert.Equal(CoachLinkEndedBy.Coach, (await db.CoachLinks.SingleAsync()).EndedBy));
+    }
+
+    [Fact]
+    public async Task NobodyElse_CanChangeOrEndALink_AndAnEndedOneIs404()
+    {
+        var linkId = await LinkAsync(_annId, _coachId);
+        var endedId = await LinkAsync(_benId, _coachId, endedAt: DateTimeOffset.UtcNow.AddMinutes(-1));
+        var stranger = TestWorld.ClientFor(_factory, _caraId);
+        var coach = TestWorld.ClientFor(_factory, _coachId);
+
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await stranger.PatchAsJsonAsync($"/me/coaches/{linkId}", new { shareReflections = false })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await stranger.DeleteAsync($"/me/coaches/{linkId}")).StatusCode);
+        // The coach can't widen what they see, or end it as if the golfer had.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await coach.PatchAsJsonAsync($"/me/coaches/{linkId}", new { sharePractice = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await coach.DeleteAsync($"/me/coaches/{linkId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await stranger.DeleteAsync($"/coach/students/{_annId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await coach.DeleteAsync($"/coach/students/{_benId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await TestWorld.ClientFor(_factory, _benId).DeleteAsync($"/me/coaches/{endedId}")).StatusCode);
+
+        Assert.Single(await StudentsOfAsync(_coachId));
+    }
+
+    [Fact]
+    public async Task EveryEndpoint_NeedsASignedInUser()
+    {
+        var anonymous = _factory.CreateClient();
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/coach/students")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.DeleteAsync($"/coach/students/{_annId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.DeleteAsync($"/me/coaches/{Guid.NewGuid()}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await anonymous.PatchAsJsonAsync($"/me/coaches/{Guid.NewGuid()}", new { sharePractice = false })).StatusCode);
+    }
+
+    private async Task<Guid> LinkAsync(
+        Guid golferId, Guid coachId, bool shareReflections = true, bool sharePractice = true, DateTimeOffset? endedAt = null)
+    {
+        var linkId = Guid.NewGuid();
+        await _factory.WithDbAsync(async db =>
         {
             db.CoachLinks.Add(new CoachLink
             {
-                CoachLinkId = Guid.NewGuid(),
+                CoachLinkId = linkId,
                 GolferId = golferId,
                 CoachId = coachId,
                 ShareReflections = shareReflections,
@@ -123,6 +213,8 @@ public sealed class CoachStudentsTests : IAsyncLifetime
             });
             await db.SaveChangesAsync();
         });
+        return linkId;
+    }
 
     private Task RoundAsync(Guid userId, DateOnly playedAt) => _factory.WithDbAsync(async db =>
     {
@@ -154,4 +246,6 @@ public sealed class CoachStudentsTests : IAsyncLifetime
         Guid GolferId, string DisplayName, DateOnly? LastActivityOn, int UnreadReplies, bool ShareReflections, bool SharePractice);
 
     private sealed record MePayload(bool HasStudents);
+
+    private sealed record CoachesPayload(IReadOnlyList<object> Coaches);
 }

@@ -31,17 +31,34 @@ public sealed class CoachInvitationsController : ControllerBase
         var (coaches, invitations) = await _invitations.ListAsync(User.GetUserId(), ct);
         return Ok(new CoachesResponse
         {
-            Coaches = coaches.Select(link => new CoachResponse
-            {
-                CoachLinkId = link.CoachLinkId,
-                DisplayName = CoachInvitationService.DisplayNameOf(link.Coach),
-                ShareReflections = link.ShareReflections,
-                SharePractice = link.SharePractice,
-                CreatedAt = link.CreatedAt,
-            }).ToList(),
+            Coaches = coaches.Select(ToResponse).ToList(),
             Invitations = invitations.Select(i => ToResponse(i, resent: false)).ToList(),
         });
     }
+
+    // PATCH /me/coaches/{linkId}
+    //
+    // Changes what a coach sees, from their next request on (#189).
+    [HttpPatch("/me/coaches/{linkId:guid}", Name = "updateCoach")]
+    [ProducesResponseType<CoachResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CoachResponse>> UpdateCoach(
+        Guid linkId, [FromBody] UpdateCoachRequest request, CancellationToken ct)
+    {
+        var link = await _invitations.ChangeSharingAsync(
+            User.GetUserId(), linkId, request.ShareReflections, request.SharePractice, ct);
+        return link is null ? NotFound() : Ok(ToResponse(link));
+    }
+
+    // DELETE /me/coaches/{linkId}
+    //
+    // Removes a coach: their access ends with their next request (#189).
+    [HttpDelete("/me/coaches/{linkId:guid}", Name = "removeCoach")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveCoach(Guid linkId, CancellationToken ct) =>
+        await _invitations.RemoveCoachAsync(User.GetUserId(), linkId, ct) ? NoContent() : NotFound();
 
     // POST /me/coach-invitations
     //
@@ -149,6 +166,15 @@ public sealed class CoachInvitationsController : ControllerBase
             title: "This golfer already has the most coaches they can have."),
         _ => Problem(statusCode: StatusCodes.Status404NotFound,
             title: "This invitation has expired, or was already used or cancelled."),
+    };
+
+    private static CoachResponse ToResponse(CoachLink link) => new()
+    {
+        CoachLinkId = link.CoachLinkId,
+        DisplayName = CoachInvitationService.DisplayNameOf(link.Coach),
+        ShareReflections = link.ShareReflections,
+        SharePractice = link.SharePractice,
+        CreatedAt = link.CreatedAt,
     };
 
     private static CoachInvitationResponse ToResponse(CoachInvitation invitation, bool resent) => new()
