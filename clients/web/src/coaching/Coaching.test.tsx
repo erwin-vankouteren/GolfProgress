@@ -131,12 +131,85 @@ describe("Profile → Coaches (#185)", () => {
     const coaches = await coachesRegion();
 
     expect(await within(coaches).findByText("Mark")).toBeInTheDocument();
-    expect(within(coaches).getByText("Sees: Rounds and progress, Reflections and notes, and Practice")).toBeVisible();
+    expect(within(coaches).getByText("Always sees your rounds and progress.")).toBeVisible();
 
     await user.click(within(coaches).getByRole("button", { name: "Cancel the invitation to pro@example.test" }));
 
     await waitFor(() => expect(within(coaches).queryByText("pro@example.test")).not.toBeInTheDocument());
     expect(within(coaches).getByText("Mark")).toBeInTheDocument();
+  });
+
+  const coach = {
+    coachLinkId: "00000000-0000-0000-0000-00000000000b",
+    displayName: "Mark",
+    shareReflections: true,
+    sharePractice: true,
+    createdAt: "2026-10-01T10:00:00Z",
+  };
+
+  it("changes what a coach sees as it's switched", async () => {
+    let current = { ...coach };
+    const bodies: unknown[] = [];
+    const { user } = renderSignedIn("/profile", {
+      "GET /me": () => json(200, me),
+      "GET /me/coaches": () => json(200, { coaches: [current], invitations: [] }),
+      [`PATCH /me/coaches/${coach.coachLinkId}`]: async (request) => {
+        const body = (await request.json()) as Partial<typeof coach>;
+        bodies.push(body);
+        current = { ...current, ...body };
+        return json(200, current);
+      },
+    });
+    const mark = await screen.findByRole("group", { name: "Mark" });
+
+    await user.click(within(mark).getByRole("checkbox", { name: /Practice/ }));
+
+    await waitFor(() => expect(within(mark).getByRole("checkbox", { name: /Practice/ })).not.toBeChecked());
+    expect(bodies).toEqual([{ shareReflections: true, sharePractice: false }]);
+    await waitFor(() => expect(within(mark).getByRole("checkbox", { name: /Practice/ })).toBeEnabled());
+    expect(within(mark).getByRole("checkbox", { name: /Reflections and notes/ })).toBeChecked();
+  });
+
+  it("goes back and says so when the change fails", async () => {
+    const { user } = renderSignedIn("/profile", {
+      "GET /me": () => json(200, me),
+      "GET /me/coaches": () => json(200, { coaches: [coach], invitations: [] }),
+      [`PATCH /me/coaches/${coach.coachLinkId}`]: () => json(500, { status: 500 }),
+    });
+    const mark = await screen.findByRole("group", { name: "Mark" });
+
+    await user.click(within(mark).getByRole("checkbox", { name: /Practice/ }));
+
+    expect(await screen.findByText(/Couldn't change what your coach sees/)).toBeInTheDocument();
+    expect(within(mark).getByRole("checkbox", { name: /Practice/ })).toBeChecked();
+  });
+
+  it("removes a coach only after saying what that means", async () => {
+    let coaches = [coach];
+    let deletes = 0;
+    const { user } = renderSignedIn("/profile", {
+      "GET /me": () => json(200, me),
+      "GET /me/coaches": () => json(200, { coaches, invitations: [] }),
+      [`DELETE /me/coaches/${coach.coachLinkId}`]: () => {
+        deletes++;
+        coaches = [];
+        return noContent();
+      },
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Remove Mark" }));
+    const dialog = await screen.findByRole("dialog", { name: "Remove this coach?" });
+    expect(within(dialog).getByText(/lose access straight away/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/feedback they gave you stays/)).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(deletes).toBe(0);
+
+    await user.click(screen.getByRole("button", { name: "Remove Mark" }));
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Remove" }));
+
+    expect(await screen.findByText(/No coaches yet/)).toBeInTheDocument();
+    expect(deletes).toBe(1);
   });
 
   it("offers Try again when the list can't load, and inviting still works", async () => {
@@ -223,6 +296,26 @@ describe("Students (#200)", () => {
     await user.click(tryAgain);
 
     expect(await screen.findByText(/No students yet/)).toBeInTheDocument();
+  });
+
+  it("stops coaching after asking, and leaves the navigation with the last student", async () => {
+    let students = [student];
+    const { user } = renderSignedIn("/students", {
+      "GET /me": () => json(200, { ...me, hasStudents: students.length > 0 }),
+      "GET /coach/students": () => json(200, students),
+      [`DELETE /coach/students/${student.golferId}`]: () => {
+        students = [];
+        return noContent();
+      },
+    });
+    await screen.findByRole("link", { name: "Students" });
+
+    await user.click(await screen.findByRole("button", { name: "Stop coaching Sam" }));
+    const dialog = await screen.findByRole("dialog", { name: "Stop coaching this golfer?" });
+    await user.click(within(dialog).getByRole("button", { name: "Stop coaching" }));
+
+    expect(await screen.findByText(/No students yet/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("link", { name: "Students" })).not.toBeInTheDocument());
   });
 
   it("loads the next page on request", async () => {

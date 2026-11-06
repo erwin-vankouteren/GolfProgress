@@ -31,6 +31,28 @@ export const plainMessages = defineMessages({
   },
   studentNoActivity: { id: "students.noActivity", defaultMessage: "No activity yet" },
   showMoreStudents: { id: "students.showMore", defaultMessage: "Show more students" },
+  coachAlwaysSees: { id: "coaches.alwaysSees", defaultMessage: "Always sees your rounds and progress." },
+  changeSharingFailed: {
+    id: "coaches.changeFailed",
+    defaultMessage: "Couldn't change what your coach sees. Please try again.",
+  },
+  removeCoach: { id: "coaches.remove", defaultMessage: "Remove" },
+  removeCoachTitle: { id: "coaches.removeTitle", defaultMessage: "Remove this coach?" },
+  removeCoachBody: {
+    id: "coaches.removeBody",
+    defaultMessage: "They lose access straight away. The feedback they gave you stays.",
+  },
+  removeCoachFailed: { id: "coaches.removeFailed", defaultMessage: "Couldn't remove this coach. Please try again." },
+  stopCoaching: { id: "students.stop", defaultMessage: "Stop coaching" },
+  stopCoachingTitle: { id: "students.stopTitle", defaultMessage: "Stop coaching this golfer?" },
+  stopCoachingBody: {
+    id: "students.stopBody",
+    defaultMessage: "You lose access to what they share straight away. What you wrote for them stays with them.",
+  },
+  stopCoachingFailed: {
+    id: "students.stopFailed",
+    defaultMessage: "Couldn't stop coaching this golfer. Please try again.",
+  },
   coachesTitle: { id: "coaches.title", defaultMessage: "Coaches" },
   coachesLoadError: { id: "coaches.loadError", defaultMessage: "Couldn't load your coaches." },
   coachesEmpty: { id: "coaches.empty", defaultMessage: "No coaches yet. Invite your coach to follow your progress." },
@@ -715,6 +737,14 @@ export const messagesWithValues = {
   studentShares: defineMessage<{ items: string }>({
     id: "students.shares",
     defaultMessage: "You see: {items}",
+  }),
+  removeCoachOf: defineMessage<{ name: string }>({
+    id: "coaches.removeOf",
+    defaultMessage: "Remove {name}",
+  }),
+  stopCoachingOf: defineMessage<{ name: string }>({
+    id: "students.stopOf",
+    defaultMessage: "Stop coaching {name}",
   }),
   coachSees: defineMessage<{ items: string }>({
     id: "coaches.sees",

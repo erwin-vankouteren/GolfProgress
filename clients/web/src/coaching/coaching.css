@@ -22,6 +22,11 @@
   overflow-wrap: anywhere;
 }
 
+.coach-list li.coach-active {
+  display: grid;
+  justify-content: stretch;
+}
+
 .coach-list p {
   margin: 0;
 }

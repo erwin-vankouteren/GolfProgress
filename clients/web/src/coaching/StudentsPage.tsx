@@ -1,7 +1,11 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
-import type { Schemas } from "../api";
-import { useStudentList } from "../api/queries";
-import { LoadError, Skeleton } from "../common/states";
+import { ApiProblem, unwrap, type Schemas } from "../api";
+import { queryKeys, useStudentList } from "../api/queries";
+import { useApi } from "../app/ApiContext";
+import { ConfirmDialog } from "../common/ConfirmDialog";
+import { LoadError, Skeleton, useOnline } from "../common/states";
 import { messages } from "../i18n/messages";
 import { sharedLabels } from "./CoachesSection";
 import { sharedItems } from "./coachForm";
@@ -55,6 +59,25 @@ export function StudentsPage() {
 
 function Student({ student }: { student: Schemas["StudentResponse"] }) {
   const intl = useIntl();
+  const api = useApi();
+  const online = useOnline();
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  // Also GET /me: without students, the section leaves the navigation.
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.students }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+    ]);
+  const stop = useMutation({
+    mutationFn: async () =>
+      unwrap(await api.DELETE("/coach/students/{golferId}", { params: { path: { golferId: student.golferId } } })),
+    onSuccess: refresh,
+    onError: (error) => {
+      // Removed by the golfer meanwhile: the list shows what's true now.
+      if (error instanceof ApiProblem && error.status === 404) void refresh();
+    },
+  });
   const items = intl.formatList(sharedItems(student).map((item) => intl.formatMessage(sharedLabels[item])));
 
   return (
@@ -83,6 +106,36 @@ function Student({ student }: { student: Schemas["StudentResponse"] }) {
           <FormattedMessage {...messages.studentShares} values={{ items }} />
         </p>
       </div>
+      <button
+        type="button"
+        className="button"
+        disabled={!online}
+        aria-label={intl.formatMessage(messages.stopCoachingOf, { name: student.displayName })}
+        onClick={() => {
+          stop.reset();
+          setConfirming(true);
+        }}
+      >
+        <FormattedMessage {...messages.stopCoaching} />
+      </button>
+      {confirming && (
+        <ConfirmDialog
+          title={messages.stopCoachingTitle}
+          body={messages.stopCoachingBody}
+          confirm={messages.stopCoaching}
+          busyLabel={messages.working}
+          busy={stop.isPending}
+          error={
+            stop.isError
+              ? intl.formatMessage(
+                  stop.error instanceof ApiProblem ? messages.stopCoachingFailed : messages.cantConnect,
+                )
+              : undefined
+          }
+          onConfirm={() => stop.mutate()}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </li>
   );
 }
