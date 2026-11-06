@@ -1,5 +1,7 @@
 package com.golfprogress.app.testing
 
+import com.golfprogress.api.generated.models.CoachInvitationResponse
+import com.golfprogress.api.generated.models.CoachResponse
 import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
@@ -23,6 +25,18 @@ import java.util.UUID
 object Fixtures {
     val userId: UUID = UUID.fromString("3f2b8c1e-5d4a-4b6f-9e2d-1a7c8b9d0e1f")
     val now: OffsetDateTime = OffsetDateTime.parse("2026-05-10T10:00:00Z")
+
+    fun coach(
+        name: String = "Mark",
+        shareReflections: Boolean = false,
+        sharePractice: Boolean = true,
+    ) = CoachResponse(UUID.randomUUID(), name, shareReflections, sharePractice, now)
+
+    fun coachInvitation(
+        email: String = "pro@example.test",
+        shareReflections: Boolean = true,
+        sharePractice: Boolean = true,
+    ) = CoachInvitationResponse(UUID.randomUUID(), email, shareReflections, sharePractice, now, now.plusDays(7), resent = false)
 
     fun roundId(i: Int): UUID = UUID.fromString("00000000-0000-0000-0000-%012d".format(i))
 
@@ -113,6 +127,7 @@ object Fixtures {
         goalFocus = goalFocus,
         createdAt = now,
         updatedAt = now,
+        hasStudents = false,
     )
 
     /** A round as the API returns it after saving [request], scored 72. */

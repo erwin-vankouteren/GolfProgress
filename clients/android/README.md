@@ -46,6 +46,7 @@ the module applies the Compose compiler plugin but not `kotlin-android`.
 | `data/` | Repositories over the generated client, one per area, bound in `di/RepositoryModule.kt`. View models only see these interfaces |
 | `ui/common/` | `Load` (loading, failed, loaded), skeletons, errors with Try again, empty states, cards, the offline banner, and the score pieces (confidence, pillars, dates) |
 | `profile/` | Profile (#113): your details, preferences, change password, sign out, delete account and About; and onboarding after Create account, which ends on Log round. `ProfileForm.kt` holds the web app's rules |
+| `coaching/` | Profile → Coaches (#186): active coaches, pending invitations with Cancel, and Invite a coach. Accepting happens on the web, from the email's link |
 | `version/` | `VersionViewModel`: "Update required" when this build is older than `GET /client-config`'s minimum. It never blocks start-up, and if the check fails the app carries on |
 | `di/AppModule.kt` | Hilt: the API client, the session and its token store, the app version, the minimum-version source |
 | `ui/theme/Theme.kt` | The Material 3 theme, built only from `DesignTokens`; light or dark follows the system |
