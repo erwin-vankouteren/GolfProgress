@@ -23,6 +23,69 @@ export const plainMessages = defineMessages({
   },
   progressEmpty: { id: "progress.empty", defaultMessage: "Log a few rounds to see your trends." },
 
+  students: { id: "section.students", defaultMessage: "Students" },
+  studentsLoadError: { id: "students.loadError", defaultMessage: "Couldn't load your students." },
+  studentsEmpty: {
+    id: "students.empty",
+    defaultMessage: "No students yet. When you accept a golfer's invitation, they appear here.",
+  },
+  studentNoActivity: { id: "students.noActivity", defaultMessage: "No activity yet" },
+  showMoreStudents: { id: "students.showMore", defaultMessage: "Show more students" },
+  coachesTitle: { id: "coaches.title", defaultMessage: "Coaches" },
+  coachesLoadError: { id: "coaches.loadError", defaultMessage: "Couldn't load your coaches." },
+  coachesEmpty: { id: "coaches.empty", defaultMessage: "No coaches yet. Invite your coach to follow your progress." },
+  coachesPending: { id: "coaches.pending", defaultMessage: "Pending invitations" },
+  inviteCoach: { id: "coaches.invite", defaultMessage: "Invite a coach" },
+  coachEmail: { id: "coaches.email", defaultMessage: "Your coach's email address" },
+  whatCoachSees: { id: "coaches.whatTheySee", defaultMessage: "What your coach sees" },
+  shareRounds: { id: "coaches.shareRounds", defaultMessage: "Rounds and progress" },
+  shareRoundsHint: {
+    id: "coaches.shareRoundsHint",
+    defaultMessage: "Always shared: your rounds, fitness scores, next focus and monthly reviews.",
+  },
+  shareReflections: { id: "coaches.shareReflections", defaultMessage: "Reflections and notes" },
+  shareReflectionsHint: {
+    id: "coaches.shareReflectionsHint",
+    defaultMessage: "Your round reflections, and the notes on your rounds and practice sessions.",
+  },
+  sharePractice: { id: "coaches.sharePractice", defaultMessage: "Practice" },
+  sharePracticeHint: { id: "coaches.sharePracticeHint", defaultMessage: "Your practice sessions and practice goals." },
+  neverShared: {
+    id: "coaches.neverShared",
+    defaultMessage:
+      "Coaches never see your email address, preferences, handicap or typical score, or your other coaches.",
+  },
+  sendInvitation: { id: "coaches.send", defaultMessage: "Send invitation" },
+  inviteFailed: { id: "coaches.inviteFailed", defaultMessage: "Couldn't send the invitation. Please try again." },
+  tooManyInvitations: { id: "coaches.tooMany", defaultMessage: "Too many invitations today. Try again tomorrow." },
+  cancelInvitationFailed: {
+    id: "coaches.cancelFailed",
+    defaultMessage: "Couldn't cancel the invitation. Please try again.",
+  },
+  offlineCantInvite: { id: "coaches.offline", defaultMessage: "You're offline. Connect to send an invitation." },
+  invitationTitle: { id: "invitation.title", defaultMessage: "Coach invitation" },
+  invitationSignedOut: {
+    id: "invitation.signedOut",
+    defaultMessage:
+      "A golfer invited you to be their coach on GolfProgress. Sign in or create an account with the email address this invitation was sent to.",
+  },
+  invitationShares: { id: "invitation.shares", defaultMessage: "You'll see their:" },
+  acceptInvitation: { id: "invitation.accept", defaultMessage: "Accept" },
+  declineInvitation: { id: "invitation.decline", defaultMessage: "Decline" },
+  invitationGone: {
+    id: "invitation.gone",
+    defaultMessage: "This invitation has expired, or was already used or cancelled. Ask the golfer to send a new one.",
+  },
+  invitationWrongAccount: {
+    id: "invitation.wrongAccount",
+    defaultMessage: "This invitation is for another email address. Sign in with the address it was sent to.",
+  },
+  signInAnotherAccount: { id: "invitation.otherAccount", defaultMessage: "Sign in with another account" },
+  invitationFull: { id: "invitation.full", defaultMessage: "This golfer already has the most coaches they can have." },
+  invitationLoadError: { id: "invitation.loadError", defaultMessage: "Couldn't load this invitation." },
+  invitationDeclined: { id: "invitation.declined", defaultMessage: "You declined the invitation." },
+  offlineCantRespond: { id: "invitation.offline", defaultMessage: "You're offline. Connect to accept or decline." },
+
   notFoundTitle: { id: "notFound.title", defaultMessage: "Page not found" },
   notFoundBody: { id: "notFound.body", defaultMessage: "This page doesn't exist." },
   backHome: { id: "notFound.backHome", defaultMessage: "Back to Home" },
@@ -640,6 +703,42 @@ export const messagesWithValues = {
   onboardingStep: defineMessage<{ step: number; total: number }>({
     id: "onboarding.step",
     defaultMessage: "Step {step} of {total}",
+  }),
+  studentLastActivity: defineMessage<{ date: string }>({
+    id: "students.lastActivity",
+    defaultMessage: "Last activity: {date}",
+  }),
+  studentUnreadReplies: defineMessage<{ count: number }>({
+    id: "students.unreadReplies",
+    defaultMessage: "{count, plural, one {# unread reply} other {# unread replies}}",
+  }),
+  studentShares: defineMessage<{ items: string }>({
+    id: "students.shares",
+    defaultMessage: "You see: {items}",
+  }),
+  coachSees: defineMessage<{ items: string }>({
+    id: "coaches.sees",
+    defaultMessage: "Sees: {items}",
+  }),
+  invitationExpires: defineMessage<{ date: string }>({
+    id: "coaches.expires",
+    defaultMessage: "Pending, expires {date}",
+  }),
+  cancelInvitationOf: defineMessage<{ email: string }>({
+    id: "coaches.cancelOf",
+    defaultMessage: "Cancel the invitation to {email}",
+  }),
+  invitationSent: defineMessage<{ email: string }>({
+    id: "coaches.sent",
+    defaultMessage: "Invitation sent to {email}.",
+  }),
+  invitationResent: defineMessage<{ email: string }>({
+    id: "coaches.resent",
+    defaultMessage: "Invitation sent to {email} again. Only the newest link works.",
+  }),
+  invitationFrom: defineMessage<{ name: string }>({
+    id: "invitation.from",
+    defaultMessage: "{name} invited you to be their coach.",
   }),
   focusTooLong: defineMessage<{ max: number }>({
     id: "progress.focusTooLong",

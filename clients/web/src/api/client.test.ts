@@ -16,6 +16,7 @@ const user: Schemas["UserResponse"] = {
   goalFocus: ["putting"],
   createdAt: "2026-05-01T09:30:00.1234567+00:00",
   updatedAt: "2026-05-01T09:30:00+00:00",
+  hasStudents: false,
 };
 
 const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>

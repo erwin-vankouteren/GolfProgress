@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { useMe } from "../api/queries";
 import { OfflineBanner } from "../common/states";
-import { messages } from "../i18n/messages";
+import { messages, type PlainMessage } from "../i18n/messages";
 import { LogRoundLink, LogRoundProvider } from "../rounds/LogRound";
 import "./AppLayout.css";
 
@@ -15,6 +16,11 @@ export const sections = [
   { path: "/profile", label: messages.profile, end: false },
 ] as const;
 
+type Section = { path: string; label: PlainMessage; end: boolean };
+
+/** Shown once someone's invitation is accepted (#200), before Profile. */
+const studentsSection: Section = { path: "/students", label: messages.students, end: false };
+
 /**
  * The signed-in app frame (#75): header with "Log round", sidebar navigation that
  * collapses into a menu on narrow screens, and the current section.
@@ -22,6 +28,10 @@ export const sections = [
 export function AppLayout() {
   const intl = useIntl();
   const location = useLocation();
+  const hasStudents = useMe().data?.hasStudents ?? false;
+  const shownSections = hasStudents
+    ? sections.flatMap<Section>((section) => (section.path === "/profile" ? [studentsSection, section] : [section]))
+    : sections;
   // The menu remembers the page it was opened on, so navigating closes it without an
   // extra state update.
   const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null);
@@ -77,7 +87,7 @@ export function AppLayout() {
           aria-label={intl.formatMessage(messages.mainNavigation)}
         >
           <ul>
-            {sections.map((section) => (
+            {shownSections.map((section) => (
               <li key={section.path}>
                 <NavLink to={section.path} end={section.end}>
                   <FormattedMessage {...section.label} />

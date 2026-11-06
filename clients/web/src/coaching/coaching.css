@@ -1,0 +1,42 @@
+/* Coaches on Profile and the invitation page (#185). Tokens only. */
+
+.coach-list {
+  display: grid;
+  gap: var(--space-md);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coach-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.coach-list li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.coach-list p {
+  margin: 0;
+}
+
+.student-list h2 {
+  margin: 0 0 var(--space-xxs);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-label);
+}
+
+.coach-never-shared {
+  margin-top: var(--space-xs);
+}
+
+.invitation-shares {
+  margin: 0 0 var(--space-lg);
+  padding-left: var(--space-lg);
+}
