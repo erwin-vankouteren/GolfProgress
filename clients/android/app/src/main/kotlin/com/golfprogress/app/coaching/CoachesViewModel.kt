@@ -3,6 +3,7 @@ package com.golfprogress.app.coaching
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.golfprogress.api.ApiProblem
+import com.golfprogress.api.generated.models.CoachResponse
 import com.golfprogress.api.generated.models.CoachesResponse
 import com.golfprogress.app.data.CoachingRepository
 import com.golfprogress.app.ui.common.Load
@@ -68,11 +69,18 @@ data class CoachesState(
     val inviteProblem: InviteProblem? = null,
     val cancelling: Set<UUID> = emptySet(),
     val cancelProblem: CancelProblem? = null,
+    /** Coaches whose sharing is being saved. */
+    val changing: Set<UUID> = emptySet(),
+    val changeProblem: CancelProblem? = null,
+    /** The coach Remove asks about. */
+    val confirmRemove: UUID? = null,
+    val removing: Boolean = false,
+    val removeProblem: CancelProblem? = null,
 )
 
 /**
  * Profile → Coaches (#186, docs/coach-access.md → "Screens"): who coaches you, who's been
- * invited, and Invite a coach. Changing what a coach sees and removing them is #191.
+ * invited, what each coach sees, Remove (#191), and Invite a coach.
  */
 @HiltViewModel
 class CoachesViewModel
@@ -169,6 +177,64 @@ class CoachesViewModel
                 }
             }
         }
+
+        /** Saves as it's switched; the screen shows the change once it's saved. */
+        fun changeSharing(
+            coach: CoachResponse,
+            shareReflections: Boolean,
+            sharePractice: Boolean,
+        ) {
+            val id = coach.coachLinkId
+            if (id in state.value.changing) return
+            mutableState.update { it.copy(changing = it.changing + id, changeProblem = null) }
+            viewModelScope.launch {
+                try {
+                    coaching.changeSharing(id, shareReflections, sharePractice)
+                    reload()
+                    mutableState.update { it.copy(changing = it.changing - id) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    val gone = e is ApiProblem && e.status == 404
+                    mutableState.update {
+                        it.copy(changing = it.changing - id, changeProblem = if (gone) null else actionProblemOf(e))
+                    }
+                    if (gone) reload()
+                }
+            }
+        }
+
+        fun askRemove(id: UUID) = mutableState.update { it.copy(confirmRemove = id, removeProblem = null) }
+
+        fun cancelRemove() = mutableState.update { if (it.removing) it else it.copy(confirmRemove = null) }
+
+        fun confirmRemove() {
+            val id = state.value.confirmRemove ?: return
+            if (state.value.removing) return
+            mutableState.update { it.copy(removing = true, removeProblem = null) }
+            viewModelScope.launch {
+                try {
+                    coaching.removeCoach(id)
+                    mutableState.update { it.copy(removing = false, confirmRemove = null) }
+                    reload()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Ended by the coach meanwhile: what was asked for has happened.
+                    val gone = e is ApiProblem && e.status == 404
+                    mutableState.update {
+                        it.copy(
+                            removing = false,
+                            confirmRemove = if (gone) null else id,
+                            removeProblem = if (gone) null else actionProblemOf(e),
+                        )
+                    }
+                    if (gone) reload()
+                }
+            }
+        }
+
+        private fun actionProblemOf(e: Exception): CancelProblem = if (e is ApiProblem) CancelProblem.Failed else CancelProblem.CantConnect
 
         private fun inviteProblemOf(e: Exception): InviteProblem =
             when {

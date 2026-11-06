@@ -3,8 +3,11 @@ package com.golfprogress.app.coaching
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -135,6 +138,69 @@ class CoachesViewModelTest {
     }
 
     @Test
+    fun `switching saves what the coach sees`() {
+        val coach = Fixtures.coach(shareReflections = true, sharePractice = true)
+        val coaching = FakeCoachingRepository(coaches = listOf(coach))
+        val viewModel = CoachesViewModel(coaching)
+
+        viewModel.changeSharing(coach, shareReflections = true, sharePractice = false)
+
+        assertEquals(false, coaching.coaches.single().sharePractice)
+        val state = viewModel.state.value
+        val loaded = state.coaches as Load.Loaded
+        assertEquals(listOf(false), loaded.value.coaches.map { it.sharePractice })
+        assertTrue(state.changing.isEmpty())
+    }
+
+    @Test
+    fun `a failed change says so and keeps what was saved`() {
+        val coach = Fixtures.coach(sharePractice = true)
+        val coaching = FakeCoachingRepository(coaches = listOf(coach))
+        val viewModel = CoachesViewModel(coaching)
+        coaching.failWith = IOException("offline")
+
+        viewModel.changeSharing(coach, shareReflections = false, sharePractice = false)
+
+        assertEquals(CancelProblem.CantConnect, viewModel.state.value.changeProblem)
+        assertEquals(true, coaching.coaches.single().sharePractice)
+    }
+
+    @Test
+    fun `removing asks first, then ends the coaching`() {
+        val coach = Fixtures.coach()
+        val coaching = FakeCoachingRepository(coaches = listOf(coach))
+        val viewModel = CoachesViewModel(coaching)
+
+        viewModel.askRemove(coach.coachLinkId)
+        viewModel.cancelRemove()
+        assertEquals(1, coaching.coaches.size)
+
+        viewModel.askRemove(coach.coachLinkId)
+        viewModel.confirmRemove()
+
+        assertTrue(coaching.coaches.isEmpty())
+        assertNull(viewModel.state.value.confirmRemove)
+    }
+
+    @Test
+    fun `a failed removal stays in the dialog, and a coach already gone closes it`() {
+        val coach = Fixtures.coach()
+        val coaching = FakeCoachingRepository(coaches = listOf(coach))
+        val viewModel = CoachesViewModel(coaching)
+        viewModel.askRemove(coach.coachLinkId)
+
+        coaching.failWith = ApiProblem(500)
+        viewModel.confirmRemove()
+        assertEquals(CancelProblem.Failed, viewModel.state.value.removeProblem)
+        assertEquals(coach.coachLinkId, viewModel.state.value.confirmRemove)
+
+        coaching.failWith = ApiProblem(404)
+        viewModel.confirmRemove()
+        assertNull(viewModel.state.value.confirmRemove)
+        assertNull(viewModel.state.value.removeProblem)
+    }
+
+    @Test
     fun `a list that can't load can be tried again`() {
         val coaching = FakeCoachingRepository(listFailsWith = IOException("offline"))
         val viewModel = CoachesViewModel(coaching)
@@ -190,11 +256,19 @@ class CoachesScreenTest {
     }
 
     @Test
-    fun `shows an active coach and what they see`() {
-        show(FakeCoachingRepository(coaches = listOf(Fixtures.coach("Mark"))))
+    fun `shows an active coach, and removes them after saying what that means`() {
+        val coaching = FakeCoachingRepository(coaches = listOf(Fixtures.coach("Mark")))
+        show(coaching)
 
         compose.onNodeWithText("Mark").assertIsDisplayed()
-        compose.onNodeWithText("Sees: Rounds and progress, Practice").assertIsDisplayed()
+        compose.onNodeWithText("Always sees your rounds and progress.").assertIsDisplayed()
+
+        compose.onNode(hasContentDescription("Remove Mark")).performScrollTo().performClick()
+        compose.onNodeWithText("They lose access straight away", substring = true).assertExists()
+        compose.onNode(hasText("Remove") and hasAnyAncestor(isDialog())).performClick()
+
+        assertTrue(coaching.coaches.isEmpty())
+        compose.onNodeWithText("No coaches yet", substring = true).assertExists()
     }
 
     @Test

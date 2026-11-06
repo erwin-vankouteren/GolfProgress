@@ -419,4 +419,11 @@
     <string name="cancel_invitation_of">Cancel the invitation to %1$s</string>
     <string name="invitation_sent">Invitation sent to %1$s.</string>
     <string name="invitation_resent">Invitation sent to %1$s again. Only the newest link works.</string>
+    <string name="coach_always_sees">Always sees your rounds and progress.</string>
+    <string name="change_sharing_failed">Couldn\'t change what your coach sees. Please try again.</string>
+    <string name="remove_coach">Remove</string>
+    <string name="remove_coach_of">Remove %1$s</string>
+    <string name="remove_coach_title">Remove this coach?</string>
+    <string name="remove_coach_body">They lose access straight away. The feedback they gave you stays.</string>
+    <string name="remove_coach_failed">Couldn\'t remove this coach. Please try again.</string>
 </resources>
