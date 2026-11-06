@@ -1,15 +1,17 @@
 import { useMutation } from "@tanstack/react-query";
-import { useId, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import { useNavigate } from "react-router";
 import { ApiProblem, unwrap } from "../api";
 import { useMe } from "../api/queries";
 import { useApi } from "../app/ApiContext";
+import { CoachesSection } from "../coaching/CoachesSection";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
 import { choiceOf, type LanguageChoice } from "../i18n/language";
 import { messages, type PlainMessage } from "../i18n/messages";
 import { useSession } from "../session/SessionContext";
+import { Section, TextField } from "./fields";
 import {
   GoalFocusField,
   LanguageField,
@@ -56,57 +58,12 @@ export function ProfilePage() {
           <PreferencesSection me={me.data} />
         </>
       )}
+      <CoachesSection />
       {/* These need nothing from GET /me, so signing out or deleting the account works
           even when the profile can't load. */}
       <AccountSection email={me.data?.email ?? null} />
       <AboutSection />
     </section>
-  );
-}
-
-function Section({ title, children }: { title: PlainMessage; children: ReactNode }) {
-  const id = useId();
-  return (
-    <section className="card profile-section" aria-labelledby={id}>
-      <h2 id={id}>
-        <FormattedMessage {...title} />
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-/** A labelled input with its hint and error, described by both. */
-function TextField({
-  id,
-  label,
-  hint,
-  error,
-  ...input
-}: {
-  id: string;
-  label: PlainMessage;
-  hint?: PlainMessage;
-  error?: string;
-} & InputHTMLAttributes<HTMLInputElement>) {
-  const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
-  return (
-    <div className="field">
-      <label htmlFor={id}>
-        <FormattedMessage {...label} />
-      </label>
-      <input id={id} aria-invalid={error ? true : undefined} aria-describedby={describedBy} {...input} />
-      {hint && (
-        <p id={`${id}-hint`} className="hint">
-          <FormattedMessage {...hint} />
-        </p>
-      )}
-      {error && (
-        <p id={`${id}-error`} className="field-error">
-          {error}
-        </p>
-      )}
-    </div>
   );
 }
 

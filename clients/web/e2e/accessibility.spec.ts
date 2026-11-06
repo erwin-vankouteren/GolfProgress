@@ -141,6 +141,48 @@ async function mockApi(page: Page, signedIn: boolean) {
 
   const answers: Record<string, () => [number, unknown, Record<string, string>?]> = {
     "GET /me": () => [200, me],
+    "GET /me/coaches": () => [
+      200,
+      {
+        coaches: [
+          {
+            coachLinkId: "00000000-0000-0000-0002-000000000001",
+            displayName: "Mark",
+            shareReflections: true,
+            sharePractice: true,
+            createdAt: now,
+          },
+        ],
+        invitations: [
+          {
+            coachInvitationId: "00000000-0000-0000-0002-000000000002",
+            email: "pro@example.test",
+            shareReflections: false,
+            sharePractice: true,
+            createdAt: now,
+            expiresAt: "2026-10-18T10:00:00Z",
+            resent: false,
+          },
+        ],
+      },
+    ],
+    "GET /coach/students": () => [
+      200,
+      [
+        {
+          golferId: "00000000-0000-0000-0002-000000000003",
+          displayName: "Sam",
+          lastActivityOn: "2026-10-11",
+          unreadReplies: 1,
+          shareReflections: true,
+          sharePractice: true,
+        },
+      ],
+    ],
+    "POST /coach-invitations/preview": () => [
+      200,
+      { golferDisplayName: "Sam", shareReflections: true, sharePractice: true, expiresAt: "2026-10-18T10:00:00Z" },
+    ],
     "GET /me/dashboard": () => [
       200,
       {
@@ -256,6 +298,8 @@ const signedInPages: [string, string][] = [
   ["/progress", "Progress"],
   ["/profile", "Profile"],
   ["/onboarding", "Which units do you use?"],
+  ["/coach-invitation?token=abc", "Coach invitation"],
+  ["/students", "Students"],
 ];
 
 async function expectNoViolations(page: Page) {

@@ -4,7 +4,8 @@ Golfers invite their coach or golf pro, who then follows their rounds, practice 
 reflections, gives feedback on them, and sets practice goals. For juniors, coaches also set
 belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
-**M6 Juniors**. Nothing of it exists yet.
+**M6 Juniors**. Inviting a coach is built on the API, web and Android, and the Students
+list on the API and web; the rest isn't yet.
 
 Background: the product overview (`docs/golfprogress-overview.pdf`, "Coming next").
 The rest of the system is in [`architecture.md`](architecture.md), and the existing screens
@@ -49,9 +50,11 @@ pros play too. A directory or academy accounts can come later (see Open question
 1. The golfer enters the coach's email address and chooses what to share (below).
 2. The API emails the coach a link with a single-use token, valid for **7 days**. Like
    password reset links, only a hash of the token is stored.
-3. The coach opens the link on the web, signs in or creates an account, and accepts or
-   declines. **The account's email must match the invitation**, so a forwarded link can't
-   be accepted by someone else.
+3. The coach opens the link on the web (`/coach-invitation?token=…`), signs in or creates
+   an account, sees who invites and what they share, and accepts or declines. **The
+   account's email must match the invitation**, so a forwarded link can't be accepted by
+   someone else, and doesn't show the golfer's name either. A new account goes to the
+   invitation first, ahead of onboarding.
 4. Until then the golfer sees the invitation as *Pending*, and can cancel it.
 
 Limits: at most **3 active coaches** per golfer, and **10 invitations a day** per golfer.
@@ -165,6 +168,7 @@ whether a golfer, round or session exists.
 
 | Endpoint | Purpose |
 |---|---|
+| `POST /coach-invitations/preview` | Who invites and what they share, under the same rules as accepting. A POST, so the token stays out of URLs |
 | `POST /coach-invitations/accept` | Accept, with the token from the email |
 | `POST /coach-invitations/decline` | Decline |
 
@@ -172,7 +176,7 @@ whether a golfer, round or session exists.
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /coach/students` | Students: name, last activity, unread replies, what's shared |
+| `GET /coach/students` | Students: name, last activity (practice only where it's shared), unread replies, what's shared |
 | `DELETE /coach/students/{golferId}` | Stop coaching a student |
 | `GET /coach/students/{golferId}/overview` | Trend, next focus, baseline, latest reflections, active goals |
 | `GET /coach/students/{golferId}/rounds`, `/rounds/{roundId}` | Rounds, read-only, the same contracts as the golfer's |

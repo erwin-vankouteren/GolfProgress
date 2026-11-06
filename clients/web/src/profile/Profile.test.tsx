@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { countTo, json, renderSignedIn, testUserId as userId, type Handler } from "../test/fakeApi";
 
 const me = {
@@ -36,6 +36,11 @@ function renderProfile(path = "/profile", handlers: Record<string, Handler> = {}
 }
 
 const region = (name: string) => screen.findByRole("region", { name });
+
+// The page loads lazily: loaded here, the first test doesn't spend its wait on the import.
+beforeAll(async () => {
+  await import("./ProfilePage");
+});
 
 describe("profile (#111)", () => {
   it("saves your details, clearing an emptied handicap", async () => {

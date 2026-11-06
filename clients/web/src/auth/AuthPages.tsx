@@ -128,9 +128,11 @@ function useAuthForm(fields: FieldName[]) {
       try {
         await action(trimmed(values));
         // A new account starts onboarding (#111); signing in goes back to where a
-        // signed-out user was heading, or Home.
+        // signed-out user was heading, or Home. An invitation comes first even for a new
+        // account: that's why they came (#185), and the preferences can wait.
         const from = (location.state as { from?: string } | null)?.from;
-        navigate(destination ?? (from && from !== "/welcome" ? from : "/"), { replace: true });
+        const invitation = from?.startsWith("/coach-invitation") ? from : undefined;
+        navigate(invitation ?? destination ?? (from && from !== "/welcome" ? from : "/"), { replace: true });
       } catch (error) {
         const { field, form } = describe(error, fields, conflictMessage, intl);
         setFieldErrors(field);

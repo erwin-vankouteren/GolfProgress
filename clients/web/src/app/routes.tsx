@@ -17,6 +17,10 @@ import { PublicOnly, RequireSession } from "../session/SessionContext";
 const ProgressPage = lazy(() => import("../progress/ProgressPage").then((m) => ({ default: m.ProgressPage })));
 const ProfilePage = lazy(() => import("../profile/ProfilePage").then((m) => ({ default: m.ProfilePage })));
 const OnboardingPage = lazy(() => import("../profile/OnboardingPage").then((m) => ({ default: m.OnboardingPage })));
+const StudentsPage = lazy(() => import("../coaching/StudentsPage").then((m) => ({ default: m.StudentsPage })));
+const CoachInvitationPage = lazy(() =>
+  import("../coaching/CoachInvitationPage").then((m) => ({ default: m.CoachInvitationPage })),
+);
 // The privacy policy and terms (#121), with their Markdown renderer.
 const LegalPage = lazy(() => import("../pages/LegalPage").then((m) => ({ default: m.LegalPage })));
 
@@ -29,6 +33,8 @@ const loading = (page: ReactNode) => <Suspense fallback={<Skeleton blocks={3} />
 export const routes: RouteObject[] = [
   // From the reset email (#86): open whether or not someone is signed in on this browser.
   { path: "reset-password", element: <ResetPasswordPage /> },
+  // From the invitation email (#185): signed out, it explains itself and offers to sign in.
+  { path: "coach-invitation", element: loading(<CoachInvitationPage />) },
   // Linked from the stores and the apps (#121): open to everyone.
   { path: "privacy", element: loading(<LegalPage document="privacy" />) },
   { path: "terms", element: loading(<LegalPage document="terms" />) },
@@ -63,6 +69,7 @@ export const routes: RouteObject[] = [
           { path: "practice/new", element: <LogPracticePage /> },
           { path: "practice/:sessionId", element: <PracticeDetailPage /> },
           { path: "progress", element: loading(<ProgressPage />) },
+          { path: "students", element: loading(<StudentsPage />) },
           { path: "profile", element: loading(<ProfilePage />) },
           { path: "*", element: <NotFoundPage /> },
         ],

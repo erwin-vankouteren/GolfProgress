@@ -28,12 +28,55 @@ export const queryKeys = {
   monthlyTimeline: (months: number) => ["progress", "monthly", months] as const,
   baseline: ["progress", "baseline"] as const,
   monthlyReview: (monthStart: string) => ["progress", "review", monthStart] as const,
+  coaches: ["coaches"] as const,
+  students: ["students"] as const,
+  coachInvitation: (token: string) => ["coach-invitation", token] as const,
 };
 
 /** The signed-in user's profile and preferences, e.g. the tracking mode. */
 export function useMe() {
   const api = useApi();
   return useQuery({ queryKey: queryKeys.me, queryFn: async () => unwrap(await api.GET("/me")) });
+}
+
+/** The golfer's active coaches and pending invitations (#185). */
+export function useCoaches() {
+  const api = useApi();
+  return useQuery({ queryKey: queryKeys.coaches, queryFn: async () => unwrap(await api.GET("/me/coaches")) });
+}
+
+/** Students per page of the Students section. */
+export const studentPageSize = 20;
+
+/** The golfers the user coaches, newest activity first, a page at a time (#200). */
+export function useStudentList() {
+  const api = useApi();
+  return useInfiniteQuery({
+    queryKey: queryKeys.students,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const result = await api.GET("/coach/students", {
+        params: { query: { skip: pageParam, take: studentPageSize } },
+      });
+      return { students: unwrap(result), total: totalCount(result.response) };
+    },
+    getNextPageParam: (lastPage, pages) => {
+      const loaded = pages.reduce((count, page) => count + page.students.length, 0);
+      const total = lastPage.total ?? loaded;
+      return loaded < total && lastPage.students.length > 0 ? loaded : undefined;
+    },
+  });
+}
+
+/** Who invites and what they share (#185). A POST, so the token stays out of URLs. */
+export function useCoachInvitation(token: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.coachInvitation(token),
+    // Once it's answered, the link stops working: coming back to the tab mustn't ask again.
+    refetchOnWindowFocus: false,
+    queryFn: async () => unwrap(await api.POST("/coach-invitations/preview", { body: { token } })),
+  });
 }
 
 export function useRound(roundId: string) {
