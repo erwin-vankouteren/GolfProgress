@@ -4,6 +4,7 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { ApiProblem, unwrap, type Schemas } from "../api";
 import { queryKeys, useCoaches } from "../api/queries";
 import { useApi } from "../app/ApiContext";
+import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
 import { messages, type PlainMessage } from "../i18n/messages";
 import { Section, TextField } from "../profile/fields";
@@ -18,7 +19,7 @@ export const sharedLabels: Record<SharedItem, PlainMessage> = {
 
 /**
  * Profile → Coaches (#185, docs/coach-access.md → "Screens"): who coaches you, who's been
- * invited, and Invite a coach. Changing what a coach sees and removing them is #190.
+ * invited, what each coach sees, Remove, and Invite a coach (#190).
  */
 export function CoachesSection() {
   const coaches = useCoaches();
@@ -53,20 +54,107 @@ function useSharedText() {
 }
 
 function ActiveCoaches({ coaches }: { coaches: Schemas["CoachResponse"][] }) {
-  const sharedText = useSharedText();
   if (coaches.length === 0) return null;
 
   return (
     <ul className="coach-list">
       {coaches.map((coach) => (
-        <li key={coach.coachLinkId}>
-          <div>
-            <strong>{coach.displayName}</strong>
-            <p className="hint">{sharedText(coach)}</p>
-          </div>
-        </li>
+        <ActiveCoach key={coach.coachLinkId} coach={coach} />
       ))}
     </ul>
+  );
+}
+
+/** A coach, with what they see, which saves as it's switched, and Remove (#190). */
+function ActiveCoach({ coach }: { coach: Schemas["CoachResponse"] }) {
+  const intl = useIntl();
+  const api = useApi();
+  const online = useOnline();
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  const path = { params: { path: { linkId: coach.coachLinkId } } };
+  const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.coaches });
+  // Ended by the coach meanwhile: the list shows what's true now.
+  const refreshWhenGone = (error: unknown) => {
+    if (error instanceof ApiProblem && error.status === 404) void refresh();
+  };
+
+  const change = useMutation({
+    mutationFn: async (body: Sharing) => unwrap(await api.PATCH("/me/coaches/{linkId}", { ...path, body })),
+    onSuccess: refresh,
+    onError: refreshWhenGone,
+  });
+  const remove = useMutation({
+    mutationFn: async () => unwrap(await api.DELETE("/me/coaches/{linkId}", path)),
+    onSuccess: refresh,
+    onError: refreshWhenGone,
+  });
+  const { shareReflections, sharePractice } = coach;
+  const sharing: Sharing = change.isPending ? change.variables : { shareReflections, sharePractice };
+  const locked = change.isPending || !online;
+
+  return (
+    <li className="coach-active">
+      <fieldset className="choice-group">
+        <legend className="choice-legend">{coach.displayName}</legend>
+        <p className="hint">
+          <FormattedMessage {...messages.coachAlwaysSees} />
+        </p>
+        <ShareChoice
+          label={messages.shareReflections}
+          hint={messages.shareReflectionsHint}
+          checked={sharing.shareReflections}
+          disabled={locked}
+          onChange={(checked) => change.mutate({ ...sharing, shareReflections: checked })}
+        />
+        <ShareChoice
+          label={messages.sharePractice}
+          hint={messages.sharePracticeHint}
+          checked={sharing.sharePractice}
+          disabled={locked}
+          onChange={(checked) => change.mutate({ ...sharing, sharePractice: checked })}
+        />
+      </fieldset>
+      {change.isError && (
+        <p className="form-error" role="alert">
+          <FormattedMessage
+            {...(change.error instanceof ApiProblem ? messages.changeSharingFailed : messages.cantConnect)}
+          />
+        </p>
+      )}
+      <div>
+        <button
+          type="button"
+          className="button button--danger-outline"
+          disabled={!online}
+          aria-label={intl.formatMessage(messages.removeCoachOf, { name: coach.displayName })}
+          onClick={() => {
+            remove.reset();
+            setConfirming(true);
+          }}
+        >
+          <FormattedMessage {...messages.removeCoach} />
+        </button>
+      </div>
+      {confirming && (
+        <ConfirmDialog
+          title={messages.removeCoachTitle}
+          body={messages.removeCoachBody}
+          confirm={messages.removeCoach}
+          busyLabel={messages.working}
+          busy={remove.isPending}
+          error={
+            remove.isError
+              ? intl.formatMessage(
+                  remove.error instanceof ApiProblem ? messages.removeCoachFailed : messages.cantConnect,
+                )
+              : undefined
+          }
+          onConfirm={() => remove.mutate()}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
+    </li>
   );
 }
 
