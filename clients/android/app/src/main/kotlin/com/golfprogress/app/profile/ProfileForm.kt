@@ -114,6 +114,9 @@ data class Preferences(
     val goalFocus: List<GoalArea> = emptyList(),
     /** Null follows the device's language. */
     val language: AppLanguage? = null,
+    /** The digest emails (#242): feedback from your coach daily, and a coach's weekly one about students. */
+    val emailFeedbackDigest: Boolean = true,
+    val emailCoachDigest: Boolean = true,
 ) {
     fun toChanges() =
         ProfileChanges(
@@ -121,6 +124,8 @@ data class Preferences(
             trackingMode = trackingMode.value,
             goalFocus = goalFocus.map { it.name },
             language = Change(language?.apiName),
+            emailFeedbackDigest = emailFeedbackDigest,
+            emailCoachDigest = emailCoachDigest,
         )
 }
 
@@ -131,6 +136,8 @@ fun preferencesOf(me: UserResponse) =
         trackingMode = me.trackingMode,
         goalFocus = GoalArea.entries.filter { area -> me.goalFocus.any { it.equals(area.name, ignoreCase = true) } },
         language = AppLanguage.fromApi(me.language),
+        emailFeedbackDigest = me.emailFeedbackDigest,
+        emailCoachDigest = me.emailCoachDigest,
     )
 
 /** Ticks or unticks an area, in the API's order; no more than three can be ticked. */

@@ -139,6 +139,9 @@ object Fixtures {
         typical18Score: Int? = 92,
         goalFocus: List<String> = listOf("Putting"),
         language: String? = null,
+        hasStudents: Boolean = false,
+        emailFeedbackDigest: Boolean = true,
+        emailCoachDigest: Boolean = true,
     ) = UserResponse(
         userId = userId,
         email = "erwin@example.test",
@@ -152,7 +155,9 @@ object Fixtures {
         goalFocus = goalFocus,
         createdAt = now,
         updatedAt = now,
-        hasStudents = false,
+        hasStudents = hasStudents,
+        emailFeedbackDigest = emailFeedbackDigest,
+        emailCoachDigest = emailCoachDigest,
     )
 
     /** A round as the API returns it after saving [request], scored 72. */

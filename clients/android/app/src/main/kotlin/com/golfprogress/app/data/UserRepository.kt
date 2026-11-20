@@ -33,6 +33,9 @@ data class ProfileChanges(
     val language: Change<String?>? = null,
     val handicapIndex: Change<Double?>? = null,
     val typical18Score: Change<Int?>? = null,
+    /** The digest emails (#242). */
+    val emailFeedbackDigest: Boolean? = null,
+    val emailCoachDigest: Boolean? = null,
 )
 
 /** The signed-in user's profile, preferences and account (#94, #113). */
@@ -69,6 +72,8 @@ class ApiUserRepository
                     changes.language?.let { put("language", it.value?.let(::JsonPrimitive) ?: JsonNull) }
                     changes.handicapIndex?.let { put("handicapIndex", it.value?.let(::JsonPrimitive) ?: JsonNull) }
                     changes.typical18Score?.let { put("typical18Score", it.value?.let(::JsonPrimitive) ?: JsonNull) }
+                    changes.emailFeedbackDigest?.let { put("emailFeedbackDigest", it) }
+                    changes.emailCoachDigest?.let { put("emailCoachDigest", it) }
                 }
             return api.service<AccountApi>().updateMe(body).unwrap()
         }

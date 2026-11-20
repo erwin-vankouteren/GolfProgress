@@ -366,6 +366,9 @@
     <string name="goal_tee_shots">Tee shots</string>
     <string name="goal_consistency">Consistency</string>
     <string name="language">Language</string>
+    <string name="emails">Emails</string>
+    <string name="email_feedback_digest">A daily email when your coach has sent you new feedback</string>
+    <string name="email_coach_digest">A weekly email about what your students logged and replied</string>
     <string name="language_device">Same as this device</string>
     <string name="language_hint">The app, your micro-wins and your next focus are shown in this language.</string>
     <string name="change_password">Change password</string>

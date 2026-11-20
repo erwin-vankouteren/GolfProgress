@@ -161,7 +161,9 @@ final class GolfProgressAPITests: XCTestCase {
       "goalFocus": ["putting"],
       "createdAt": "2026-05-01T09:30:00.1234567+00:00",
       "updatedAt": "2026-05-01T09:30:00+00:00",
-      "hasStudents": false
+      "hasStudents": false,
+      "emailFeedbackDigest": true,
+      "emailCoachDigest": true
     }
     """
 }

@@ -209,6 +209,30 @@ fun GoalsChoice(
     }
 }
 
+/** A digest email on or off (#242): the whole row toggles, as a checkbox. */
+@Composable
+private fun EmailChoice(
+    @StringRes text: Int,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = DesignTokens.touchTarget)
+                .toggleable(value = checked, role = Role.Checkbox, onValueChange = onChange),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(checked = checked, onCheckedChange = null)
+        Text(
+            stringResource(text),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(start = DesignTokens.Spacing.sm),
+        )
+    }
+}
+
 @Composable
 private fun Label(
     @StringRes text: Int,
@@ -469,6 +493,16 @@ private fun PreferencesCard(
         GoalsChoice(preferences.goalFocus, viewModel::toggleGoal)
         Label(R.string.language)
         LanguageChoice(preferences.language) { viewModel.setPreferences(preferences.copy(language = it)) }
+        Label(R.string.emails)
+        EmailChoice(R.string.email_feedback_digest, preferences.emailFeedbackDigest) {
+            viewModel.setPreferences(preferences.copy(emailFeedbackDigest = it))
+        }
+        // Only coaches get the weekly digest about their students.
+        if ((state.me as? Load.Loaded)?.value?.hasStudents == true) {
+            EmailChoice(R.string.email_coach_digest, preferences.emailCoachDigest) {
+                viewModel.setPreferences(preferences.copy(emailCoachDigest = it))
+            }
+        }
         if (state.preferencesSaved) Saved(R.string.changes_saved)
         // Once saved, the app switches to it (and does nothing if it's shown already).
         val context = LocalContext.current

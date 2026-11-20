@@ -113,6 +113,23 @@ class ProfileViewModelTest {
     }
 
     @Test
+    fun `the digest emails start as saved, and save with the preferences (#242)`() {
+        val user = FakeUserRepository(me = { Fixtures.user(emailFeedbackDigest = false) })
+        val viewModel = ProfileViewModel(user)
+        assertFalse(viewModel.state.value.preferences.emailFeedbackDigest)
+
+        viewModel.setPreferences(
+            viewModel.state.value.preferences
+                .copy(emailCoachDigest = false),
+        )
+        viewModel.savePreferences()
+
+        val changes = user.updates.single()
+        assertEquals(false, changes.emailFeedbackDigest)
+        assertEquals(false, changes.emailCoachDigest)
+    }
+
+    @Test
     fun `a wrong current password shows by its field`() {
         val viewModel = ProfileViewModel(FakeUserRepository())
 
@@ -230,6 +247,28 @@ class ProfileScreenTest {
                     androidx.compose.ui.test
                         .hasClickAction(),
             ).assertIsNotEnabled()
+    }
+
+    @Test
+    fun switchesTheFeedbackDigestOff_AndOnlyCoachesSeeTheWeeklyOne() {
+        val user = show()
+
+        compose.onNodeWithText("A weekly email", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("A daily email when your coach has sent you new feedback").performScrollTo().performClick()
+        compose.onAllNodesWithText("Save")[1].performScrollTo().performClick()
+
+        assertEquals(false, user.updates.single().emailFeedbackDigest)
+    }
+
+    @Test
+    fun aCoachSwitchesTheWeeklyDigestOff() {
+        val user = show(FakeUserRepository(me = { Fixtures.user(hasStudents = true) }))
+
+        compose.onNodeWithText("A weekly email about what your students logged and replied").performScrollTo().performClick()
+        compose.onAllNodesWithText("Save")[1].performScrollTo().performClick()
+
+        assertEquals(false, user.updates.single().emailCoachDigest)
+        assertEquals(true, user.updates.single().emailFeedbackDigest)
     }
 
     @Test
