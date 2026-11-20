@@ -77,6 +77,9 @@ public abstract class ApiTexts
     /// <summary>Why a stat that went down is still the focus: it cost the most strokes.</summary>
     public abstract string LeverKeepGoingRationale(LeverText lever);
 
+    /// <summary>Why the stat of a coach's active practice goal is the focus (#226).</summary>
+    public abstract string LeverCoachGoalRationale(string goalTitle);
+
     // ------------------------------------------------------------ monthly review
 
     public abstract string RoundsLogged(int count);
@@ -181,6 +184,8 @@ internal sealed class EnglishTexts : ApiTexts
     public override string LeverGoalRationale(GoalFocusArea area, bool improved) => improved
         ? $"Better than your average — keep going with your goal: {FocusLabel(area)}."
         : $"You chose {FocusLabel(area)} as one of your goals.";
+
+    public override string LeverCoachGoalRationale(string goalTitle) => $"Your coach's goal for your practice: {goalTitle}.";
 
     public override string LeverKeepGoingRationale(LeverText lever) => lever switch
     {
@@ -316,6 +321,8 @@ internal sealed class DutchTexts : ApiTexts
     public override string LeverGoalRationale(GoalFocusArea area, bool improved) => improved
         ? $"Beter dan je gemiddelde — ga zo door met je doel: {FocusLabel(area)}."
         : $"Je koos {FocusLabel(area)} als een van je doelen.";
+
+    public override string LeverCoachGoalRationale(string goalTitle) => $"Het doel van je coach voor je training: {goalTitle}.";
 
     public override string LeverKeepGoingRationale(LeverText lever) => lever switch
     {

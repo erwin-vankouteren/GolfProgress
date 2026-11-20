@@ -9,13 +9,14 @@ namespace GolfProgress.Api.Caching;
 ///
 /// Hooking SaveChanges rather than individual endpoints means no write path can
 /// forget to invalidate -- including ones added later. Any added, modified or
-/// deleted entity with a UserId counts. Users are collected before the save and
+/// deleted entity with a UserId counts, and with a GolferId: a coach's practice goal
+/// changes the golfer's next focus (#226). Users are collected before the save and
 /// invalidated only after it succeeds, so a reader cannot re-cache the old data in
 /// between.
 /// </summary>
 public sealed class CacheInvalidationInterceptor : SaveChangesInterceptor
 {
-    private const string UserIdProperty = "UserId";
+    private static readonly string[] UserProperties = { "UserId", "GolferId" };
 
     private readonly UserScopedCache _cache;
 
@@ -72,11 +73,11 @@ public sealed class CacheInvalidationInterceptor : SaveChangesInterceptor
             if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted))
                 continue;
 
-            if (entry.Metadata.FindProperty(UserIdProperty) is null)
-                continue;
-
-            if (entry.Property(UserIdProperty).CurrentValue is Guid userId)
-                users.Add(userId);
+            foreach (var property in UserProperties)
+            {
+                if (entry.Metadata.FindProperty(property) is not null && entry.Property(property).CurrentValue is Guid userId)
+                    users.Add(userId);
+            }
         }
     }
 

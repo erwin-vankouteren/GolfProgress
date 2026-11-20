@@ -221,6 +221,39 @@ public sealed class PracticeGoalTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ACoachsActiveGoal_IsTheNextFocus_AheadOfABigSetback_UntilItsDone()
+    {
+        await LinkAsync(_coachId);
+        // Three 3-putts, and penalties far above the first round's: normally penalties win.
+        await RoundAsync(strokes: 88, penalties: 0, threePutts: 1);
+        await RoundAsync(strokes: 95, penalties: 6, threePutts: 3);
+        Assert.Equal("penalties", (await NextFocusAsync()).LeverKey);
+
+        var set = await Coach().PostAsJsonAsync(GoalsUrl(), Goal("Lag putts", focusArea: "Putting"));
+        var goalId = (await set.Content.ReadFromJsonAsync<GoalPayload>())!.PracticeGoalId;
+
+        // Home is cached: setting the goal refreshes it.
+        var focus = await NextFocusAsync();
+        Assert.Equal("three_putts", focus.LeverKey);
+        Assert.Equal("Your coach's goal for your practice: Lag putts.", focus.Rationale);
+
+        await Golfer().PatchAsJsonAsync($"/me/practice-goals/{goalId}", new { status = "Done" });
+        Assert.Equal("penalties", (await NextFocusAsync()).LeverKey);
+    }
+
+    [Fact]
+    public async Task AGoalWhoseStatDidntOccur_OrWithoutAFocusArea_LeavesTheNextFocusAlone()
+    {
+        await LinkAsync(_coachId);
+        await RoundAsync(strokes: 88, penalties: 0, threePutts: 0);
+        await RoundAsync(strokes: 95, penalties: 6, threePutts: 0);
+        await Coach().PostAsJsonAsync(GoalsUrl(), Goal("Lag putts", focusArea: "Putting"));
+        await Coach().PostAsJsonAsync(GoalsUrl(), Goal("Enjoy it"));
+
+        Assert.Equal("penalties", (await NextFocusAsync()).LeverKey);
+    }
+
+    [Fact]
     public async Task EveryEndpoint_NeedsASignedInUser()
     {
         var anonymous = _factory.CreateClient();
@@ -234,6 +267,25 @@ public sealed class PracticeGoalTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PutAsJsonAsync($"{GoalsUrl()}/{id}", Goal("Putts"))).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.DeleteAsync($"{GoalsUrl()}/{id}")).StatusCode);
     }
+
+    private async Task RoundAsync(int strokes, int penalties, int threePutts) =>
+        (await Golfer().PostAsJsonAsync("/me/rounds", new
+        {
+            playedAt = Iso(Today.AddDays(-10 + strokes - 88)),
+            holes = 18,
+            totalStrokes = strokes,
+            totalPutts = 32,
+            penalties,
+            threePutts,
+            blowUpHoles = 1,
+        })).EnsureSuccessStatusCode();
+
+    private async Task<FocusPayload> NextFocusAsync() =>
+        (await Golfer().GetFromJsonAsync<DashboardPayload>("/me/dashboard"))!.NextLever!;
+
+    private sealed record DashboardPayload(FocusPayload? NextLever);
+
+    private sealed record FocusPayload(string LeverKey, string Rationale);
 
     private HttpClient Coach() => TestWorld.ClientFor(_factory, _coachId);
     private HttpClient Golfer() => TestWorld.ClientFor(_factory, _annId);

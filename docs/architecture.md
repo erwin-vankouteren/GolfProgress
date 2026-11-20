@@ -191,6 +191,7 @@ compared with the current baseline. It takes the first that applies (#292, #299)
 
 | # | When | Focus | Reason shown |
 |---|---|---|---|
+| 0 | A **coach's practice goal** with a focus area is active (newest first), and its stat occurred | That stat | "Your coach's goal for your practice: Lag putts inside 1 metre." |
 | 1 | A stat is **2 or more above the baseline** | That stat (the most worse, weighted) | Its difference from the baseline |
 | 2 | The golfer's **goal focus area** (Preferences, in their order) has a stat, and it occurred in the round | That stat, whether it got worse, held level or **improved** | Worse: the difference. Otherwise "You chose putting as one of your goals", or "Better than your average — keep going with your goal: putting" |
 | 3 | A stat got worse; without a baseline, any stat that occurred | The one that got most worse, weighted (or cost the most) | The difference, or why the stat matters |
@@ -207,9 +208,14 @@ for a while beats a focus that jumps between stats every round, and an improving
 gets encouragement rather than being dropped. A stat that improved can still be the
 biggest cost (4), so it isn't excluded, but it's never presented as having got worse.
 
-A coach's practice goal with a focus area (M5, [coach-access.md](coach-access.md)) will
-come before step 1 while it's active, since it's set for weeks. Deliberately not done
-(yet): keeping the same focus for a number of rounds regardless of the stats.
+A coach's practice goal (0, M5, [coach-access.md](coach-access.md)) comes before
+everything else while it's active, even a large setback, since the coach set it for weeks
+and working on it is the point. Its stat uses the same mapping; a goal for tee shots, or
+without a focus area, doesn't change the focus. Deliberately not done (yet): keeping the
+same focus for a number of rounds regardless of the stats.
+
+A coach's change to a goal refreshes the golfer's cached Home: the cache is cleared for the
+user in any saved row's  or  (#14, #226).
 
 ## Authentication
 

@@ -52,6 +52,21 @@ public sealed class NextLeverService
         }
 
         // The order is in docs/architecture.md → "Choosing the next focus" (#299).
+        // 0. A coach's active practice goal with a focus area (#226): set for weeks, it comes
+        //    first while it lasts, if its stat occurred. The newest goal wins.
+        var today = PracticeGoalService.Today;
+        var coachGoals = await _db.PracticeGoals.AsNoTracking()
+            .Where(g => g.GolferId == userId && g.Status == PracticeGoalStatus.Active && g.FocusArea != null
+                        && g.StartsOn <= today && today <= g.EndsOn)
+            .OrderByDescending(g => g.CreatedAt)
+            .Select(g => new { g.Title, Area = g.FocusArea!.Value })
+            .ToListAsync(ct);
+        foreach (var goal in coachGoals)
+        {
+            if (candidates.FirstOrDefault(c => c.Lever == LeverFor(goal.Area) && c.Count > 0) is { } set)
+                return Answer(set, texts.LeverCoachGoalRationale(goal.Title));
+        }
+
         // 1. A stat far above the baseline, even when the golfer's goal is another.
         if (candidates.Where(c => c.Delta >= MuchWorse).MaxBy(c => c.Score) is { } muchWorse)
             return Answer(muchWorse, texts.LeverRationale(muchWorse.Lever, muchWorse.Delta));
