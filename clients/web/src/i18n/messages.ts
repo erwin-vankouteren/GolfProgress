@@ -41,6 +41,18 @@ export const plainMessages = defineMessages({
   recentRounds: { id: "students.recentRounds", defaultMessage: "Recent rounds" },
   latestReflections: { id: "students.latestReflections", defaultMessage: "Latest reflections" },
   noReflectionsYet: { id: "students.noReflections", defaultMessage: "No reflections yet." },
+  reflectionsNotSharedPlain: {
+    id: "students.reflectionsNotSharedPlain",
+    defaultMessage: "Reflections aren't shared with you.",
+  },
+  practiceNotShared: {
+    id: "students.practiceNotShared",
+    defaultMessage: "This golfer doesn't share practice with you.",
+  },
+  studentPracticeEmpty: { id: "students.practiceEmpty", defaultMessage: "No practice logged yet." },
+  allRounds: { id: "students.allRounds", defaultMessage: "All rounds" },
+  practiceSessions: { id: "students.practiceSessions", defaultMessage: "Practice sessions" },
+  breadcrumb: { id: "nav.breadcrumb", defaultMessage: "Breadcrumb" },
   coachAlwaysSees: { id: "coaches.alwaysSees", defaultMessage: "Always sees your rounds and progress." },
   changeSharingFailed: {
     id: "coaches.changeFailed",

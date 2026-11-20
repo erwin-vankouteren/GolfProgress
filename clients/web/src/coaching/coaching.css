@@ -83,3 +83,26 @@
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-label);
 }
+
+/* The way back from a student's rounds and practice (#206). */
+
+.student-breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  list-style: none;
+}
+
+.student-breadcrumb li + li::before {
+  content: "›";
+  margin-inline-end: var(--space-xs);
+  color: var(--color-text-secondary);
+}
+
+.student-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}

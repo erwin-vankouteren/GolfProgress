@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useApi } from "../app/ApiContext";
 import { ApiProblem } from "./problem";
 import { totalCount, unwrap, type Schemas } from "./client";
+import { scopedKey, useStudentScope } from "./studentScope";
 
 /**
  * Query keys, in one place so a write can invalidate exactly what it changed. Every key
@@ -93,30 +94,51 @@ export function useCoachInvitation(token: string) {
 
 export function useRound(roundId: string) {
   const api = useApi();
+  const golferId = useStudentScope();
   return useQuery({
-    queryKey: queryKeys.round(roundId),
-    queryFn: async () => unwrap(await api.GET("/rounds/{id}", { params: { path: { id: roundId } } })),
+    queryKey: scopedKey(golferId, queryKeys.round(roundId)),
+    queryFn: async () =>
+      golferId
+        ? unwrap(
+            await api.GET("/coach/students/{golferId}/rounds/{roundId}", { params: { path: { golferId, roundId } } }),
+          )
+        : unwrap(await api.GET("/rounds/{id}", { params: { path: { id: roundId } } })),
   });
 }
 
 /** The round's fitness score, or null when it has none yet. */
 export function useFitnessScore(roundId: string | undefined) {
   const api = useApi();
+  const golferId = useStudentScope();
   return useQuery({
-    queryKey: queryKeys.fitnessScore(roundId ?? ""),
+    queryKey: scopedKey(golferId, queryKeys.fitnessScore(roundId ?? "")),
     enabled: roundId !== undefined,
     queryFn: async (): Promise<Schemas["FitnessScoreResponse"] | null> =>
       nullWhenNotFound(async () =>
-        unwrap(await api.GET("/rounds/{roundId}/fitness-score", { params: { path: { roundId: roundId! } } })),
+        golferId
+          ? unwrap(
+              await api.GET("/coach/students/{golferId}/rounds/{roundId}/fitness-score", {
+                params: { path: { golferId, roundId: roundId! } },
+              }),
+            )
+          : unwrap(await api.GET("/rounds/{roundId}/fitness-score", { params: { path: { roundId: roundId! } } })),
       ),
   });
 }
 
 export function useMicroWins(roundId: string) {
   const api = useApi();
+  const golferId = useStudentScope();
   return useQuery({
-    queryKey: queryKeys.microWins(roundId),
-    queryFn: async () => unwrap(await api.GET("/rounds/{roundId}/micro-wins", { params: { path: { roundId } } })),
+    queryKey: scopedKey(golferId, queryKeys.microWins(roundId)),
+    queryFn: async () =>
+      golferId
+        ? unwrap(
+            await api.GET("/coach/students/{golferId}/rounds/{roundId}/micro-wins", {
+              params: { path: { golferId, roundId } },
+            }),
+          )
+        : unwrap(await api.GET("/rounds/{roundId}/micro-wins", { params: { path: { roundId } } })),
   });
 }
 
@@ -152,11 +174,15 @@ export const roundPageSize = 20;
  */
 export function useRoundList() {
   const api = useApi();
+  const golferId = useStudentScope();
   return useInfiniteQuery({
-    queryKey: queryKeys.roundList,
+    queryKey: scopedKey(golferId, queryKeys.roundList),
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
-      const result = await api.GET("/me/rounds", { params: { query: { skip: pageParam, take: roundPageSize } } });
+      const query = { skip: pageParam, take: roundPageSize };
+      const result = golferId
+        ? await api.GET("/coach/students/{golferId}/rounds", { params: { path: { golferId }, query } })
+        : await api.GET("/me/rounds", { params: { query } });
       return { rounds: unwrap(result), total: totalCount(result.response) };
     },
     getNextPageParam: (lastPage, pages) => {
@@ -170,17 +196,36 @@ export function useRoundList() {
 /** "Your next focus" for a round, read without recording a recommendation. */
 export function useNextLever(roundId: string) {
   const api = useApi();
+  const golferId = useStudentScope();
   return useQuery({
-    queryKey: queryKeys.nextLever(roundId),
-    queryFn: async () => unwrap(await api.GET("/rounds/{roundId}/next-lever", { params: { path: { roundId } } })),
+    queryKey: scopedKey(golferId, queryKeys.nextLever(roundId)),
+    queryFn: async () =>
+      golferId
+        ? unwrap(
+            await api.GET("/coach/students/{golferId}/rounds/{roundId}/next-lever", {
+              params: { path: { golferId, roundId } },
+            }),
+          )
+        : unwrap(await api.GET("/rounds/{roundId}/next-lever", { params: { path: { roundId } } })),
   });
 }
 
+/** A round's reflections; null for a coach when the student doesn't share them (#206). */
 export function useReflections(roundId: string) {
   const api = useApi();
+  const golferId = useStudentScope();
   return useQuery({
-    queryKey: queryKeys.reflections(roundId),
-    queryFn: async () => unwrap(await api.GET("/rounds/{roundId}/reflections", { params: { path: { roundId } } })),
+    queryKey: scopedKey(golferId, queryKeys.reflections(roundId)),
+    queryFn: async (): Promise<Schemas["ReflectionResponse"][] | null> =>
+      golferId
+        ? nullWhenNotFound(async () =>
+            unwrap(
+              await api.GET("/coach/students/{golferId}/rounds/{roundId}/reflections", {
+                params: { path: { golferId, roundId } },
+              }),
+            ),
+          )
+        : unwrap(await api.GET("/rounds/{roundId}/reflections", { params: { path: { roundId } } })),
   });
 }
 
@@ -190,13 +235,15 @@ export const practicePageSize = 20;
 /** The user's practice sessions, newest first, a page at a time (#103). */
 export function usePracticeList() {
   const api = useApi();
+  const golferId = useStudentScope();
   return useInfiniteQuery({
-    queryKey: queryKeys.practiceList,
+    queryKey: scopedKey(golferId, queryKeys.practiceList),
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
-      const result = await api.GET("/me/practice-sessions", {
-        params: { query: { skip: pageParam, take: practicePageSize } },
-      });
+      const query = { skip: pageParam, take: practicePageSize };
+      const result = golferId
+        ? await api.GET("/coach/students/{golferId}/practice-sessions", { params: { path: { golferId }, query } })
+        : await api.GET("/me/practice-sessions", { params: { query } });
       return { sessions: unwrap(result), total: totalCount(result.response) };
     },
     getNextPageParam: (lastPage, pages) => {
@@ -209,9 +256,17 @@ export function usePracticeList() {
 
 export function usePracticeSession(id: string) {
   const api = useApi();
+  const golferId = useStudentScope();
   return useQuery({
-    queryKey: queryKeys.practiceSession(id),
-    queryFn: async () => unwrap(await api.GET("/me/practice-sessions/{id}", { params: { path: { id } } })),
+    queryKey: scopedKey(golferId, queryKeys.practiceSession(id)),
+    queryFn: async () =>
+      golferId
+        ? unwrap(
+            await api.GET("/coach/students/{golferId}/practice-sessions/{sessionId}", {
+              params: { path: { golferId, sessionId: id } },
+            }),
+          )
+        : unwrap(await api.GET("/me/practice-sessions/{id}", { params: { path: { id } } })),
   });
 }
 

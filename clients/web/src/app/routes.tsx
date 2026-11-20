@@ -3,6 +3,7 @@ import type { RouteObject } from "react-router";
 import { CreateAccountPage, SignInPage, WelcomePage } from "../auth/AuthPages";
 import { ForgotPasswordPage, ResetPasswordPage } from "../auth/PasswordResetPages";
 import { Skeleton } from "../common/states";
+import { StudentLayout } from "../coaching/StudentLayout";
 import { AppLayout } from "../layout/AppLayout";
 import { DashboardPage } from "../dashboard/DashboardPage";
 import { NotFoundPage } from "../pages/SectionPage";
@@ -73,7 +74,22 @@ export const routes: RouteObject[] = [
           { path: "practice/:sessionId", element: <PracticeDetailPage /> },
           { path: "progress", element: loading(<ProgressPage />) },
           { path: "students", element: loading(<StudentsPage />) },
-          { path: "students/:golferId", element: loading(<StudentOverviewPage />) },
+          {
+            // A student's overview, rounds and practice (#203, #206): the rounds and practice
+            // on the golfer's own screens, read-only.
+            path: "students/:golferId",
+            element: <StudentLayout />,
+            children: [
+              { index: true, element: loading(<StudentOverviewPage />) },
+              {
+                path: "rounds",
+                element: <RoundsLayout />,
+                children: [{ path: ":roundId", element: <RoundDetailPage /> }],
+              },
+              { path: "practice", element: <PracticePage /> },
+              { path: "practice/:sessionId", element: <PracticeDetailPage /> },
+            ],
+          },
           { path: "profile", element: loading(<ProfilePage />) },
           { path: "*", element: <NotFoundPage /> },
         ],

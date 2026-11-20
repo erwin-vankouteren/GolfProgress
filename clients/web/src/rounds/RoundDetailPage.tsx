@@ -3,6 +3,7 @@ import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiProblem, type Schemas } from "../api";
 import { useFitnessScore, useMicroWins, useNextLever, useRound } from "../api/queries";
+import { useSectionPaths } from "../api/studentScope";
 import { LoadError, Skeleton } from "../common/states";
 import { useMediaQuery, wideScreen } from "../common/media";
 import { messages, type PlainMessage } from "../i18n/messages";
@@ -22,6 +23,7 @@ import "./rounds.css";
 export function RoundDetailPage() {
   const { roundId } = useParams<{ roundId: string }>();
   const round = useRound(roundId!);
+  const paths = useSectionPaths();
   const summary = useRoundSummary();
   const level = usePaneHeadingLevel();
   const Title = level === 1 ? "h1" : "h2";
@@ -60,9 +62,11 @@ export function RoundDetailPage() {
         <Title>
           <PlayedDate value={round.data.playedAt} />
         </Title>
-        <Link to={`/rounds/${round.data.roundId}/edit`} className="button">
-          <FormattedMessage {...messages.edit} />
-        </Link>
+        {!paths.readOnly && (
+          <Link to={`/rounds/${round.data.roundId}/edit`} className="button">
+            <FormattedMessage {...messages.edit} />
+          </Link>
+        )}
       </div>
       <p className="round-summary">{summary(round.data)}</p>
 
@@ -78,8 +82,9 @@ export function RoundDetailPage() {
 /** Back to the list, where the list isn't already beside the round. */
 function BackLink() {
   const wide = useMediaQuery(wideScreen);
+  const paths = useSectionPaths();
   return wide ? null : (
-    <Link to="/rounds" className="back-link">
+    <Link to={paths.rounds} className="back-link">
       <span aria-hidden="true">‹ </span>
       <FormattedMessage {...messages.backToRounds} />
     </Link>
@@ -250,10 +255,11 @@ function MicroWinsCard({ roundId, Heading }: { roundId: string; Heading: Heading
 
 function NextFocusCard({ roundId, Heading }: { roundId: string; Heading: HeadingTag }) {
   const lever = useNextLever(roundId);
+  const paths = useSectionPaths();
   if (!lever.data) return null;
 
   return (
-    <Card title={messages.nextFocus} Heading={Heading}>
+    <Card title={paths.readOnly ? messages.theirNextFocus : messages.nextFocus} Heading={Heading}>
       <p className="next-focus-title">{lever.data.title}</p>
       <p>{lever.data.recommendation}</p>
       <p className="card-detail">{lever.data.rationale}</p>

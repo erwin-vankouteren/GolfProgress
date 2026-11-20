@@ -377,6 +377,12 @@ export const nl: Record<string, string> = {
   "students.recentRounds": "Recente rondes",
   "students.latestReflections": "Laatste reflecties",
   "students.noReflections": "Nog geen reflecties.",
+  "students.reflectionsNotSharedPlain": "Reflecties worden niet met je gedeeld.",
+  "students.practiceNotShared": "Deze golfer deelt geen training met je.",
+  "students.practiceEmpty": "Nog geen training ingevoerd.",
+  "students.allRounds": "Alle rondes",
+  "students.practiceSessions": "Trainingen",
+  "nav.breadcrumb": "Kruimelpad",
   "students.noRounds":
     "{name} heeft nog geen ronde ingevoerd. Na de eerste ronde verschijnen hier de scores en de volgende focus.",
   "students.baselineBasedOn": "Gebaseerd op {count, plural, one {de laatste ronde} other {de laatste # rondes}}.",

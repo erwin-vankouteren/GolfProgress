@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { NavLink, Outlet, useMatch } from "react-router";
+import { ApiProblem } from "../api";
 import { useRoundList } from "../api/queries";
+import { useSectionPaths } from "../api/studentScope";
 import { useMediaQuery, wideScreen } from "../common/media";
 import { LoadError, Skeleton } from "../common/states";
 import { messages } from "../i18n/messages";
@@ -18,7 +20,8 @@ import "./rounds.css";
 
 export function RoundsLayout() {
   const wide = useMediaQuery(wideScreen);
-  const paneOpen = useMatch("/rounds/:segment/*") !== null;
+  const paths = useSectionPaths();
+  const paneOpen = useMatch(`${paths.rounds}/:segment/*`) !== null;
 
   if (!wide) {
     return paneOpen ? (
@@ -53,6 +56,7 @@ export function RoundsLayout() {
 /** The user's rounds, newest first, loading more on scroll or with "Show more rounds". */
 function RoundList({ headingLevel }: { headingLevel: 1 | 2 }) {
   const list = useRoundList();
+  const paths = useSectionPaths();
   const intl = useIntl();
   const Heading = headingLevel === 1 ? "h1" : "h2";
   const sentinel = useRef<HTMLDivElement>(null);
@@ -89,7 +93,14 @@ function RoundList({ headingLevel }: { headingLevel: 1 | 2 }) {
     return (
       <>
         {heading}
-        <LoadError message={messages.roundsLoadError} onRetry={() => void list.refetch()} />
+        {/* For a coach, rounds are always shared: a 404 means the link ended. */}
+        {paths.readOnly && list.error instanceof ApiProblem && list.error.status === 404 ? (
+          <p>
+            <FormattedMessage {...messages.studentGone} />
+          </p>
+        ) : (
+          <LoadError message={messages.roundsLoadError} onRetry={() => void list.refetch()} />
+        )}
       </>
     );
   }
@@ -104,9 +115,11 @@ function RoundList({ headingLevel }: { headingLevel: 1 | 2 }) {
           <p>
             <FormattedMessage {...messages.roundsEmpty} />
           </p>
-          <LogRoundLink className="button button--primary">
-            <FormattedMessage {...messages.logRound} />
-          </LogRoundLink>
+          {!paths.readOnly && (
+            <LogRoundLink className="button button--primary">
+              <FormattedMessage {...messages.logRound} />
+            </LogRoundLink>
+          )}
         </div>
       </>
     );
@@ -118,7 +131,7 @@ function RoundList({ headingLevel }: { headingLevel: 1 | 2 }) {
       <ul className="round-list">
         {rounds.map((round) => (
           <li key={round.roundId}>
-            <NavLink to={`/rounds/${round.roundId}`} className="round-row">
+            <NavLink to={`${paths.rounds}/${round.roundId}`} className="round-row">
               <span className="round-row-main">
                 <span className="round-row-date">{formatPlayedDate(intl, round.playedAt)}</span>
                 <span className="round-row-course">

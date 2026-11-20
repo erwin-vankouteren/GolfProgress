@@ -4,6 +4,7 @@ import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiProblem, knownSessionTypes, sessionTypeOf, unwrap, type Schemas, type SessionType } from "../api";
 import { queryKeys, usePracticeList, usePracticeSession } from "../api/queries";
+import { useSectionPaths } from "../api/studentScope";
 import { useApi } from "../app/ApiContext";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
@@ -44,6 +45,7 @@ export const sessionTypeLabel = (value: string) => sessionTypeLabels[sessionType
 
 export function PracticePage() {
   const list = usePracticeList();
+  const paths = useSectionPaths();
   const intl = useIntl();
   const sentinel = useRef<HTMLDivElement>(null);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = list;
@@ -58,7 +60,8 @@ export function PracticePage() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const logButton = (
+  // A coach reads a student's practice (#206), and logs none.
+  const logButton = paths.readOnly ? null : (
     <Link to="/practice/new" className="button button--primary">
       <FormattedMessage {...messages.logPractice} />
     </Link>
@@ -78,23 +81,31 @@ export function PracticePage() {
       {list.isPending ? (
         <Skeleton blocks={3} className="round-list-skeleton" />
       ) : list.isError ? (
-        <LoadError message={messages.practiceLoadError} onRetry={() => void list.refetch()} />
+        paths.readOnly && list.error instanceof ApiProblem && list.error.status === 404 ? (
+          <p>
+            <FormattedMessage {...messages.practiceNotShared} />
+          </p>
+        ) : (
+          <LoadError message={messages.practiceLoadError} onRetry={() => void list.refetch()} />
+        )
       ) : sessions.length === 0 ? (
         <div className="empty-state">
           <p>
-            <FormattedMessage {...messages.practiceEmpty} />
+            <FormattedMessage {...(paths.readOnly ? messages.studentPracticeEmpty : messages.practiceEmpty)} />
           </p>
           {logButton}
         </div>
       ) : (
         <>
-          <p className="hint">
-            <FormattedMessage {...messages.practiceHabitsHint} />
-          </p>
+          {!paths.readOnly && (
+            <p className="hint">
+              <FormattedMessage {...messages.practiceHabitsHint} />
+            </p>
+          )}
           <ul className="round-list">
             {sessions.map((session) => (
               <li key={session.practiceSessionId}>
-                <Link to={`/practice/${session.practiceSessionId}`} className="round-row practice-row">
+                <Link to={`${paths.practice}/${session.practiceSessionId}`} className="round-row practice-row">
                   <span className="round-row-main">
                     <span className="round-row-date">{formatPlayedDate(intl, session.practicedAt)}</span>
                     <span className="round-row-course">
@@ -530,6 +541,7 @@ function TagInput({
 export function PracticeDetailPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const session = usePracticeSession(sessionId!);
+  const paths = useSectionPaths();
   const intl = useIntl();
   const api = useApi();
   const navigate = useNavigate();
@@ -548,7 +560,7 @@ export function PracticeDetailPage() {
   });
 
   const back = (
-    <Link to="/practice" className="back-link">
+    <Link to={paths.practice} className="back-link">
       <span aria-hidden="true">‹ </span>
       <FormattedMessage {...messages.backToPractice} />
     </Link>
@@ -622,14 +634,16 @@ export function PracticeDetailPage() {
         </dl>
       </section>
 
-      <button
-        type="button"
-        className="button button--danger-outline"
-        disabled={!online}
-        onClick={() => setConfirming(true)}
-      >
-        <FormattedMessage {...messages.deletePractice} />
-      </button>
+      {!paths.readOnly && (
+        <button
+          type="button"
+          className="button button--danger-outline"
+          disabled={!online}
+          onClick={() => setConfirming(true)}
+        >
+          <FormattedMessage {...messages.deletePractice} />
+        </button>
+      )}
 
       {confirming && (
         <ConfirmDialog

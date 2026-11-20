@@ -107,16 +107,18 @@ function OverviewCards({
 }) {
   const intl = useIntl();
   const trend = fitnessTrend(student.recentRounds);
+  const roundsPath = `/students/${student.golferId}/rounds`;
 
   return (
     <div className="dashboard-grid">
       <Card title={messages.lastRound} id="last-round">
-        <p>
+        <Link to={`${roundsPath}/${lastRound.roundId}`} className="last-round-link">
           <FormattedMessage
             {...messages.lastRoundLink}
             values={{ date: formatPlayedDate(intl, lastRound.playedAt), strokes: lastRound.totalStrokes }}
           />
-        </p>
+          <span aria-hidden="true"> ›</span>
+        </Link>
         {lastRound.fitnessScore !== null && lastRound.fitnessConfidence !== null ? (
           <p className="score-line">
             <span className="visually-hidden">
@@ -180,15 +182,30 @@ function OverviewCards({
             />
           </p>
         )}
-        <RecentRounds rounds={student.recentRounds} />
+        <RecentRounds rounds={student.recentRounds} roundsPath={roundsPath} />
+        <p>
+          <Link to={roundsPath}>
+            <FormattedMessage {...messages.allRounds} />
+          </Link>
+        </p>
       </Card>
+
+      {student.sharePractice && (
+        <Card title={messages.practice} id="practice">
+          <p>
+            <Link to={`/students/${student.golferId}/practice`}>
+              <FormattedMessage {...messages.practiceSessions} />
+            </Link>
+          </p>
+        </Card>
+      )}
 
       <Reflections student={student} />
     </div>
   );
 }
 
-function RecentRounds({ rounds }: { rounds: StudentOverview["recentRounds"] }) {
+function RecentRounds({ rounds, roundsPath }: { rounds: StudentOverview["recentRounds"]; roundsPath: string }) {
   return (
     <div className="table-scroll">
       <table className="progress-table">
@@ -216,7 +233,9 @@ function RecentRounds({ rounds }: { rounds: StudentOverview["recentRounds"] }) {
           {[...rounds].reverse().map((round) => (
             <tr key={round.roundId}>
               <th scope="row">
-                <PlayedDate value={round.playedAt} />
+                <Link to={`${roundsPath}/${round.roundId}`}>
+                  <PlayedDate value={round.playedAt} />
+                </Link>
               </th>
               <td>{round.holes}</td>
               <td>{round.totalStrokes}</td>

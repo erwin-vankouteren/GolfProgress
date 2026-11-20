@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } fr
 import { FormattedMessage, useIntl } from "react-intl";
 import { ApiProblem, unwrap, type Schemas } from "../api";
 import { queryKeys, useReflections } from "../api/queries";
+import { useSectionPaths } from "../api/studentScope";
 import { useApi } from "../app/ApiContext";
 import { LoadError, Skeleton, useOnline } from "../common/states";
 import { messages, type PlainMessage } from "../i18n/messages";
@@ -24,6 +25,8 @@ import {
 export function ReflectionSection({ roundId, Heading }: { roundId: string; Heading: "h2" | "h3" }) {
   const intl = useIntl();
   const reflections = useReflections(roundId);
+  // A coach reads a student's reflections (#206): nothing to add, and null when not shared.
+  const { readOnly } = useSectionPaths();
   const [adding, setAdding] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const addButton = useRef<HTMLButtonElement>(null);
@@ -48,11 +51,15 @@ export function ReflectionSection({ roundId, Heading }: { roundId: string; Headi
         <Skeleton blocks={1} />
       ) : reflections.isError ? (
         <LoadError message={messages.reflectionLoadError} onRetry={() => void reflections.refetch()} />
+      ) : reflections.data === null ? (
+        <p>
+          <FormattedMessage {...messages.reflectionsNotSharedPlain} />
+        </p>
       ) : (
         <>
           {list.length === 0 && !adding && (
             <p>
-              <FormattedMessage {...messages.noReflection} />
+              <FormattedMessage {...(readOnly ? messages.noReflectionsYet : messages.noReflection)} />
             </p>
           )}
           {list.map((reflection) => (
@@ -67,7 +74,7 @@ export function ReflectionSection({ roundId, Heading }: { roundId: string; Headi
         </p>
       )}
 
-      {adding ? (
+      {readOnly ? null : adding ? (
         <ReflectionForm roundId={roundId} onDone={close} />
       ) : (
         !reflections.isPending && (
