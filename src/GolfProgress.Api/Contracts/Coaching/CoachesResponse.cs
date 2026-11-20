@@ -11,6 +11,10 @@ public sealed class CoachesResponse
 public sealed class CoachResponse
 {
     public Guid CoachLinkId { get; init; }
+
+    /// <summary>The coach's user id: the coachId of their feedback threads (#216).</summary>
+    public Guid CoachId { get; init; }
+
     public string DisplayName { get; init; } = "";
     public bool ShareReflections { get; init; }
     public bool SharePractice { get; init; }

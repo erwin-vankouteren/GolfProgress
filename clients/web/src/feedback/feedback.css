@@ -1,0 +1,61 @@
+/* Feedback threads (#214, #216). Tokens only. */
+
+.feedback-thread + .feedback-thread {
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.feedback-thread h3,
+.feedback-thread h4 {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-label);
+}
+
+.feedback-messages {
+  display: grid;
+  gap: var(--space-md);
+  margin: 0 0 var(--space-md);
+  padding: 0;
+  list-style: none;
+}
+
+.feedback-message {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.feedback-message--mine {
+  border-inline-start: 3px solid var(--color-primary);
+}
+
+.feedback-meta {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.feedback-author {
+  font-weight: var(--font-weight-label);
+  color: var(--color-text-primary);
+}
+
+.feedback-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.feedback-form {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}

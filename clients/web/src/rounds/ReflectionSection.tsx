@@ -4,6 +4,7 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { ApiProblem, unwrap, type Schemas } from "../api";
 import { queryKeys, useReflections } from "../api/queries";
 import { useSectionPaths } from "../api/studentScope";
+import { FeedbackSection } from "../feedback/FeedbackSection";
 import { useApi } from "../app/ApiContext";
 import { LoadError, Skeleton, useOnline } from "../common/states";
 import { messages, type PlainMessage } from "../i18n/messages";
@@ -63,7 +64,14 @@ export function ReflectionSection({ roundId, Heading }: { roundId: string; Headi
             </p>
           )}
           {list.map((reflection) => (
-            <SavedReflection key={reflection.reflectionId} reflection={reflection} />
+            <div key={reflection.reflectionId} className="reflection-with-feedback">
+              <SavedReflection reflection={reflection} />
+              <FeedbackSection
+                targetType="Reflection"
+                targetId={reflection.reflectionId}
+                Heading={Heading === "h2" ? "h3" : "h4"}
+              />
+            </div>
           ))}
         </>
       )}

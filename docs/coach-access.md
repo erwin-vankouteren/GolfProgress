@@ -6,7 +6,7 @@ belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
 **M6 Juniors**. Inviting and managing coaches is built on the API, web and Android, the
 Students list on the API and web, and the student overview and a student's rounds and practice on the API and web, and
-feedback threads on the API; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
+feedback threads on the API and web; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
 read-only: a student scope (`clients/web/src/api/studentScope.ts`) points their queries at
 the coach's routes and leaves out every action.
 

@@ -34,6 +34,9 @@ export const queryKeys = {
   // Under students, so stopping coaching or a changed list refreshes it too.
   studentOverview: (golferId: string) => ["students", golferId, "overview"] as const,
   coachInvitation: (token: string) => ["coach-invitation", token] as const,
+  feedback: ["feedback"] as const,
+  feedbackThread: (golferId: string, targetType: string, targetId: string) =>
+    ["feedback", golferId, targetType, targetId] as const,
 };
 
 /** The signed-in user's profile and preferences, e.g. the tracking mode. */
@@ -78,6 +81,22 @@ export function useStudentOverview(golferId: string) {
     queryKey: queryKeys.studentOverview(golferId),
     queryFn: async () =>
       unwrap(await api.GET("/coach/students/{golferId}/overview", { params: { path: { golferId } } })),
+  });
+}
+
+/**
+ * The feedback threads on a golfer's item (#214, #216): every coach's for the golfer, only
+ * their own for a coach. A 404 means the caller can no longer see the item.
+ */
+export function useFeedbackThread(
+  golferId: string,
+  targetType: Schemas["FeedbackMessageResponse"]["targetType"],
+  targetId: string,
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.feedbackThread(golferId, targetType, targetId),
+    queryFn: async () => unwrap(await api.GET("/feedback", { params: { query: { golferId, targetType, targetId } } })),
   });
 }
 

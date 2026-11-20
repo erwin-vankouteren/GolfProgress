@@ -7,6 +7,7 @@ import { useSectionPaths } from "../api/studentScope";
 import { LoadError, Skeleton } from "../common/states";
 import { useMediaQuery, wideScreen } from "../common/media";
 import { messages, type PlainMessage } from "../i18n/messages";
+import { FeedbackSection } from "../feedback/FeedbackSection";
 import { LogRoundForm } from "./LogRoundForm";
 import { ReflectionSection } from "./ReflectionSection";
 import { explainPillars, trackedStats, type Sentence } from "./roundDetail";
@@ -74,6 +75,7 @@ export function RoundDetailPage() {
       <MicroWinsCard roundId={round.data.roundId} Heading={Section} />
       <NextFocusCard roundId={round.data.roundId} Heading={Section} />
       <StatsCard round={round.data} Heading={Section} />
+      <FeedbackSection targetType="Round" targetId={round.data.roundId} Heading={Section} />
       <ReflectionSection roundId={round.data.roundId} Heading={Section} />
     </section>
   );

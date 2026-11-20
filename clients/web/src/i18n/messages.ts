@@ -53,6 +53,32 @@ export const plainMessages = defineMessages({
   allRounds: { id: "students.allRounds", defaultMessage: "All rounds" },
   practiceSessions: { id: "students.practiceSessions", defaultMessage: "Practice sessions" },
   breadcrumb: { id: "nav.breadcrumb", defaultMessage: "Breadcrumb" },
+  feedback: { id: "feedback.title", defaultMessage: "Feedback" },
+  feedbackFromYourCoach: { id: "feedback.fromYourCoach", defaultMessage: "Feedback from your coach" },
+  feedbackLoadError: { id: "feedback.loadError", defaultMessage: "Couldn't load the feedback." },
+  feedbackEmptyCoach: { id: "feedback.emptyCoach", defaultMessage: "No feedback yet. What did you notice?" },
+  writeFeedback: { id: "feedback.write", defaultMessage: "Write feedback" },
+  formerCoach: { id: "feedback.formerCoach", defaultMessage: "A former coach" },
+  you: { id: "feedback.you", defaultMessage: "You" },
+  yourStudent: { id: "feedback.yourStudent", defaultMessage: "Your student" },
+  edited: { id: "feedback.edited", defaultMessage: "Edited" },
+  editMessage: { id: "feedback.editMessage", defaultMessage: "Edit your message" },
+  send: { id: "feedback.send", defaultMessage: "Send" },
+  sending: { id: "feedback.sending", defaultMessage: "Sending…" },
+  feedbackSendFailed: { id: "feedback.sendFailed", defaultMessage: "Couldn't send your message. Please try again." },
+  feedbackSaveFailed: { id: "feedback.saveFailed", defaultMessage: "Couldn't save your message. Please try again." },
+  feedbackDeleteFailed: {
+    id: "feedback.deleteFailed",
+    defaultMessage: "Couldn't delete your message. Please try again.",
+  },
+  deleteMessageTitle: { id: "feedback.deleteTitle", defaultMessage: "Delete this message?" },
+  deleteMessageBody: {
+    id: "feedback.deleteBody",
+    defaultMessage: "It's removed for both of you. This can't be undone.",
+  },
+  tooManyMessages: { id: "feedback.tooMany", defaultMessage: "Too many messages this hour. Try again later." },
+  writeSomethingFirst: { id: "feedback.empty", defaultMessage: "Write something first." },
+  offlineCantSendMessage: { id: "feedback.offline", defaultMessage: "You're offline. Connect to send a message." },
   coachAlwaysSees: { id: "coaches.alwaysSees", defaultMessage: "Always sees your rounds and progress." },
   changeSharingFailed: {
     id: "coaches.changeFailed",
@@ -763,6 +789,22 @@ export const messagesWithValues = {
   removeCoachOf: defineMessage<{ name: string }>({
     id: "coaches.removeOf",
     defaultMessage: "Remove {name}",
+  }),
+  feedbackEmptyGolfer: defineMessage<{ name: string }>({
+    id: "feedback.emptyGolfer",
+    defaultMessage: "No messages yet. You can ask {name} about this.",
+  }),
+  messageToCoach: defineMessage<{ name: string }>({
+    id: "feedback.messageTo",
+    defaultMessage: "Message to {name}",
+  }),
+  editMessageOf: defineMessage<{ when: string }>({
+    id: "feedback.editOf",
+    defaultMessage: "Edit your message of {when}",
+  }),
+  deleteMessageOf: defineMessage<{ when: string }>({
+    id: "feedback.deleteOf",
+    defaultMessage: "Delete your message of {when}",
   }),
   studentNoRounds: defineMessage<{ name: string }>({
     id: "students.noRounds",

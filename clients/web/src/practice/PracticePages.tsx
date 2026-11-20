@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { ApiProblem, knownSessionTypes, sessionTypeOf, unwrap, type Schemas, type SessionType } from "../api";
 import { queryKeys, usePracticeList, usePracticeSession } from "../api/queries";
 import { useSectionPaths } from "../api/studentScope";
+import { FeedbackSection } from "../feedback/FeedbackSection";
 import { useApi } from "../app/ApiContext";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
@@ -633,6 +634,8 @@ export function PracticeDetailPage() {
           )}
         </dl>
       </section>
+
+      <FeedbackSection targetType="PracticeSession" targetId={s.practiceSessionId} Heading="h2" />
 
       {!paths.readOnly && (
         <button

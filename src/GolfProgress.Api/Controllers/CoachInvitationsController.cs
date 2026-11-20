@@ -171,6 +171,7 @@ public sealed class CoachInvitationsController : ControllerBase
     private static CoachResponse ToResponse(CoachLink link) => new()
     {
         CoachLinkId = link.CoachLinkId,
+        CoachId = link.CoachId,
         DisplayName = CoachInvitationService.DisplayNameOf(link.Coach),
         ShareReflections = link.ShareReflections,
         SharePractice = link.SharePractice,

@@ -4557,6 +4557,7 @@
       },
       "CoachResponse": {
         "required": [
+          "coachId",
           "coachLinkId",
           "createdAt",
           "displayName",
@@ -4566,6 +4567,10 @@
         "type": "object",
         "properties": {
           "coachLinkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "coachId": {
             "type": "string",
             "format": "uuid"
           },
