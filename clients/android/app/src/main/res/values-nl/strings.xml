@@ -463,4 +463,51 @@
         <item quantity="one">En nog %d nieuw bericht bij andere onderdelen.</item>
         <item quantity="other">En nog %d nieuwe berichten bij andere onderdelen.</item>
     </plurals>
+    <!-- Trainingsdoelen van je coach (#231, #236) -->
+    <string name="practice_goal">Trainingsdoel</string>
+    <string name="goals_from_your_coach">Doelen van je coach</string>
+    <string name="goal_load_error">Dit doel kon niet worden geladen.</string>
+    <string name="goal_gone">Dit doel bestaat niet meer.</string>
+    <string name="goal_change_failed">Dit doel kon niet worden gewijzigd. Probeer het opnieuw.</string>
+    <string name="mark_goal_done">Afronden</string>
+    <string name="dismiss_goal">Sluiten</string>
+    <string name="dismiss_goal_title">Dit doel sluiten?</string>
+    <string name="dismiss_goal_body">Het staat niet meer bij Training. Je coach ziet dat je het hebt gesloten.</string>
+    <string name="goal_from">Van %1$s</string>
+    <string name="goal_from_former_coach">Van een voormalige coach</string>
+    <string name="goal_period">%1$s – %2$s</string>
+    <string name="goal_active">Actief</string>
+    <string name="goal_ended">Afgelopen</string>
+    <string name="goal_done">Afgerond</string>
+    <string name="goal_dismissed">Gesloten</string>
+    <string name="goal_reached">Doel bereikt</string>
+    <string name="goal_what">Het doel</string>
+    <string name="goal_focus_area">Focusgebied</string>
+    <string name="did_it_work">Werkte het?</string>
+    <string name="outcome_load_error">Kon niet laden of het werkte.</string>
+    <string name="goal_sessions">Trainingen voor dit doel</string>
+    <string name="goal_no_sessions">Nog geen trainingen. Kies dit doel bij Telt mee voor als je er een invoert.</string>
+    <string name="verdict_improved">Het werkt: %1$s is beter dan vóór het doel.</string>
+    <string name="verdict_worse">Nog niet: %1$s is tot nu toe niet beter dan vóór het doel.</string>
+    <string name="verdict_same">Ongeveer gelijk: %1$s ligt dicht bij vóór het doel.</string>
+    <string name="verdict_cant_tell">Nog niet te zeggen: daarvoor zijn minstens 2 rondes vóór het doel en 2 tijdens het doel nodig waarin dit is bijgehouden.</string>
+    <string name="verdict_not_measured">Dit doel heeft geen focusgebied, dus er is geen statistiek om te vergelijken.</string>
+    <string name="outcome_before">Vóór het doel</string>
+    <string name="outcome_during">Tijdens het doel, en twee weken erna</string>
+    <string name="outcome_window">Rondes van %1$s tot %2$s tellen als tijdens.</string>
+    <string name="stat_putts_per_18">Putts per 18 holes</string>
+    <string name="stat_penalties_per_18">Strafslagen per 18 holes</string>
+    <string name="stat_fairways_per_18">Fairways geraakt per 18 holes</string>
+    <string name="stat_score_spread">Spreiding van scores</string>
+    <string name="counts_towards">Telt mee voor</string>
+    <string name="no_goal">Geen doel</string>
+    <string name="goal_suggested">Voorgesteld omdat het voor dit soort training is.</string>
+    <plurals name="goal_progress">
+        <item quantity="one">%1$d van %2$d training</item>
+        <item quantity="other">%1$d van %2$d trainingen</item>
+    </plurals>
+    <plurals name="outcome_rounds">
+        <item quantity="one">(%d ronde)</item>
+        <item quantity="other">(%d rondes)</item>
+    </plurals>
 </resources>

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
+import com.golfprogress.app.testing.FakeGoalsRepository
 import com.golfprogress.app.testing.FakePracticeRepository
 import com.golfprogress.app.testing.Fixtures
 import com.golfprogress.app.ui.common.Load
@@ -89,7 +90,7 @@ class PracticeViewModelsTest {
     @Test
     fun `the list pages until the total`() {
         val repository = FakePracticeRepository((1..25).map { Fixtures.practiceSession(it) })
-        val viewModel = PracticeListViewModel(repository)
+        val viewModel = PracticeListViewModel(repository, FakeGoalsRepository())
         assertEquals(20, viewModel.state.value.sessions.size)
 
         viewModel.loadMore()
@@ -101,7 +102,7 @@ class PracticeViewModelsTest {
     @Test
     fun `a comma adds a tag, and a tag still being typed is kept on save`() {
         val repository = FakePracticeRepository()
-        val viewModel = LogPracticeViewModel(repository)
+        val viewModel = LogPracticeViewModel(repository, FakeGoalsRepository())
 
         viewModel.setTagInput("lag,")
         viewModel.setTagInput("speed")
@@ -114,7 +115,7 @@ class PracticeViewModelsTest {
     @Test
     fun `a duplicate tag is refused and stops the save`() {
         val repository = FakePracticeRepository()
-        val viewModel = LogPracticeViewModel(repository)
+        val viewModel = LogPracticeViewModel(repository, FakeGoalsRepository())
 
         viewModel.setTagInput("lag,")
         viewModel.setTagInput("LAG")
@@ -164,7 +165,7 @@ class PracticeScreensTest {
                     Fixtures.practiceSession(2, sessionType = "Fitness"),
                 ),
             )
-        val viewModel = PracticeListViewModel(repository)
+        val viewModel = PracticeListViewModel(repository, FakeGoalsRepository())
         compose.setContent { GolfProgressTheme { PracticeListScreen(onOpen = {}, onLogPractice = {}, viewModel = viewModel) } }
 
         compose.onNode(hasContentDescription("May 19, 2026, Putting, 45 min")).assertIsDisplayed()
@@ -175,7 +176,7 @@ class PracticeScreensTest {
     @Test
     fun logsASessionWithTags() {
         val repository = FakePracticeRepository()
-        val viewModel = LogPracticeViewModel(repository)
+        val viewModel = LogPracticeViewModel(repository, FakeGoalsRepository())
         var saved: UUID? = null
         compose.setContent {
             CompositionLocalProvider(LocalOnline provides true) {

@@ -5,8 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.golfprogress.api.ApiProblem
 import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
+import com.golfprogress.api.generated.models.PracticeGoalResponse
 import com.golfprogress.api.generated.models.PracticeSessionResponse
+import com.golfprogress.app.data.GoalsRepository
 import com.golfprogress.app.data.PracticeRepository
+import com.golfprogress.app.goals.NO_GOAL
+import com.golfprogress.app.goals.goalsToShow
+import com.golfprogress.app.goals.linkableGoals
+import com.golfprogress.app.goals.selectedGoal
 import com.golfprogress.app.rounds.FormProblem
 import com.golfprogress.app.ui.common.Load
 import com.golfprogress.app.ui.common.load
@@ -31,6 +37,8 @@ data class PracticeListState(
     val loadingMore: Boolean = false,
     val moreFailed: Boolean = false,
     val refreshing: Boolean = false,
+    /** Goals from the golfer's coach (#231), shown above the sessions; none if they can't load. */
+    val goals: List<PracticeGoalResponse> = emptyList(),
 ) {
     val hasMore: Boolean get() = total?.let { sessions.size < it } ?: false
 }
@@ -41,6 +49,7 @@ class PracticeListViewModel
     @Inject
     constructor(
         private val repository: PracticeRepository,
+        private val goals: GoalsRepository,
     ) : ViewModel() {
         private val mutableState = MutableStateFlow(PracticeListState())
         val state: StateFlow<PracticeListState> = mutableState.asStateFlow()
@@ -64,6 +73,11 @@ class PracticeListViewModel
             loading?.cancel()
             loading =
                 viewModelScope.launch {
+                    // Most golfers have no coach: goals that fail to load just don't show.
+                    launch {
+                        val loaded = (load { goals.goals() } as? Load.Loaded)?.value
+                        if (loaded != null) mutableState.update { it.copy(goals = goalsToShow(loaded)) }
+                    }
                     val page = load { repository.page(skip = 0, take = PAGE_SIZE) }
                     mutableState.update {
                         when (page) {
@@ -119,8 +133,23 @@ data class LogPracticeState(
     val saving: Boolean = false,
     val savedId: UUID? = null,
     val focus: PracticeField? = null,
+    /** The golfer's goals (#231), to count the session towards one. */
+    val goals: List<PracticeGoalResponse> = emptyList(),
+    /** Null until the golfer chooses: then the suggestion applies. [NO_GOAL] for "No goal". */
+    val chosenGoal: UUID? = null,
+    /** The API's message about the goal. */
+    val goalError: String? = null,
 ) {
     val errors: Map<PracticeField, PracticeError> get() = validatePractice(values)
+
+    /** The goals this session can count towards, on its date. */
+    val linkableGoals: List<PracticeGoalResponse> get() = linkableGoals(goals, values.practicedAt)
+
+    /** The goal it will count towards. */
+    val goalId: UUID? get() = selectedGoal(goals, values.practicedAt, values.sessionType.value, chosenGoal)
+
+    /** Whether [goalId] is the suggestion for this type of session, not the golfer's choice. */
+    val goalSuggested: Boolean get() = chosenGoal == null && goalId != null
 
     /** The API's message, or a rule once the field was touched or Save pressed. */
     fun messageFor(field: PracticeField): PracticeMessage? =
@@ -145,9 +174,19 @@ class LogPracticeViewModel
     @Inject
     constructor(
         private val repository: PracticeRepository,
+        private val goals: GoalsRepository,
     ) : ViewModel() {
         private val mutableState = MutableStateFlow(LogPracticeState())
         val state: StateFlow<LogPracticeState> = mutableState.asStateFlow()
+
+        init {
+            viewModelScope.launch {
+                (load { goals.goals() } as? Load.Loaded)?.value?.let { loaded -> mutableState.update { it.copy(goals = loaded) } }
+            }
+        }
+
+        /** Counts the session towards [id], or no goal for [NO_GOAL]. */
+        fun chooseGoal(id: UUID) = mutableState.update { it.copy(chosenGoal = id, goalError = null) }
 
         fun setDate(date: LocalDate) = edit(PracticeField.PracticedAt) { copy(practicedAt = date) }
 
@@ -211,7 +250,7 @@ class LogPracticeViewModel
             mutableState.update { it.copy(saving = true) }
             viewModelScope.launch {
                 try {
-                    val saved = repository.create(current.values.toRequest())
+                    val saved = repository.create(current.values.toRequest().copy(practiceGoalId = current.goalId))
                     mutableState.update { it.copy(saving = false, savedId = saved.practiceSessionId) }
                 } catch (e: CancellationException) {
                     throw e
@@ -224,11 +263,13 @@ class LogPracticeViewModel
                         } else {
                             emptyMap()
                         }
+                    val onGoal = if (e.status == 400) e.messagesFor("practiceGoalId").firstOrNull() else null
                     mutableState.update {
                         it.copy(
                             saving = false,
                             apiErrors = fields,
-                            problem = if (fields.isEmpty()) FormProblem.SaveFailed else null,
+                            goalError = onGoal,
+                            problem = if (fields.isEmpty() && onGoal == null) FormProblem.SaveFailed else null,
                             focus = PracticeField.entries.firstOrNull { f -> f in fields },
                         )
                     }

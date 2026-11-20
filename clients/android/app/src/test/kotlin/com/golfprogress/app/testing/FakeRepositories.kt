@@ -10,10 +10,13 @@ import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.FeedbackMessageResponse
 import com.golfprogress.api.generated.models.FitnessScoreResponse
+import com.golfprogress.api.generated.models.GoalOutcomeResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.MonthlyReviewResponse
 import com.golfprogress.api.generated.models.MonthlyTimelinePointResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
+import com.golfprogress.api.generated.models.PracticeGoalDetailResponse
+import com.golfprogress.api.generated.models.PracticeGoalResponse
 import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
@@ -24,6 +27,7 @@ import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.CoachingRepository
 import com.golfprogress.app.data.DashboardRepository
 import com.golfprogress.app.data.FeedbackRepository
+import com.golfprogress.app.data.GoalsRepository
 import com.golfprogress.app.data.Page
 import com.golfprogress.app.data.PracticeRepository
 import com.golfprogress.app.data.ProfileChanges
@@ -306,6 +310,38 @@ class FakeFeedbackRepository(
     }
 }
 
+/**
+ * Goals in memory: setting a status changes the goal, and [details] and [outcomes] answer
+ * the goal page. [failWith] makes setting a status throw.
+ */
+class FakeGoalsRepository(
+    var goals: List<PracticeGoalResponse> = emptyList(),
+    val details: MutableMap<UUID, PracticeGoalDetailResponse> = mutableMapOf(),
+    val outcomes: MutableMap<UUID, GoalOutcomeResponse> = mutableMapOf(),
+) : GoalsRepository {
+    val statusChanges = mutableListOf<Pair<UUID, Boolean>>()
+    var failWith: Exception? = null
+
+    override suspend fun goals(): List<PracticeGoalResponse> = goals
+
+    override suspend fun goal(id: UUID): PracticeGoalDetailResponse? = details[id]
+
+    override suspend fun setStatus(
+        id: UUID,
+        done: Boolean,
+    ): PracticeGoalResponse {
+        failWith?.let { throw it }
+        statusChanges += id to done
+        val status = if (done) PracticeGoalResponse.Status.Done else PracticeGoalResponse.Status.Dismissed
+        val changed = (details[id]?.goal ?: goals.first { it.practiceGoalId == id }).copy(status = status)
+        details[id]?.let { details[id] = it.copy(goal = changed) }
+        goals = goals.map { if (it.practiceGoalId == id) changed else it }
+        return changed
+    }
+
+    override suspend fun outcome(id: UUID): GoalOutcomeResponse = outcomes[id] ?: throw java.io.IOException()
+}
+
 /** The fakes the Hilt graph hands out; [reset] before each test. */
 object FakeRepositories {
     lateinit var dashboard: FakeDashboardRepository
@@ -322,6 +358,8 @@ object FakeRepositories {
         private set
     lateinit var feedback: FakeFeedbackRepository
         private set
+    lateinit var goals: FakeGoalsRepository
+        private set
 
     fun reset() {
         dashboard = FakeDashboardRepository()
@@ -331,6 +369,7 @@ object FakeRepositories {
         progress = FakeProgressRepository()
         coaching = FakeCoachingRepository()
         feedback = FakeFeedbackRepository()
+        goals = FakeGoalsRepository()
     }
 
     init {
@@ -361,6 +400,9 @@ object FakeRepositoryModule {
 
     @Provides
     fun feedback(): FeedbackRepository = FakeRepositories.feedback
+
+    @Provides
+    fun goals(): GoalsRepository = FakeRepositories.goals
 }
 
 /** Practice sessions in memory, newest first; creating answers id 8. */

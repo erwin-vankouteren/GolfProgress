@@ -34,6 +34,7 @@ import com.golfprogress.app.rounds.RoundFormViewModel
 import com.golfprogress.app.rounds.RoundsListScreen
 import com.golfprogress.app.rounds.RoundsListViewModel
 import com.golfprogress.app.testing.FakeCoachingRepository
+import com.golfprogress.app.testing.FakeGoalsRepository
 import com.golfprogress.app.testing.FakePracticeRepository
 import com.golfprogress.app.testing.FakeProgressRepository
 import com.golfprogress.app.testing.FakeRoundsRepository
@@ -138,13 +139,13 @@ class AccessibilityChecksTest {
 
     @Test
     fun practice() {
-        val viewModel = PracticeListViewModel(FakePracticeRepository(listOf(Fixtures.practiceSession(1))))
+        val viewModel = PracticeListViewModel(FakePracticeRepository(listOf(Fixtures.practiceSession(1))), FakeGoalsRepository())
         check { PracticeListScreen(onOpen = {}, onLogPractice = {}, viewModel = viewModel) }
     }
 
     @Test
     fun logPractice() {
-        val viewModel = LogPracticeViewModel(FakePracticeRepository())
+        val viewModel = LogPracticeViewModel(FakePracticeRepository(), FakeGoalsRepository())
         check { LogPracticeScreen(onSaved = {}, viewModel = viewModel) }
     }
 

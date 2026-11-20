@@ -462,4 +462,51 @@
         <item quantity="one">And %d more new message on other items.</item>
         <item quantity="other">And %d more new messages on other items.</item>
     </plurals>
+    <!-- Practice goals from your coach (#231, #236) -->
+    <string name="practice_goal">Practice goal</string>
+    <string name="goals_from_your_coach">Goals from your coach</string>
+    <string name="goal_load_error">Couldn\'t load this goal.</string>
+    <string name="goal_gone">This goal is no longer there.</string>
+    <string name="goal_change_failed">Couldn\'t change this goal. Please try again.</string>
+    <string name="mark_goal_done">Mark done</string>
+    <string name="dismiss_goal">Dismiss</string>
+    <string name="dismiss_goal_title">Dismiss this goal?</string>
+    <string name="dismiss_goal_body">It\'s no longer shown on Practice. Your coach sees that you dismissed it.</string>
+    <string name="goal_from">From %1$s</string>
+    <string name="goal_from_former_coach">From a former coach</string>
+    <string name="goal_period">%1$s – %2$s</string>
+    <string name="goal_active">Active</string>
+    <string name="goal_ended">Ended</string>
+    <string name="goal_done">Done</string>
+    <string name="goal_dismissed">Dismissed</string>
+    <string name="goal_reached">Target reached</string>
+    <string name="goal_what">The goal</string>
+    <string name="goal_focus_area">Focus area</string>
+    <string name="did_it_work">Did it work?</string>
+    <string name="outcome_load_error">Couldn\'t load whether it worked.</string>
+    <string name="goal_sessions">Sessions towards it</string>
+    <string name="goal_no_sessions">No sessions yet. When you log one, choose this goal under Counts towards.</string>
+    <string name="verdict_improved">It\'s working: %1$s improved on before the goal.</string>
+    <string name="verdict_worse">Not yet: %1$s isn\'t better than before the goal so far.</string>
+    <string name="verdict_same">About the same: %1$s is close to before the goal.</string>
+    <string name="verdict_cant_tell">Can\'t tell yet: this needs at least 2 rounds before the goal and 2 during it that track this stat.</string>
+    <string name="verdict_not_measured">This goal has no focus area, so there\'s no stat to compare.</string>
+    <string name="outcome_before">Before the goal</string>
+    <string name="outcome_during">During it, and two weeks after</string>
+    <string name="outcome_window">Rounds from %1$s to %2$s count as during.</string>
+    <string name="stat_putts_per_18">Putts per 18 holes</string>
+    <string name="stat_penalties_per_18">Penalties per 18 holes</string>
+    <string name="stat_fairways_per_18">Fairways hit per 18 holes</string>
+    <string name="stat_score_spread">Spread of scores</string>
+    <string name="counts_towards">Counts towards</string>
+    <string name="no_goal">No goal</string>
+    <string name="goal_suggested">Suggested because it\'s for this type of session.</string>
+    <plurals name="goal_progress">
+        <item quantity="one">%1$d of %2$d session</item>
+        <item quantity="other">%1$d of %2$d sessions</item>
+    </plurals>
+    <plurals name="outcome_rounds">
+        <item quantity="one">(%d round)</item>
+        <item quantity="other">(%d rounds)</item>
+    </plurals>
 </resources>

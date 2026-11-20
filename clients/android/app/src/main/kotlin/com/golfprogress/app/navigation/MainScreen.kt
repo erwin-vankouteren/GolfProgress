@@ -46,6 +46,8 @@ import com.golfprogress.app.dashboard.DashboardScreen
 import com.golfprogress.app.feedback.FeedbackSection
 import com.golfprogress.app.feedback.FeedbackSlot
 import com.golfprogress.app.feedback.NoFeedback
+import com.golfprogress.app.goals.GoalDetailScreen
+import com.golfprogress.app.goals.GoalDetailViewModel
 import com.golfprogress.app.practice.LogPracticeScreen
 import com.golfprogress.app.practice.PracticeDetailScreen
 import com.golfprogress.app.practice.PracticeDetailViewModel
@@ -78,6 +80,7 @@ enum class Destination(
     Practice("practice", R.string.section_practice, tab = true),
     LogPractice("practice/new", R.string.log_practice, tab = false),
     PracticeDetail("practice/{sessionId}", R.string.practice_session, tab = false),
+    GoalDetail("practice/goals/{goalId}", R.string.practice_goal, tab = false),
     Progress("progress", R.string.section_progress, tab = true),
     Profile("profile", R.string.section_profile, tab = false),
     Coaches("profile/coaches", R.string.coaches_title, tab = false),
@@ -176,9 +179,11 @@ fun MainScreen(
                     ReflectionScreen(onSaved = { navController.popBackStack() })
                 }
                 composable(Destination.Practice.route) {
-                    PracticeListScreen(onOpen = { id -> navController.navigate("practice/$id") }, onLogPractice = {
-                        navController.navigate(Destination.LogPractice.route)
-                    })
+                    PracticeListScreen(
+                        onOpen = { id -> navController.navigate("practice/$id") },
+                        onLogPractice = { navController.navigate(Destination.LogPractice.route) },
+                        onOpenGoal = { id -> navController.navigate("practice/goals/$id") },
+                    )
                 }
                 composable(Destination.LogPractice.route) {
                     LogPracticeScreen(onSaved = { id ->
@@ -189,6 +194,10 @@ fun MainScreen(
                     Destination.PracticeDetail.route,
                     arguments = listOf(navArgument(PracticeDetailViewModel.SESSION_ID) { type = NavType.StringType }),
                 ) { PracticeDetailScreen(onDeleted = { navController.popBackStack() }, feedback = feedback) }
+                composable(
+                    Destination.GoalDetail.route,
+                    arguments = listOf(navArgument(GoalDetailViewModel.GOAL_ID) { type = NavType.StringType }),
+                ) { GoalDetailScreen(onOpenSession = { id -> navController.navigate("practice/$id") }) }
                 composable(Destination.Progress.route) { ProgressScreen(onLogRound = logRound) }
                 composable(Destination.Profile.route) {
                     ProfileScreen(onSignOut = onSignOut, onOpenCoaches = { navController.navigate(Destination.Coaches.route) })

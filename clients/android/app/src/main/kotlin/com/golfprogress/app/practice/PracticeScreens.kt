@@ -71,6 +71,8 @@ import com.golfprogress.app.R
 import com.golfprogress.app.feedback.FeedbackSlot
 import com.golfprogress.app.feedback.FeedbackTarget
 import com.golfprogress.app.feedback.NoFeedback
+import com.golfprogress.app.goals.GoalsFromYourCoach
+import com.golfprogress.app.goals.NO_GOAL
 import com.golfprogress.app.rounds.DateField
 import com.golfprogress.app.rounds.Fact
 import com.golfprogress.app.rounds.FormProblem
@@ -108,6 +110,7 @@ fun PracticeListScreen(
     onOpen: (UUID) -> Unit,
     onLogPractice: () -> Unit,
     viewModel: PracticeListViewModel = hiltViewModel(),
+    onOpenGoal: (UUID) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
@@ -127,6 +130,7 @@ fun PracticeListScreen(
             verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm),
             modifier = Modifier.fillMaxSize(),
         ) {
+            if (state.goals.isNotEmpty()) item { GoalsFromYourCoach(state.goals, onOpenGoal) }
             when (state.first) {
                 Load.Loading -> item { Skeleton(blocks = 4, blockHeight = 64) }
                 is Load.Failed -> item { LoadError(R.string.practice_load_error, viewModel::retry) }
@@ -244,6 +248,8 @@ fun LogPracticeScreen(
                 }
             }
         }
+
+        GoalChoice(state, viewModel::chooseGoal)
 
         Field(
             label = R.string.duration,
@@ -446,5 +452,47 @@ private fun SessionDetail(session: PracticeSessionResponse) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * Counts towards (#231): the goals this session can count towards, as chips, with the one for
+ * this type of session suggested until the golfer chooses. Nothing without such goals.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GoalChoice(
+    state: LogPracticeState,
+    onChoose: (UUID) -> Unit,
+) {
+    val goals = state.linkableGoals
+    if (goals.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)) {
+        Text(stringResource(R.string.counts_towards), style = MaterialTheme.typography.labelLarge)
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm)) {
+            FilterChip(
+                selected = state.goalId == null,
+                onClick = { onChoose(NO_GOAL) },
+                label = { Text(stringResource(R.string.no_goal)) },
+                modifier = Modifier.heightIn(min = DesignTokens.touchTarget),
+            )
+            goals.forEach { goal ->
+                FilterChip(
+                    selected = state.goalId == goal.practiceGoalId,
+                    onClick = { onChoose(goal.practiceGoalId) },
+                    label = { Text(goal.title) },
+                    modifier = Modifier.heightIn(min = DesignTokens.touchTarget),
+                )
+            }
+        }
+        when {
+            state.goalError != null -> Text(state.goalError, color = MaterialTheme.colorScheme.error)
+            state.goalSuggested ->
+                Text(
+                    stringResource(R.string.goal_suggested),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+        }
     }
 }
