@@ -5,8 +5,8 @@ reflections, gives feedback on them, and sets practice goals. For juniors, coach
 belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
 **M6 Juniors**. Inviting and managing coaches is built on the API, web and Android, the
-Students list on the API and web, and the student overview and a student's rounds and practice on the API and web; the rest
-isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
+Students list on the API and web, and the student overview and a student's rounds and practice on the API and web, and
+feedback threads on the API; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
 read-only: a student scope (`clients/web/src/api/studentScope.ts`) points their queries at
 the coach's routes and leaves out every action.
 
@@ -89,10 +89,16 @@ from a former coach. Inviting the same coach again creates a new link.
 
 ### Feedback (R3)
 
-Each round, reflection and practice session can have one **feedback thread**. The coach
-writes; the golfer can reply, so a question about the feedback has a place to go.
+Each round, reflection and practice session can have a **feedback thread** with each of
+the golfer's coaches. Either side can write first: the coach with feedback, the golfer
+with a question about a round.
 
-- Messages are plain text, 1–2,000 characters. Authors can edit or delete their own.
+- **One thread per coach.** A coach sees only their own thread with the golfer, so coaches
+  never see each other, as "What a coach sees" promises. The golfer sees every coach's
+  thread on the item, each under that coach's name, and chooses which coach a message is for.
+  A golfer can only write to a coach who can see the item.
+- Messages are plain text, 1–2,000 characters. Authors can edit or delete their own, while
+  they can still see the item.
 - A coach can only comment on what they can see: on a reflection only when reflections are
   shared, on a practice session only when practice is shared.
 - The golfer sees the thread under the item it's about, and **"New from your coach"** on
@@ -194,8 +200,8 @@ widened ownership checks, so no existing golfer endpoint changes how it authoris
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /feedback?golferId&targetType&targetId` | A thread; `targetType` is `round`, `reflection` or `practiceSession` |
-| `POST /feedback` | Write a message |
+| `GET /feedback?golferId&targetType&targetId` | The threads on an item: every coach's for the golfer, their own for a coach. `targetType` is `Round`, `Reflection` or `PracticeSession` |
+| `POST /feedback` | Write a message; the golfer names the coach (`coachId`) |
 | `PATCH`/`DELETE /feedback/{id}` | Edit or delete your own message |
 | `POST /feedback/read` | Mark a golfer's threads read up to a time |
 | `GET /me/feedback/unread` | Unread count and the newest threads, for the dashboard |
@@ -209,7 +215,7 @@ golfer, or a coach with an active link whose sharing covers the item.
 |---|---|
 | `CoachInvitations` | Id, GolferId, Email, TokenHash, ShareReflections, SharePractice, CreatedAt, ExpiresAt, AcceptedAt, DeclinedAt, CancelledAt |
 | `CoachLinks` | Id, GolferId, CoachId, ShareReflections, SharePractice, CreatedAt, EndedAt, EndedBy (golfer or coach) |
-| `FeedbackMessages` | Id, GolferId, AuthorId (null for a deleted coach account), TargetType, TargetId, Text, CreatedAt, EditedAt |
+| `FeedbackMessages` | Id, GolferId, CoachId (whose thread; null once the coach's account is deleted), AuthorId (null for a deleted coach account), TargetType, TargetId, Text, CreatedAt, EditedAt |
 | `FeedbackReads` | UserId, GolferId, ReadUpTo |
 | `PracticeGoals` | Id, GolferId, CoachId (null once the coach's account is deleted), Title, Details, FocusArea, SessionType, TargetSessions, StartsOn, EndsOn, Status (Active, Done, Dismissed), CreatedAt |
 | `PracticeSessions` | Gains PracticeGoalId |

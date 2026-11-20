@@ -48,6 +48,16 @@ public sealed class AccountDeletionService
         _db.CoachInvitations.RemoveRange(await _db.CoachInvitations
             .Where(x => x.GolferId == userId || (address != null && x.Email == address)).ToListAsync(ct));
         _db.CoachLinks.RemoveRange(await _db.CoachLinks.Where(x => x.GolferId == userId || x.CoachId == userId).ToListAsync(ct));
+        // Feedback (#212): a golfer's threads go with them. What a coach wrote stays with the
+        // golfers it was written for, without the author: "a former coach".
+        _db.FeedbackMessages.RemoveRange(await _db.FeedbackMessages.Where(x => x.GolferId == userId).ToListAsync(ct));
+        foreach (var message in await _db.FeedbackMessages
+                     .Where(x => x.GolferId != userId && (x.CoachId == userId || x.AuthorId == userId)).ToListAsync(ct))
+        {
+            if (message.CoachId == userId) message.CoachId = null;
+            if (message.AuthorId == userId) message.AuthorId = null;
+        }
+        _db.FeedbackReads.RemoveRange(await _db.FeedbackReads.Where(x => x.UserId == userId || x.GolferId == userId).ToListAsync(ct));
         _db.Users.Remove(user);
 
         // One save, so one transaction: the account is deleted entirely or not at all.

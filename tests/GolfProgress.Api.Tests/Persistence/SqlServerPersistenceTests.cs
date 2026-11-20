@@ -268,6 +268,7 @@ public sealed class SqlServerPersistenceTests
         var otherUserId = await SeedUserAsync();
         var roundId = await SeedRoundAsync(userId);
         var otherRoundId = await SeedRoundAsync(otherUserId);
+        var coachMessageId = Guid.NewGuid();
 
         await using (var db = _sql.CreateContext())
         {
@@ -308,6 +309,22 @@ public sealed class SqlServerPersistenceTests
             db.CoachLinks.AddRange(
                 new CoachLink { CoachLinkId = Guid.NewGuid(), GolferId = userId, CoachId = otherUserId, CreatedAt = DateTimeOffset.UtcNow },
                 new CoachLink { CoachLinkId = Guid.NewGuid(), GolferId = otherUserId, CoachId = userId, CreatedAt = DateTimeOffset.UtcNow });
+            // Feedback (#212): the user's own thread, one they wrote in as the other's coach,
+            // and how far each has read the other's.
+            db.FeedbackMessages.AddRange(
+                new FeedbackMessage
+                {
+                    FeedbackMessageId = Guid.NewGuid(), GolferId = userId, CoachId = otherUserId, AuthorId = userId,
+                    TargetType = FeedbackTargetType.Round, TargetId = roundId, Text = "Mine", CreatedAt = DateTimeOffset.UtcNow
+                },
+                new FeedbackMessage
+                {
+                    FeedbackMessageId = coachMessageId, GolferId = otherUserId, CoachId = userId, AuthorId = userId,
+                    TargetType = FeedbackTargetType.Round, TargetId = otherRoundId, Text = "As coach", CreatedAt = DateTimeOffset.UtcNow
+                });
+            db.FeedbackReads.AddRange(
+                new FeedbackRead { UserId = userId, GolferId = otherUserId, ReadUpTo = DateTimeOffset.UtcNow },
+                new FeedbackRead { UserId = otherUserId, GolferId = userId, ReadUpTo = DateTimeOffset.UtcNow });
             await db.SaveChangesAsync();
         }
 
@@ -325,6 +342,10 @@ public sealed class SqlServerPersistenceTests
         {
             Assert.True(await db.Users.AnyAsync(u => u.UserId == otherUserId));
             Assert.True(await db.FitnessScores.AnyAsync(f => f.RoundId == otherRoundId));
+            // What the user wrote as a coach stays with that golfer, from "a former coach".
+            var kept = await db.FeedbackMessages.SingleAsync(m => m.FeedbackMessageId == coachMessageId);
+            Assert.Null(kept.CoachId);
+            Assert.Null(kept.AuthorId);
         }
     }
 
@@ -353,8 +374,8 @@ public sealed class SqlServerPersistenceTests
                 .SingleAsync();
         }
 
-        // Users, the ten tables with a UserId, and coaching's three columns.
-        Assert.Equal(14, counts.Count);
+        // Users, the ten tables with a UserId, coaching's three columns and feedback's five.
+        Assert.Equal(19, counts.Count);
         return counts;
     }
 

@@ -374,6 +374,10 @@ Users delete their account in the app (Profile → Delete account), as both stor
 | Password reset links | `PasswordResetTokens` |
 | Coach invitations they sent, and those sent to their address | `CoachInvitations` |
 | Their coaches' access to them, and their access as a coach to others | `CoachLinks` |
+| Feedback threads on their rounds, reflections and sessions, and how far they've read | `FeedbackMessages`, `FeedbackReads` |
+
+What they wrote as a coach stays with the golfers it was written for, without the
+author: it shows as from *a former coach* (`CoachId` and `AuthorId` set to null).
 
 Nothing is kept: no row in any table references the user afterwards, which a SQL Server
 test checks for every column with a foreign key to `Users`. The API's log keeps one line,

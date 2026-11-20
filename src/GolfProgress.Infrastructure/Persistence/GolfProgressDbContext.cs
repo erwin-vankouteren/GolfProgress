@@ -25,6 +25,8 @@ public class GolfProgressDbContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<CoachInvitation> CoachInvitations => Set<CoachInvitation>();
     public DbSet<CoachLink> CoachLinks => Set<CoachLink>();
+    public DbSet<FeedbackMessage> FeedbackMessages => Set<FeedbackMessage>();
+    public DbSet<FeedbackRead> FeedbackReads => Set<FeedbackRead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -362,6 +364,51 @@ public class GolfProgressDbContext : DbContext
             e.HasOne(x => x.Coach)
                 .WithMany()
                 .HasForeignKey(x => x.CoachId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Feedback threads (#212). They go with the golfer's account; the coach and the
+        // author can't cascade as well (SQL Server allows one path from Users), so
+        // AccountDeletionService clears them when that account is deleted.
+        modelBuilder.Entity<FeedbackMessage>(e =>
+        {
+            e.ToTable("FeedbackMessages");
+            e.HasKey(x => x.FeedbackMessageId);
+
+            e.HasIndex(x => new { x.GolferId, x.TargetType, x.TargetId, x.CreatedAt });
+            e.HasIndex(x => new { x.GolferId, x.CoachId, x.CreatedAt });
+            e.HasIndex(x => x.AuthorId);
+
+            e.Property(x => x.TargetType).HasConversion<string>().HasMaxLength(32);
+            e.Property(x => x.Text).IsRequired().HasMaxLength(2000);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
+
+            e.HasOne(x => x.Golfer)
+                .WithMany()
+                .HasForeignKey(x => x.GolferId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Coach)
+                .WithMany()
+                .HasForeignKey(x => x.CoachId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            e.HasOne(x => x.Author)
+                .WithMany()
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<FeedbackRead>(e =>
+        {
+            e.ToTable("FeedbackReads");
+            e.HasKey(x => new { x.UserId, x.GolferId });
+
+            e.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(x => x.GolferId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

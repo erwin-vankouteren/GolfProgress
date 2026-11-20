@@ -138,6 +138,10 @@ public sealed class PracticeSessionsController : ControllerBase
             .FirstOrDefaultAsync(s => s.PracticeSessionId == id && s.UserId == userId, ct);
         if (session is null) return NotFound();
 
+        // Its feedback threads go with it (#212).
+        _db.FeedbackMessages.RemoveRange(await _db.FeedbackMessages
+            .Where(m => m.GolferId == userId && m.TargetType == FeedbackTargetType.PracticeSession && m.TargetId == id)
+            .ToListAsync(ct));
         _db.PracticeSessions.Remove(session);
         await _db.SaveChangesAsync(ct);
 

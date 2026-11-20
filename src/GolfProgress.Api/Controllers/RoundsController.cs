@@ -152,7 +152,15 @@ public sealed class RoundsController : ControllerBase
         // keeps the change tracker, and providers without the cascade, in step.
         _db.FitnessScores.RemoveRange(await _db.FitnessScores.Where(x => x.RoundId == id).ToListAsync(ct));
         _db.MicroWins.RemoveRange(await _db.MicroWins.Where(x => x.RoundId == id).ToListAsync(ct));
-        _db.Reflections.RemoveRange(await _db.Reflections.Where(x => x.RoundId == id).ToListAsync(ct));
+        var reflections = await _db.Reflections.Where(x => x.RoundId == id).ToListAsync(ct);
+        _db.Reflections.RemoveRange(reflections);
+        // The feedback threads on the round and its reflections go with them (#212).
+        var reflectionIds = reflections.Select(r => r.ReflectionId).ToList();
+        _db.FeedbackMessages.RemoveRange(await _db.FeedbackMessages
+            .Where(m => m.GolferId == userId
+                        && ((m.TargetType == FeedbackTargetType.Round && m.TargetId == id)
+                            || (m.TargetType == FeedbackTargetType.Reflection && reflectionIds.Contains(m.TargetId))))
+            .ToListAsync(ct));
         _db.Rounds.Remove(round);
 
         _db.Events.Add(RoundEvent("RoundDeleted", round, DateTimeOffset.UtcNow));

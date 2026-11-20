@@ -17,7 +17,7 @@ namespace GolfProgress.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.32")
+                .HasAnnotation("ProductVersion", "8.0.34")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -149,6 +149,73 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.HasIndex("UserId", "CreatedAt");
 
                     b.ToTable("Events", (string)null);
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.FeedbackMessage", b =>
+                {
+                    b.Property<Guid>("FeedbackMessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("sysutcdatetime()");
+
+                    b.Property<DateTimeOffset?>("EditedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("GolferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("FeedbackMessageId");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("GolferId", "CoachId", "CreatedAt");
+
+                    b.HasIndex("GolferId", "TargetType", "TargetId", "CreatedAt");
+
+                    b.ToTable("FeedbackMessages", (string)null);
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.FeedbackRead", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GolferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("ReadUpTo")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("UserId", "GolferId");
+
+                    b.HasIndex("GolferId");
+
+                    b.ToTable("FeedbackReads", (string)null);
                 });
 
             modelBuilder.Entity("GolfProgress.Domain.Entities.FitnessScore", b =>
@@ -673,6 +740,44 @@ namespace GolfProgress.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.FeedbackMessage", b =>
+                {
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId");
+
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId");
+
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Golfer")
+                        .WithMany()
+                        .HasForeignKey("GolferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Coach");
+
+                    b.Navigation("Golfer");
+                });
+
+            modelBuilder.Entity("GolfProgress.Domain.Entities.FeedbackRead", b =>
+                {
+                    b.HasOne("GolfProgress.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("GolferId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GolfProgress.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("GolfProgress.Domain.Entities.FitnessScore", b =>

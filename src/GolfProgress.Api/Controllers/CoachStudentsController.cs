@@ -21,17 +21,20 @@ public sealed class CoachStudentsController : ControllerBase
     private readonly CoachInvitationService _invitations;
     private readonly CoachAccess _access;
     private readonly StudentOverviewService _overview;
+    private readonly FeedbackService _feedback;
 
     public CoachStudentsController(
         GolfProgressDbContext db,
         CoachInvitationService invitations,
         CoachAccess access,
-        StudentOverviewService overview)
+        StudentOverviewService overview,
+        FeedbackService feedback)
     {
         _db = db;
         _invitations = invitations;
         _access = access;
         _overview = overview;
+        _feedback = feedback;
     }
 
     // GET /coach/students?skip=0&take=20
@@ -75,6 +78,8 @@ public sealed class CoachStudentsController : ControllerBase
             return round > practice || practice is null ? round : practice;
         }
 
+        var unread = await _feedback.UnreadRepliesAsync(coachId, links, ct);
+
         Response.Headers[RoundsController.TotalCountHeader] = links.Count.ToString();
 
         return Ok(links
@@ -83,8 +88,7 @@ public sealed class CoachStudentsController : ControllerBase
                 GolferId = l.GolferId,
                 DisplayName = CoachInvitationService.DisplayNameOf(l.Golfer),
                 LastActivityOn = LastActivityOf(l.GolferId),
-                // Until feedback threads exist (#212).
-                UnreadReplies = 0,
+                UnreadReplies = unread.GetValueOrDefault(l.GolferId),
                 ShareReflections = l.ShareReflections,
                 SharePractice = l.SharePractice,
             })
