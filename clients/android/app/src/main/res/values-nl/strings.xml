@@ -427,4 +427,26 @@
     <string name="remove_coach_title">Deze coach verwijderen?</string>
     <string name="remove_coach_body">Je coach verliest direct de toegang. De feedback die je hebt gekregen blijft staan.</string>
     <string name="remove_coach_failed">Deze coach kon niet worden verwijderd. Probeer het opnieuw.</string>
+    <!-- Feedback van je coach (#217) -->
+    <string name="feedback_from_your_coach">Feedback van je coach</string>
+    <string name="feedback_load_error">De feedback kon niet worden geladen.</string>
+    <string name="feedback_former_coach">Een voormalige coach</string>
+    <string name="feedback_you">Jij</string>
+    <string name="feedback_edited">Bewerkt</string>
+    <string name="feedback_empty_golfer">Nog geen berichten. Je kunt %1$s hier iets over vragen.</string>
+    <string name="feedback_message_to">Bericht aan %1$s</string>
+    <string name="feedback_send">Versturen</string>
+    <string name="feedback_sending">Versturen…</string>
+    <string name="feedback_edit">Bewerken</string>
+    <string name="feedback_edit_of">Je bericht van %1$s bewerken</string>
+    <string name="feedback_edit_message">Je bericht bewerken</string>
+    <string name="feedback_delete">Verwijderen</string>
+    <string name="feedback_delete_of">Je bericht van %1$s verwijderen</string>
+    <string name="feedback_delete_title">Dit bericht verwijderen?</string>
+    <string name="feedback_delete_body">Het verdwijnt voor jullie allebei. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="feedback_write_something">Schrijf eerst iets.</string>
+    <string name="feedback_too_long">Gebruik maximaal %1$d tekens.</string>
+    <string name="feedback_too_many">Te veel berichten dit uur. Probeer het later opnieuw.</string>
+    <string name="feedback_failed">Dat is niet gelukt. Probeer het opnieuw.</string>
+    <string name="feedback_offline">Je bent offline. Maak verbinding om een bericht te versturen.</string>
 </resources>

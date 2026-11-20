@@ -43,6 +43,9 @@ import androidx.navigation.navArgument
 import com.golfprogress.app.R
 import com.golfprogress.app.coaching.CoachesScreen
 import com.golfprogress.app.dashboard.DashboardScreen
+import com.golfprogress.app.feedback.FeedbackSection
+import com.golfprogress.app.feedback.FeedbackSlot
+import com.golfprogress.app.feedback.NoFeedback
 import com.golfprogress.app.practice.LogPracticeScreen
 import com.golfprogress.app.practice.PracticeDetailScreen
 import com.golfprogress.app.practice.PracticeDetailViewModel
@@ -97,7 +100,11 @@ fun MainScreen(
     onSignOut: () -> Unit = {},
     /** After onboarding (#113): open Log round straight away. */
     openLogRound: Boolean = false,
+    /** The signed-in golfer, whose feedback threads the detail screens show (#217). */
+    userId: UUID? = null,
 ) {
+    val feedback: FeedbackSlot =
+        userId?.let { golferId -> { target, targetId -> FeedbackSection(golferId, target, targetId) } } ?: NoFeedback
     LaunchedEffect(Unit) { if (openLogRound) navController.navigateTo(Destination.LogRound) }
     val backStack by navController.currentBackStackEntryAsState()
     val current = Destination.entries.firstOrNull { it.route == backStack?.destination?.route } ?: Destination.Home
@@ -153,6 +160,7 @@ fun MainScreen(
                         onEdit = { id -> navController.navigate("rounds/$id/edit") },
                         onDeleted = { navController.popBackStack() },
                         onAddReflection = { id -> navController.navigate("rounds/$id/reflect") },
+                        feedback = feedback,
                     )
                 }
                 composable(Destination.EditRound.route, arguments = listOf(roundIdArgument)) {
@@ -174,7 +182,7 @@ fun MainScreen(
                 composable(
                     Destination.PracticeDetail.route,
                     arguments = listOf(navArgument(PracticeDetailViewModel.SESSION_ID) { type = NavType.StringType }),
-                ) { PracticeDetailScreen(onDeleted = { navController.popBackStack() }) }
+                ) { PracticeDetailScreen(onDeleted = { navController.popBackStack() }, feedback = feedback) }
                 composable(Destination.Progress.route) { ProgressScreen(onLogRound = logRound) }
                 composable(Destination.Profile.route) {
                     ProfileScreen(onSignOut = onSignOut, onOpenCoaches = { navController.navigate(Destination.Coaches.route) })

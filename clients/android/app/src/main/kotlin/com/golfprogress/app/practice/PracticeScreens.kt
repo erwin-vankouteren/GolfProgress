@@ -68,6 +68,9 @@ import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.knownSessionType
 import com.golfprogress.app.R
+import com.golfprogress.app.feedback.FeedbackSlot
+import com.golfprogress.app.feedback.FeedbackTarget
+import com.golfprogress.app.feedback.NoFeedback
 import com.golfprogress.app.rounds.DateField
 import com.golfprogress.app.rounds.Fact
 import com.golfprogress.app.rounds.FormProblem
@@ -381,6 +384,8 @@ fun PracticeDetailScreen(
     onDeleted: () -> Unit,
     viewModel: PracticeDetailViewModel = hiltViewModel(),
     online: Boolean = isOnline(),
+    /** Feedback from your coach on the session (#217). */
+    feedback: FeedbackSlot = NoFeedback,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
@@ -398,6 +403,7 @@ fun PracticeDetailScreen(
                     Text(stringResource(R.string.practice_no_longer_exists), style = MaterialTheme.typography.bodyLarge)
                 } else {
                     SessionDetail(session)
+                    feedback(FeedbackTarget.PracticeSession, session.practiceSessionId)
                     OutlinedButton(
                         onClick = viewModel::askToDelete,
                         enabled = online,

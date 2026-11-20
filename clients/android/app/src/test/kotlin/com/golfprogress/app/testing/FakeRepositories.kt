@@ -8,6 +8,7 @@ import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.CreateReflectionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
+import com.golfprogress.api.generated.models.FeedbackMessageResponse
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.MonthlyReviewResponse
@@ -21,6 +22,7 @@ import com.golfprogress.api.generated.models.UserBaselineResponse
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.CoachingRepository
 import com.golfprogress.app.data.DashboardRepository
+import com.golfprogress.app.data.FeedbackRepository
 import com.golfprogress.app.data.Page
 import com.golfprogress.app.data.PracticeRepository
 import com.golfprogress.app.data.ProfileChanges
@@ -28,10 +30,12 @@ import com.golfprogress.app.data.ProgressRepository
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.data.UserRepository
 import com.golfprogress.app.di.RepositoryModule
+import com.golfprogress.app.feedback.FeedbackTarget
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import java.time.OffsetDateTime
 import java.util.UUID
 
 /*
@@ -231,6 +235,65 @@ class FakeRoundsRepository(
     }
 }
 
+/**
+ * Feedback threads in memory, answering as the golfer: writing adds a message of theirs,
+ * editing and deleting change it, and [reads] records marking read. [failWith] makes the
+ * writes throw, and [threadFailsWith] reading.
+ */
+class FakeFeedbackRepository(
+    val messages: MutableList<FeedbackMessageResponse> = mutableListOf(),
+    var threadFailsWith: Exception? = null,
+) : FeedbackRepository {
+    val written = mutableListOf<Pair<UUID, String>>()
+    val reads = mutableListOf<OffsetDateTime>()
+    var failWith: Exception? = null
+
+    override suspend fun thread(
+        golferId: UUID,
+        target: FeedbackTarget,
+        targetId: UUID,
+    ): List<FeedbackMessageResponse> {
+        threadFailsWith?.let { throw it }
+        return messages.toList()
+    }
+
+    override suspend fun write(
+        golferId: UUID,
+        target: FeedbackTarget,
+        targetId: UUID,
+        coachId: UUID,
+        text: String,
+    ): FeedbackMessageResponse {
+        failWith?.let { throw it }
+        written += coachId to text
+        val message = Fixtures.feedback(100 + messages.size, text, coachId, fromCoach = false)
+        messages += message
+        return message
+    }
+
+    override suspend fun edit(
+        id: UUID,
+        text: String,
+    ): FeedbackMessageResponse {
+        failWith?.let { throw it }
+        val edited = messages.first { it.feedbackMessageId == id }.copy(text = text, editedAt = Fixtures.now)
+        messages.replaceAll { if (it.feedbackMessageId == id) edited else it }
+        return edited
+    }
+
+    override suspend fun delete(id: UUID) {
+        failWith?.let { throw it }
+        messages.removeAll { it.feedbackMessageId == id }
+    }
+
+    override suspend fun markRead(
+        golferId: UUID,
+        upTo: OffsetDateTime,
+    ) {
+        reads += upTo
+    }
+}
+
 /** The fakes the Hilt graph hands out; [reset] before each test. */
 object FakeRepositories {
     lateinit var dashboard: FakeDashboardRepository
@@ -245,6 +308,8 @@ object FakeRepositories {
         private set
     lateinit var coaching: FakeCoachingRepository
         private set
+    lateinit var feedback: FakeFeedbackRepository
+        private set
 
     fun reset() {
         dashboard = FakeDashboardRepository()
@@ -253,6 +318,7 @@ object FakeRepositories {
         practice = FakePracticeRepository()
         progress = FakeProgressRepository()
         coaching = FakeCoachingRepository()
+        feedback = FakeFeedbackRepository()
     }
 
     init {
@@ -280,6 +346,9 @@ object FakeRepositoryModule {
 
     @Provides
     fun coaching(): CoachingRepository = FakeRepositories.coaching
+
+    @Provides
+    fun feedback(): FeedbackRepository = FakeRepositories.feedback
 }
 
 /** Practice sessions in memory, newest first; creating answers id 8. */

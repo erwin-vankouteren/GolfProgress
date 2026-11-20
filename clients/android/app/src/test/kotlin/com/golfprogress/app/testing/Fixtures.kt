@@ -6,6 +6,7 @@ import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.CreateRoundRequest
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.DashboardRoundSummary
+import com.golfprogress.api.generated.models.FeedbackMessageResponse
 import com.golfprogress.api.generated.models.FitnessScoreExplanation
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.MicroWinResponse
@@ -30,7 +31,31 @@ object Fixtures {
         name: String = "Mark",
         shareReflections: Boolean = false,
         sharePractice: Boolean = true,
-    ) = CoachResponse(UUID.randomUUID(), name, shareReflections, sharePractice, now)
+        coachId: UUID = UUID.randomUUID(),
+    ) = CoachResponse(UUID.randomUUID(), coachId, name, shareReflections, sharePractice, now)
+
+    /** A message in a coach's feedback thread on round 1 (#217). */
+    fun feedback(
+        id: Int,
+        text: String,
+        coachId: UUID?,
+        coachName: String? = "Mark",
+        fromCoach: Boolean = true,
+        mine: Boolean = !fromCoach,
+        createdAt: OffsetDateTime = now.plusMinutes(id.toLong()),
+    ) = FeedbackMessageResponse(
+        feedbackMessageId = UUID(0, id.toLong()),
+        golferId = userId,
+        coachId = coachId,
+        coachName = coachName,
+        fromCoach = fromCoach,
+        mine = mine,
+        targetType = FeedbackMessageResponse.TargetType.Round,
+        targetId = roundId(1),
+        text = text,
+        createdAt = createdAt,
+        editedAt = null,
+    )
 
     fun coachInvitation(
         email: String = "pro@example.test",

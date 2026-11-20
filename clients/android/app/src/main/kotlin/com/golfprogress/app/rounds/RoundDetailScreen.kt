@@ -40,6 +40,9 @@ import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.app.R
+import com.golfprogress.app.feedback.FeedbackSlot
+import com.golfprogress.app.feedback.FeedbackTarget
+import com.golfprogress.app.feedback.NoFeedback
 import com.golfprogress.app.ui.common.Confidence
 import com.golfprogress.app.ui.common.ConfidenceBadge
 import com.golfprogress.app.ui.common.ConfirmDialog
@@ -66,6 +69,8 @@ fun RoundDetailScreen(
     onDeleted: () -> Unit,
     onAddReflection: (UUID) -> Unit,
     viewModel: RoundDetailViewModel = hiltViewModel(),
+    /** Feedback from your coach on the round and on each reflection (#217). */
+    feedback: FeedbackSlot = NoFeedback,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
@@ -78,6 +83,7 @@ fun RoundDetailScreen(
         onConfirmDelete = viewModel::confirmDelete,
         onCancelDelete = viewModel::cancelDelete,
         onAddReflection = { onAddReflection(viewModel.roundId) },
+        feedback = feedback,
     )
 }
 
@@ -91,6 +97,7 @@ fun RoundDetailContent(
     onCancelDelete: () -> Unit,
     online: Boolean = isOnline(),
     onAddReflection: () -> Unit = {},
+    feedback: FeedbackSlot = NoFeedback,
 ) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(DesignTokens.Spacing.lg),
@@ -103,7 +110,7 @@ fun RoundDetailContent(
                 if (detail.value == null) {
                     RoundGone()
                 } else {
-                    Detail(detail.value, onAddReflection, online)
+                    Detail(detail.value, onAddReflection, online, feedback)
                     Button(
                         onClick = onEdit,
                         enabled = online,
@@ -136,6 +143,7 @@ private fun Detail(
     detail: RoundDetail,
     onAddReflection: () -> Unit,
     online: Boolean,
+    feedback: FeedbackSlot,
 ) {
     val round = detail.round
     Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)) {
@@ -169,7 +177,8 @@ private fun Detail(
     }
 
     StatsCard(round)
-    ReflectionsCard(detail.reflections, onAddReflection, online)
+    feedback(FeedbackTarget.Round, round.roundId)
+    ReflectionsCard(detail.reflections, onAddReflection, online, feedback)
 }
 
 /** "Hilversum · 18 holes · 88 strokes", or without the course when there's none. */
@@ -253,12 +262,16 @@ private fun ReflectionsCard(
     reflections: List<ReflectionResponse>,
     onAdd: () -> Unit,
     online: Boolean,
+    feedback: FeedbackSlot,
 ) {
     SectionCard(R.string.reflection) {
         if (reflections.isEmpty()) {
             Text(stringResource(R.string.no_reflection), style = MaterialTheme.typography.bodyLarge)
         }
-        reflections.forEach { ReflectionView(it) }
+        reflections.forEach {
+            ReflectionView(it)
+            feedback(FeedbackTarget.Reflection, it.reflectionId)
+        }
         OutlinedButton(
             onClick = onAdd,
             enabled = online,

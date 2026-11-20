@@ -40,6 +40,7 @@ import com.golfprogress.app.version.UpdateRequiredScreen
 import com.golfprogress.app.version.VersionState
 import com.golfprogress.app.version.VersionViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.UUID
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -92,7 +93,11 @@ private fun Root(
                         )
                     } else {
                         LanguageSync((session as SessionState.SignedIn).userId)
-                        MainScreen(onSignOut = sessionViewModel::signOut, openLogRound = openLogRound)
+                        MainScreen(
+                            onSignOut = sessionViewModel::signOut,
+                            openLogRound = openLogRound,
+                            userId = UUID.fromString((session as SessionState.SignedIn).userId),
+                        )
                     }
             }
     }

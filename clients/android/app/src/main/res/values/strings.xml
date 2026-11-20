@@ -426,4 +426,26 @@
     <string name="remove_coach_title">Remove this coach?</string>
     <string name="remove_coach_body">They lose access straight away. The feedback they gave you stays.</string>
     <string name="remove_coach_failed">Couldn\'t remove this coach. Please try again.</string>
+    <!-- Feedback from your coach (#217) -->
+    <string name="feedback_from_your_coach">Feedback from your coach</string>
+    <string name="feedback_load_error">Couldn\'t load the feedback.</string>
+    <string name="feedback_former_coach">A former coach</string>
+    <string name="feedback_you">You</string>
+    <string name="feedback_edited">Edited</string>
+    <string name="feedback_empty_golfer">No messages yet. You can ask %1$s about this.</string>
+    <string name="feedback_message_to">Message to %1$s</string>
+    <string name="feedback_send">Send</string>
+    <string name="feedback_sending">Sending…</string>
+    <string name="feedback_edit">Edit</string>
+    <string name="feedback_edit_of">Edit your message of %1$s</string>
+    <string name="feedback_edit_message">Edit your message</string>
+    <string name="feedback_delete">Delete</string>
+    <string name="feedback_delete_of">Delete your message of %1$s</string>
+    <string name="feedback_delete_title">Delete this message?</string>
+    <string name="feedback_delete_body">It\'s removed for both of you. This can\'t be undone.</string>
+    <string name="feedback_write_something">Write something first.</string>
+    <string name="feedback_too_long">Use at most %1$d characters.</string>
+    <string name="feedback_too_many">Too many messages this hour. Try again later.</string>
+    <string name="feedback_failed">Couldn\'t do that. Please try again.</string>
+    <string name="feedback_offline">You\'re offline. Connect to send a message.</string>
 </resources>
