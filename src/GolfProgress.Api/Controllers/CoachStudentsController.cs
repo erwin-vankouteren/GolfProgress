@@ -19,11 +19,19 @@ public sealed class CoachStudentsController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
     private readonly CoachInvitationService _invitations;
+    private readonly CoachAccess _access;
+    private readonly StudentOverviewService _overview;
 
-    public CoachStudentsController(GolfProgressDbContext db, CoachInvitationService invitations)
+    public CoachStudentsController(
+        GolfProgressDbContext db,
+        CoachInvitationService invitations,
+        CoachAccess access,
+        StudentOverviewService overview)
     {
         _db = db;
         _invitations = invitations;
+        _access = access;
+        _overview = overview;
     }
 
     // GET /coach/students?skip=0&take=20
@@ -86,6 +94,20 @@ public sealed class CoachStudentsController : ControllerBase
             .Skip(skip)
             .Take(take)
             .ToList());
+    }
+
+    // GET /coach/students/{golferId}/overview
+    //
+    // What a coach needs before a lesson (#202). 404 when the caller doesn't coach them.
+    [HttpGet("/coach/students/{golferId:guid}/overview", Name = "getStudentOverview")]
+    [ProducesResponseType<StudentOverviewResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<StudentOverviewResponse>> Overview(Guid golferId, CancellationToken ct)
+    {
+        var link = await _access.LinkCoveringAsync(User.GetUserId(), golferId, CoachShare.RoundsAndProgress, ct);
+        if (link is null) return NotFound();
+
+        return Ok(await _overview.BuildAsync(link, ct));
     }
 
     // DELETE /coach/students/{golferId}

@@ -1133,6 +1133,72 @@
         ]
       }
     },
+    "/coach/students/{golferId}/overview": {
+      "get": {
+        "tags": [
+          "CoachStudents"
+        ],
+        "operationId": "getStudentOverview",
+        "parameters": [
+          {
+            "name": "golferId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentOverviewResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The access token is missing, invalid or expired. Refresh it and retry once.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/coach/students/{golferId}": {
       "delete": {
         "tags": [
@@ -4453,6 +4519,145 @@
             "items": {
               "$ref": "#/components/schemas/RoundTimelinePointResponse"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentOverviewResponse": {
+        "required": [
+          "baseline",
+          "displayName",
+          "golferId",
+          "lastRound",
+          "latestReflections",
+          "monthlyFitnessAvg",
+          "monthlyFitnessChange",
+          "nextFocus",
+          "recentRounds",
+          "sharePractice",
+          "shareReflections"
+        ],
+        "type": "object",
+        "properties": {
+          "golferId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "shareReflections": {
+            "type": "boolean"
+          },
+          "sharePractice": {
+            "type": "boolean"
+          },
+          "lastRound": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardRoundSummary"
+              }
+            ],
+            "nullable": true
+          },
+          "recentRounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoundTimelinePointResponse"
+            }
+          },
+          "monthlyFitnessAvg": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "monthlyFitnessChange": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "nextFocus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextLeverResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "baseline": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserBaselineResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "latestReflections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentReflectionResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentReflectionResponse": {
+        "required": [
+          "createdAt",
+          "focusRating",
+          "frustrationSpillover",
+          "moodRating",
+          "oneChangeNext",
+          "playedAt",
+          "reflectionId",
+          "roundId",
+          "whatToRepeat",
+          "whatWorked"
+        ],
+        "type": "object",
+        "properties": {
+          "reflectionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roundId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "playedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "focusRating": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "moodRating": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "frustrationSpillover": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "whatWorked": {
+            "type": "string",
+            "nullable": true
+          },
+          "whatToRepeat": {
+            "type": "string",
+            "nullable": true
+          },
+          "oneChangeNext": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false

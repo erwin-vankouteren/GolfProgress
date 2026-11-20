@@ -2,6 +2,7 @@ using GolfProgress.Api.Configuration;
 using GolfProgress.Api.Contracts.Progress;
 using GolfProgress.Api.Security;
 using GolfProgress.Api.Services;
+using GolfProgress.Domain.Entities;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,7 +55,12 @@ public sealed class ProgressController : ControllerBase
         // round written, so it averages all of them until there are more.
         var rounds = await _db.Rounds.CountAsync(r => r.UserId == userId, ct);
 
-        return Ok(new UserBaselineResponse
+        return Ok(BaselineResponse(b, rounds));
+    }
+
+    /// <summary>A baseline as the API shows it; also on a coach's student overview (#202).</summary>
+    internal static UserBaselineResponse BaselineResponse(UserBaseline b, int rounds) =>
+        new()
         {
             UserId = b.UserId,
             WindowRounds = b.WindowRounds,
@@ -70,8 +76,7 @@ public sealed class ProgressController : ControllerBase
             CompletenessRatio = b.CompletenessRatio,
             ConfidenceLevel = b.ConfidenceLevel.ToString(),
             ComputedAt = b.ComputedAt
-        });
-    }
+        };
 
     // GET /rounds/{roundId}/fitness-score
     [HttpGet("/rounds/{roundId:guid}/fitness-score", Name = "getFitnessScore")]
