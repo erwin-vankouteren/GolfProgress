@@ -83,7 +83,7 @@ public sealed class ReflectionsController : ControllerBase
         return Ok(items);
     }
 
-    private static ReflectionResponse ToResponse(Reflection r) => new()
+    internal static ReflectionResponse ToResponse(Reflection r) => new()
     {
         ReflectionId = r.ReflectionId,
         UserId = r.UserId,

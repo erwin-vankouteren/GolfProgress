@@ -88,9 +88,12 @@ public sealed class ProgressController : ControllerBase
 
         var fs = await _db.FitnessScores.AsNoTracking()
             .FirstOrDefaultAsync(x => x.RoundId == roundId && x.UserId == userId, ct);
-        if (fs is null) return NotFound();
+        return fs is null ? NotFound() : Ok(FitnessScoreResponse(fs));
+    }
 
-        return Ok(new FitnessScoreResponse
+    /// <summary>A round's fitness score as the API shows it; also to a coach (#205).</summary>
+    internal static FitnessScoreResponse FitnessScoreResponse(FitnessScore fs) =>
+        new()
         {
             FitnessScoreId = fs.FitnessScoreId,
             UserId = fs.UserId,
@@ -103,8 +106,7 @@ public sealed class ProgressController : ControllerBase
             ConfidenceLevel = fs.ConfidenceLevel.ToString(),
             ComputedAt = fs.ComputedAt,
             Explanation = Explain(fs.ExplanationJson)
-        });
-    }
+        };
 
     /// <summary>
     /// The stored explanation (ProgressComputationService.UpsertFitnessScoreAsync), read

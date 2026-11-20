@@ -5,7 +5,8 @@ reflections, gives feedback on them, and sets practice goals. For juniors, coach
 belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
 **M6 Juniors**. Inviting and managing coaches is built on the API, web and Android, the
-Students list on the API and web, and the student overview on the API and web; the rest isn't yet.
+Students list on the API and web, the student overview on the API and web, and a student's rounds and practice on the API;
+the rest isn't yet.
 
 Background: the product overview (`docs/golfprogress-overview.pdf`, "Coming next").
 The rest of the system is in [`architecture.md`](architecture.md), and the existing screens
@@ -179,8 +180,9 @@ whether a golfer, round or session exists.
 | `GET /coach/students` | Students: name, last activity (practice only where it's shared), unread replies, what's shared |
 | `DELETE /coach/students/{golferId}` | Stop coaching a student |
 | `GET /coach/students/{golferId}/overview` | Trend, next focus, baseline, latest reflections, active goals (goals and unread threads join it with #226 and #212) |
-| `GET /coach/students/{golferId}/rounds`, `/rounds/{roundId}` | Rounds, read-only, the same contracts as the golfer's |
-| `GET /coach/students/{golferId}/practice-sessions`, `/timeline`, `/monthly-reviews` | As above |
+| `GET /coach/students/{golferId}/rounds`, `/rounds/{roundId}` | Rounds, read-only, the same contracts as the golfer's; notes only when reflections are shared |
+| `GET /coach/students/{golferId}/rounds/{roundId}/fitness-score`, `/micro-wins`, `/next-lever`, `/reflections` | A round's detail, as above; reflections only when shared |
+| `GET /coach/students/{golferId}/practice-sessions[/{id}]`, `/timeline[/monthly]`, `/monthly-reviews/{monthStart}` | As above; practice only when shared |
 | `POST`/`PATCH`/`DELETE /coach/students/{golferId}/practice-goals[/{id}]` | Set and change goals |
 
 The coach reads through its own routes, rather than through the golfer's routes with

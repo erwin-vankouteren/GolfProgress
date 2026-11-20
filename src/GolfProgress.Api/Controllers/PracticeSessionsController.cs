@@ -97,13 +97,23 @@ public sealed class PracticeSessionsController : ControllerBase
         [FromQuery] int take = 20,
         CancellationToken ct = default)
     {
-        var userId = User.GetUserId();
+        var (sessions, total) = await PageAsync(_db, User.GetUserId(), skip, take, includeNotes: true, ct);
+        Response.Headers["X-Total-Count"] = total.ToString();
+        return Ok(sessions);
+    }
+
+    /// <summary>
+    /// A page of a golfer's practice sessions, newest first, with the total; for the golfer
+    /// and their coach (#205). take is clamped to 1..100.
+    /// </summary>
+    internal static async Task<(List<PracticeSessionResponse> Sessions, int Total)> PageAsync(
+        GolfProgressDbContext db, Guid userId, int skip, int take, bool includeNotes, CancellationToken ct)
+    {
         skip = Math.Max(skip, 0);
         take = Math.Clamp(take, 1, 100);
 
-        var query = _db.PracticeSessions.AsNoTracking().Where(s => s.UserId == userId);
-
-        Response.Headers["X-Total-Count"] = (await query.CountAsync(ct)).ToString();
+        var query = db.PracticeSessions.AsNoTracking().Where(s => s.UserId == userId);
+        var total = await query.CountAsync(ct);
 
         var sessions = await query
             .OrderByDescending(s => s.PracticedAt)
@@ -113,7 +123,7 @@ public sealed class PracticeSessionsController : ControllerBase
             .Take(take)
             .ToListAsync(ct);
 
-        return Ok(sessions.Select(ToResponse).ToList());
+        return (sessions.Select(s => ToResponse(s, includeNotes)).ToList(), total);
     }
 
     // DELETE /me/practice-sessions/{id}
@@ -134,7 +144,8 @@ public sealed class PracticeSessionsController : ControllerBase
         return NoContent();
     }
 
-    private static PracticeSessionResponse ToResponse(PracticeSession s) => new()
+    /// <summary>A session as the API shows it; a coach sees the notes only when reflections are shared (#205).</summary>
+    internal static PracticeSessionResponse ToResponse(PracticeSession s, bool includeNotes = true) => new()
     {
         PracticeSessionId = s.PracticeSessionId,
         UserId = s.UserId,
@@ -144,7 +155,7 @@ public sealed class PracticeSessionsController : ControllerBase
         VenueName = s.VenueName,
         Tags = s.Tags,
         PrimaryGoal = s.PrimaryGoal,
-        Notes = s.Notes,
+        Notes = includeNotes ? s.Notes : null,
         CreatedAt = s.CreatedAt
     };
 }

@@ -72,7 +72,7 @@ public sealed class MonthlyReviewsController : ControllerBase
         return Ok(ToResponse(review));
     }
 
-    private static MonthlyReviewResponse ToResponse(GolfProgress.Domain.Entities.MonthlyReview r)
+    internal static MonthlyReviewResponse ToResponse(GolfProgress.Domain.Entities.MonthlyReview r)
     {
         var highlights = MonthlyReviewService.Highlights(r, ApiTexts.Current);
         var (roundsLogged, topCategory) = MonthlyReviewService.ReadFacts(r.HighlightsJson);

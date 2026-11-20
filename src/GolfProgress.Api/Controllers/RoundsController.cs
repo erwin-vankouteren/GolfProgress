@@ -180,13 +180,23 @@ public sealed class RoundsController : ControllerBase
         [FromQuery] int take = 20,
         CancellationToken ct = default)
     {
-        var userId = User.GetUserId();
+        var (rounds, total) = await PageAsync(_db, User.GetUserId(), skip, take, includeNotes: true, ct);
+        Response.Headers[TotalCountHeader] = total.ToString();
+        return Ok(rounds);
+    }
+
+    /// <summary>
+    /// A page of a golfer's rounds, newest first, with the total; for the golfer and their
+    /// coach (#205). take is clamped to 1..100.
+    /// </summary>
+    internal static async Task<(List<RoundResponse> Rounds, int Total)> PageAsync(
+        GolfProgressDbContext db, Guid userId, int skip, int take, bool includeNotes, CancellationToken ct)
+    {
         skip = Math.Max(skip, 0);
         take = Math.Clamp(take, 1, 100);
 
-        var query = _db.Rounds.AsNoTracking().Where(r => r.UserId == userId);
-
-        Response.Headers[TotalCountHeader] = (await query.CountAsync(ct)).ToString();
+        var query = db.Rounds.AsNoTracking().Where(r => r.UserId == userId);
+        var total = await query.CountAsync(ct);
 
         var rounds = await query
             .OrderByDescending(r => r.PlayedAt)
@@ -200,11 +210,11 @@ public sealed class RoundsController : ControllerBase
 
         // The page's scores in one query, rather than one per round.
         var ids = rounds.Select(r => r.RoundId).ToList();
-        var scores = await _db.FitnessScores.AsNoTracking()
+        var scores = await db.FitnessScores.AsNoTracking()
             .Where(f => ids.Contains(f.RoundId))
             .ToDictionaryAsync(f => f.RoundId, ct);
 
-        return Ok(rounds.Select(r => ToResponse(r, scores.GetValueOrDefault(r.RoundId))).ToList());
+        return (rounds.Select(r => ToResponse(r, scores.GetValueOrDefault(r.RoundId), includeNotes)).ToList(), total);
     }
 
     /// <summary>Copies a validated create or update request onto the round.</summary>
@@ -247,7 +257,8 @@ public sealed class RoundsController : ControllerBase
         CreatedAt = now
     };
 
-    private static RoundResponse ToResponse(Round r, FitnessScore? score = null) => new()
+    /// <summary>A round as the API shows it; a coach sees the notes only when reflections are shared (#205).</summary>
+    internal static RoundResponse ToResponse(Round r, FitnessScore? score = null, bool includeNotes = true) => new()
     {
         RoundId = r.RoundId,
         UserId = r.UserId,
@@ -263,7 +274,7 @@ public sealed class RoundsController : ControllerBase
         ThreePutts = r.ThreePutts,
         BlowUpHoles = r.BlowUpHoles,
         Source = r.Source.ToString(),
-        Notes = r.Notes,
+        Notes = includeNotes ? r.Notes : null,
         CreatedAt = r.CreatedAt,
         UpdatedAt = r.UpdatedAt,
         FitnessScore = score?.ScoreTotal,
