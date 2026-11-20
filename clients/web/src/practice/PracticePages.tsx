@@ -3,9 +3,11 @@ import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent,
 import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiProblem, knownSessionTypes, sessionTypeOf, unwrap, type Schemas, type SessionType } from "../api";
-import { queryKeys, usePracticeList, usePracticeSession } from "../api/queries";
+import { queryKeys, usePracticeGoals, usePracticeList, usePracticeSession } from "../api/queries";
+import { linkableGoals, suggestedGoal } from "../goals/goals";
 import { useSectionPaths } from "../api/studentScope";
 import { FeedbackSection } from "../feedback/FeedbackSection";
+import { GoalsSection } from "../goals/GoalPages";
 import { useApi } from "../app/ApiContext";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
@@ -78,6 +80,8 @@ export function PracticePage() {
         </h1>
         {sessions.length > 0 && logButton}
       </div>
+
+      <GoalsSection />
 
       {list.isPending ? (
         <Skeleton blocks={3} className="round-list-skeleton" />
@@ -160,12 +164,27 @@ export function LogPracticePage() {
   const [formError, setFormError] = useState<string | undefined>();
   const sending = useRef(false);
 
+  // The coach's goal it counts towards (#230): suggested from the session type until the
+  // golfer picks one; only goals whose period includes the date.
+  const goals = usePracticeGoals();
+  const [chosenGoal, setChosenGoal] = useState<string | undefined>();
+  const [goalError, setGoalError] = useState<string | undefined>();
+  const linkable = linkableGoals(goals.data ?? [], values.practicedAt);
+  const suggestion = suggestedGoal(goals.data ?? [], values.practicedAt, values.sessionType);
+  const goalId =
+    chosenGoal === undefined
+      ? (suggestion?.practiceGoalId ?? "")
+      : linkable.some((goal) => goal.practiceGoalId === chosenGoal)
+        ? chosenGoal
+        : "";
+
   const save = useMutation({
     mutationFn: async (body: Schemas["CreatePracticeSessionRequest"]) =>
       unwrap(await api.POST("/me/practice-sessions", { body })),
     onSuccess: (session) => {
       queryClient.setQueryData(queryKeys.practiceSession(session.practiceSessionId), session);
       void queryClient.invalidateQueries({ queryKey: queryKeys.practiceList });
+      if (session.practiceGoalId) void queryClient.invalidateQueries({ queryKey: queryKeys.practiceGoals });
       navigate(`/practice/${session.practiceSessionId}`, { replace: true });
     },
     onError: (error) => {
@@ -176,7 +195,9 @@ export function LogPracticePage() {
           if (message) fields[field] = message;
         }
         setApiErrors(fields);
-        if (Object.keys(fields).length) return;
+        const onGoal = error.messagesFor("practiceGoalId")[0];
+        setGoalError(onGoal);
+        if (Object.keys(fields).length || onGoal) return;
       }
       setFormError(
         intl.formatMessage(error instanceof ApiProblem ? messages.practiceSaveFailed : messages.cantConnect),
@@ -240,7 +261,7 @@ export function LogPracticePage() {
     }
 
     sending.current = true;
-    save.mutate(toPracticeRequest(withTags));
+    save.mutate({ ...toPracticeRequest(withTags), practiceGoalId: goalId || null });
   };
 
   return (
@@ -288,6 +309,47 @@ export function LogPracticePage() {
             </select>
           )}
         </Field>
+
+        {linkable.length > 0 && (
+          <div className="field">
+            <label htmlFor={`${formId}-goal`}>
+              <FormattedMessage {...messages.countsTowards} />
+            </label>
+            <select
+              id={`${formId}-goal`}
+              value={goalId}
+              aria-invalid={goalError ? true : undefined}
+              aria-describedby={
+                goalError
+                  ? `${formId}-goal-error`
+                  : suggestion && goalId === suggestion.practiceGoalId
+                    ? `${formId}-goal-hint`
+                    : undefined
+              }
+              onChange={(e) => {
+                setChosenGoal(e.target.value);
+                setGoalError(undefined);
+              }}
+            >
+              <option value="">{intl.formatMessage(messages.noGoal)}</option>
+              {linkable.map((goal) => (
+                <option key={goal.practiceGoalId} value={goal.practiceGoalId}>
+                  {goal.title}
+                </option>
+              ))}
+            </select>
+            {suggestion && goalId === suggestion.practiceGoalId && chosenGoal === undefined && (
+              <p id={`${formId}-goal-hint`} className="hint">
+                <FormattedMessage {...messages.goalSuggested} />
+              </p>
+            )}
+            {goalError && (
+              <p id={`${formId}-goal-error`} className="field-error">
+                {goalError}
+              </p>
+            )}
+          </div>
+        )}
 
         <Field
           id={idFor("durationMinutes")}

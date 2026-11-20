@@ -1,0 +1,71 @@
+/* Practice goals (#227, #230, #235). Tokens only. */
+
+.goal-list {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-row {
+  display: grid;
+  gap: var(--space-xs);
+  min-height: var(--touch-target);
+  padding: var(--space-sm) 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.goal-row-title {
+  font-weight: var(--font-weight-label);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.goal-progress {
+  display: grid;
+  gap: var(--space-xxs);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.goal-bar {
+  display: block;
+  height: 6px;
+  max-width: 16rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-variant);
+  overflow: hidden;
+}
+
+.goal-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.goal-sessions {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-sessions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
+.goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.goal-actions .form-error {
+  flex-basis: 100%;
+}

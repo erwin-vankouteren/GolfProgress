@@ -11,6 +11,7 @@ import { ConfidenceBadge, PlayedDate, formatPlayedDate } from "../rounds/score";
 import { sharedLabels } from "./CoachesSection";
 import { sharedItems } from "./coachForm";
 import { StopCoachingButton } from "./StudentsPage";
+import { GoalList } from "../goals/GoalPages";
 import { fitnessTrend, reflectionsState, type StudentOverview } from "./studentOverview";
 import "../progress/progress.css";
 import "./coaching.css";
@@ -80,6 +81,7 @@ export function StudentOverviewPage() {
             <FormattedMessage {...messages.studentNoRounds} values={{ name: student.displayName }} />
           </p>
           <div className="dashboard-grid">
+            <PracticeCard student={student} />
             <Reflections student={student} />
           </div>
         </>
@@ -190,18 +192,27 @@ function OverviewCards({
         </p>
       </Card>
 
-      {student.sharePractice && (
-        <Card title={messages.practice} id="practice">
-          <p>
-            <Link to={`/students/${student.golferId}/practice`}>
-              <FormattedMessage {...messages.practiceSessions} />
-            </Link>
-          </p>
-        </Card>
-      )}
-
+      <PracticeCard student={student} />
       <Reflections student={student} />
     </div>
+  );
+}
+
+/** Practice, when it's shared (#227): the coach's current goals, Set a practice goal, and the sessions. */
+function PracticeCard({ student }: { student: StudentOverview }) {
+  if (!student.sharePractice) return null;
+  return (
+    <Card title={messages.practice} id="practice">
+      {student.activeGoals.length > 0 && <GoalList goals={student.activeGoals} />}
+      <p className="overview-links">
+        <Link to={`/students/${student.golferId}/practice/goals/new`}>
+          <FormattedMessage {...messages.setPracticeGoal} />
+        </Link>
+        <Link to={`/students/${student.golferId}/practice`}>
+          <FormattedMessage {...messages.practiceSessions} />
+        </Link>
+      </p>
+    </Card>
   );
 }
 

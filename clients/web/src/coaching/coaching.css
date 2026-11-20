@@ -106,3 +106,15 @@
   align-items: center;
   min-height: var(--touch-target);
 }
+
+.overview-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+}
+
+.overview-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}

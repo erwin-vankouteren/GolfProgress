@@ -36,6 +36,9 @@ export const queryKeys = {
   coachInvitation: (token: string) => ["coach-invitation", token] as const,
   feedback: ["feedback"] as const,
   unreadFeedback: ["feedback", "unread"] as const,
+  practiceGoals: ["practice-goals"] as const,
+  practiceGoal: (goalId: string) => ["practice-goals", goalId] as const,
+  goalOutcome: (goalId: string) => ["practice-goals", goalId, "outcome"] as const,
   feedbackThread: (golferId: string, targetType: string, targetId: string) =>
     ["feedback", golferId, targetType, targetId] as const,
 };
@@ -109,6 +112,56 @@ export function useUnreadFeedback() {
     // Like the dashboard it's on: current whenever the golfer comes back to the tab.
     refetchOnWindowFocus: "always",
     queryFn: async () => unwrap(await api.GET("/me/feedback/unread")),
+  });
+}
+
+/**
+ * Practice goals (#227, #230): the golfer's from every coach, or in a student's screens the
+ * ones this coach set. Current ones first.
+ */
+export function usePracticeGoals() {
+  const api = useApi();
+  const golferId = useStudentScope();
+  return useQuery({
+    queryKey: scopedKey(golferId, queryKeys.practiceGoals),
+    queryFn: async () =>
+      golferId
+        ? unwrap(await api.GET("/coach/students/{golferId}/practice-goals", { params: { path: { golferId } } }))
+        : unwrap(await api.GET("/me/practice-goals")),
+  });
+}
+
+/** A goal with its linked sessions. A 404 means it's gone, or not this coach's. */
+export function usePracticeGoal(goalId: string) {
+  const api = useApi();
+  const golferId = useStudentScope();
+  return useQuery({
+    queryKey: scopedKey(golferId, queryKeys.practiceGoal(goalId)),
+    queryFn: async () =>
+      golferId
+        ? unwrap(
+            await api.GET("/coach/students/{golferId}/practice-goals/{id}", {
+              params: { path: { golferId, id: goalId } },
+            }),
+          )
+        : unwrap(await api.GET("/me/practice-goals/{id}", { params: { path: { id: goalId } } })),
+  });
+}
+
+/** "Did it work?" (#235). */
+export function useGoalOutcome(goalId: string) {
+  const api = useApi();
+  const golferId = useStudentScope();
+  return useQuery({
+    queryKey: scopedKey(golferId, queryKeys.goalOutcome(goalId)),
+    queryFn: async () =>
+      golferId
+        ? unwrap(
+            await api.GET("/coach/students/{golferId}/practice-goals/{id}/outcome", {
+              params: { path: { golferId, id: goalId } },
+            }),
+          )
+        : unwrap(await api.GET("/me/practice-goals/{id}/outcome", { params: { path: { id: goalId } } })),
   });
 }
 

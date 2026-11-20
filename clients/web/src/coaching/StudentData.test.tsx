@@ -72,6 +72,7 @@ const overview = {
   nextFocus: null,
   baseline: null,
   latestReflections: [],
+  activeGoals: [],
 };
 
 const paged = (body: unknown[]) =>
@@ -133,6 +134,7 @@ function handlers(overrides: Record<string, Handler> = {}): Record<string, Handl
         },
       ]),
     [`GET ${root}/practice-sessions`]: () => paged([session]),
+    [`GET ${root}/practice-goals`]: () => json(200, []),
     [`GET ${root}/practice-sessions/${sessionId}`]: () => json(200, session),
     ...overrides,
   };

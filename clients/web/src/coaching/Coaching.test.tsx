@@ -421,6 +421,7 @@ const overview = {
       createdAt: "2026-11-01T18:00:00Z",
     },
   ],
+  activeGoals: [],
 };
 const overviewPath = `/students/${student.golferId}`;
 const overviewApi = `GET /coach/students/${student.golferId}/overview`;
@@ -463,6 +464,7 @@ describe("a student's overview (#203)", () => {
           monthlyFitnessAvg: null,
           monthlyFitnessChange: null,
           latestReflections: [],
+          activeGoals: [],
         }),
     });
 

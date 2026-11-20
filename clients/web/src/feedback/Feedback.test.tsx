@@ -137,6 +137,7 @@ function renderAsCoach(initial: Message[] = [], overrides: Record<string, Handle
         nextFocus: null,
         baseline: null,
         latestReflections: [],
+        activeGoals: [],
       }),
     [`GET ${root}/rounds`]: () => json(200, [round(golferId)]),
     [`GET ${root}/rounds/${roundId}`]: () => json(200, round(golferId)),

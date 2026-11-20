@@ -4,6 +4,7 @@ import { CreateAccountPage, SignInPage, WelcomePage } from "../auth/AuthPages";
 import { ForgotPasswordPage, ResetPasswordPage } from "../auth/PasswordResetPages";
 import { Skeleton } from "../common/states";
 import { StudentLayout } from "../coaching/StudentLayout";
+import { GoalFormPage, GoalPage } from "../goals/GoalPages";
 import { AppLayout } from "../layout/AppLayout";
 import { DashboardPage } from "../dashboard/DashboardPage";
 import { NotFoundPage } from "../pages/SectionPage";
@@ -71,6 +72,7 @@ export const routes: RouteObject[] = [
           },
           { path: "practice", element: <PracticePage /> },
           { path: "practice/new", element: <LogPracticePage /> },
+          { path: "practice/goals/:goalId", element: <GoalPage /> },
           { path: "practice/:sessionId", element: <PracticeDetailPage /> },
           { path: "progress", element: loading(<ProgressPage />) },
           { path: "students", element: loading(<StudentsPage />) },
@@ -87,6 +89,9 @@ export const routes: RouteObject[] = [
                 children: [{ path: ":roundId", element: <RoundDetailPage /> }],
               },
               { path: "practice", element: <PracticePage /> },
+              { path: "practice/goals/new", element: <GoalFormPage /> },
+              { path: "practice/goals/:goalId", element: <GoalPage /> },
+              { path: "practice/goals/:goalId/edit", element: <GoalFormPage /> },
               { path: "practice/:sessionId", element: <PracticeDetailPage /> },
             ],
           },
