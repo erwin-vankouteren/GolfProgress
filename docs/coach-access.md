@@ -6,7 +6,7 @@ belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
 **M6 Juniors**. Inviting and managing coaches is built on the API, web and Android, the
 Students list on the API and web, and the student overview and a student's rounds and practice on the API and web, and
-feedback threads on the API and web, the golfer's side of them on Android, and "New from your coach" on the API, web and Android; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
+feedback threads on the API and web, the golfer's side of them on Android, and "New from your coach" on the API, web and Android, and practice goals on the API; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
 read-only: a student scope (`clients/web/src/api/studentScope.ts`) points their queries at
 the coach's routes and leaves out every action.
 
@@ -169,9 +169,9 @@ whether a golfer, round or session exists.
 | `GET /me/coaches` | Active coaches and pending invitations, with what each sees |
 | `PATCH /me/coaches/{linkId}` | Change what a coach sees |
 | `DELETE /me/coaches/{linkId}` | Remove a coach |
-| `GET /me/practice-goals` | Goals, with progress |
+| `GET /me/practice-goals`, `/{id}` | Every coach's goals with progress, current ones first; one with its linked sessions |
 | `PATCH /me/practice-goals/{id}` | Mark done or dismiss |
-| `POST`/`PUT /me/practice-sessions` | Gain an optional `practiceGoalId` |
+| `POST /me/practice-sessions` | Gains an optional `practiceGoalId` (sessions aren't edited, so there's no PUT) |
 
 **Invitation (the coach, signed in)**
 
@@ -191,7 +191,7 @@ whether a golfer, round or session exists.
 | `GET /coach/students/{golferId}/rounds`, `/rounds/{roundId}` | Rounds, read-only, the same contracts as the golfer's; notes only when reflections are shared |
 | `GET /coach/students/{golferId}/rounds/{roundId}/fitness-score`, `/micro-wins`, `/next-lever`, `/reflections` | A round's detail, as above; reflections only when shared |
 | `GET /coach/students/{golferId}/practice-sessions[/{id}]`, `/timeline[/monthly]`, `/monthly-reviews/{monthStart}` | As above; practice only when shared |
-| `POST`/`PATCH`/`DELETE /coach/students/{golferId}/practice-goals[/{id}]` | Set and change goals |
+| `GET`/`POST /coach/students/{golferId}/practice-goals`, `GET`/`PUT`/`DELETE .../{id}` | The goals this coach set: list, set, see with linked sessions, change (the whole goal), remove (only while no session is linked: then it's ended sooner instead). Needs practice to be shared |
 
 The coach reads through its own routes, rather than through the golfer's routes with
 widened ownership checks, so no existing golfer endpoint changes how it authorises.
@@ -217,8 +217,8 @@ golfer, or a coach with an active link whose sharing covers the item.
 | `CoachLinks` | Id, GolferId, CoachId, ShareReflections, SharePractice, CreatedAt, EndedAt, EndedBy (golfer or coach) |
 | `FeedbackMessages` | Id, GolferId, CoachId (whose thread; null once the coach's account is deleted), AuthorId (null for a deleted coach account), TargetType, TargetId, Text, CreatedAt, EditedAt |
 | `FeedbackReads` | UserId, GolferId, TargetType, TargetId, ReadUpTo: per item, so opening one thread leaves the others unread |
-| `PracticeGoals` | Id, GolferId, CoachId (null once the coach's account is deleted), Title, Details, FocusArea, SessionType, TargetSessions, StartsOn, EndsOn, Status (Active, Done, Dismissed), CreatedAt |
-| `PracticeSessions` | Gains PracticeGoalId |
+| `PracticeGoals` | Id, GolferId, CoachId (null once the coach's account is deleted), Title, Details, FocusArea, SessionType, TargetSessions, StartsOn, EndsOn, Status (Active, Done, Dismissed; an active goal past its end reads as Ended), CreatedAt, UpdatedAt |
+| `PracticeSessions` | Gains PracticeGoalId: one of the golfer's active goals whose period includes the session's date |
 
 A unique index allows one active link per golfer and coach.
 

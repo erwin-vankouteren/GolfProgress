@@ -23,6 +23,7 @@ describe("open enums", () => {
       tags: [],
       primaryGoal: null,
       notes: null,
+      practiceGoalId: null,
       createdAt: "2026-05-01T09:30:00+00:00",
     };
     const api = createApiClient({

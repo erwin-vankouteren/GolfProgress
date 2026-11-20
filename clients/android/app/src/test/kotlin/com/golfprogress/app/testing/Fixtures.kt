@@ -230,6 +230,7 @@ object Fixtures {
         tags = request.tags.orEmpty(),
         primaryGoal = request.primaryGoal,
         notes = request.notes,
+        practiceGoalId = request.practiceGoalId,
         createdAt = now,
     )
 

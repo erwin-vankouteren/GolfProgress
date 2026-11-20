@@ -68,7 +68,7 @@ mean. When a breaking change is unavoidable, add a new endpoint next to the old 
 
 | Field | Adding a value |
 |---|---|
-| **Open:** `PracticeSessionResponse.sessionType`, `MicroWinResponse.category`, `RoundResponse.source` | Allowed at any time. Clients map unknown values to "unknown". Add the value to the enum and regenerate the spec; then add it to each client's known values (`knownValues.ts`, `KnownValues.kt`, `KnownValues.swift`) so new builds show it properly. Each client has a test that fails until it does |
+| **Open:** `PracticeSessionResponse.sessionType` and `PracticeGoalResponse.sessionType` (the same values), `MicroWinResponse.category`, `RoundResponse.source` | Allowed at any time. Clients map unknown values to "unknown". Add the value to the enum and regenerate the spec; then add it to each client's known values (`knownValues.ts`, `KnownValues.kt`, `KnownValues.swift`) so new builds show it properly. Each client has a test that fails until it does |
 | **Closed:** every other enum in a response | **Breaking:** installed apps fail to read the response. Raise the minimum app versions (`ClientConfig:MinimumVersions`) first, or add a new field |
 
 Making a field open or closed is a contract decision. `OpenApiContractTests` lists the

@@ -217,6 +217,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
     {
         "MicroWinResponse.category",
         "MonthlyReviewResponse.topMicroWinCategory", // #162
+        "PracticeGoalResponse.sessionType", // #226: the same values as a session's
         "PracticeSessionResponse.sessionType",
         "RoundResponse.source",
         "UserResponse.language", // more languages will come
@@ -236,6 +237,7 @@ public sealed class OpenApiContractTests : IClassFixture<OpenApiContractTests.Do
 
     [Theory]
     [InlineData("PracticeSessionResponse", "sessionType", new[] { "Range", "Putting", "ShortGame", "Simulator", "Lesson", "Other" })]
+    [InlineData("PracticeGoalResponse", "sessionType", new[] { "Range", "Putting", "ShortGame", "Simulator", "Lesson", "Other" })]
     [InlineData("MicroWinResponse", "category", new[] { "StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea" })]
     [InlineData("MonthlyReviewResponse", "topMicroWinCategory", new[] { "StatDelta", "Behavior", "Narrative", "Habit", "Recovery", "FocusArea" })]
     [InlineData("RoundResponse", "source", new[] { "Manual", "Import", "Coach", "Other" })]

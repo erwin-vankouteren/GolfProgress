@@ -27,6 +27,7 @@ public class GolfProgressDbContext : DbContext
     public DbSet<CoachLink> CoachLinks => Set<CoachLink>();
     public DbSet<FeedbackMessage> FeedbackMessages => Set<FeedbackMessage>();
     public DbSet<FeedbackRead> FeedbackReads => Set<FeedbackRead>();
+    public DbSet<PracticeGoal> PracticeGoals => Set<PracticeGoal>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -142,6 +143,14 @@ public class GolfProgressDbContext : DbContext
                 .WithMany(u => u.PracticeSessions)
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Not cascading: both come from Users, which SQL Server allows only one path from.
+            // A goal with linked sessions is never deleted, only dismissed (#226).
+            e.HasIndex(x => x.PracticeGoalId);
+            e.HasOne(x => x.PracticeGoal)
+                .WithMany()
+                .HasForeignKey(x => x.PracticeGoalId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         // ---------- REFLECTIONS
@@ -394,6 +403,33 @@ public class GolfProgressDbContext : DbContext
             e.HasOne(x => x.Author)
                 .WithMany()
                 .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        // Practice goals (#226). They go with the golfer's account; the coach can't cascade as
+        // well, so AccountDeletionService clears CoachId when the coach's account is deleted.
+        modelBuilder.Entity<PracticeGoal>(e =>
+        {
+            e.ToTable("PracticeGoals");
+            e.HasKey(x => x.PracticeGoalId);
+
+            e.HasIndex(x => new { x.GolferId, x.Status, x.EndsOn });
+            e.HasIndex(x => x.CoachId);
+
+            e.Property(x => x.Title).IsRequired().HasMaxLength(100);
+            e.Property(x => x.Details).HasMaxLength(1000);
+            e.Property(x => x.FocusArea).HasConversion<string>().HasMaxLength(32);
+            e.Property(x => x.SessionType).HasConversion<string>().HasMaxLength(32);
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
+
+            e.HasOne(x => x.Golfer)
+                .WithMany()
+                .HasForeignKey(x => x.GolferId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Coach)
+                .WithMany()
+                .HasForeignKey(x => x.CoachId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
 

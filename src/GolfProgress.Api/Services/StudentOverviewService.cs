@@ -19,12 +19,15 @@ public sealed class StudentOverviewService
     private readonly GolfProgressDbContext _db;
     private readonly DashboardService _dashboard;
     private readonly TimelineService _timeline;
+    private readonly PracticeGoalService _goals;
 
-    public StudentOverviewService(GolfProgressDbContext db, DashboardService dashboard, TimelineService timeline)
+    public StudentOverviewService(
+        GolfProgressDbContext db, DashboardService dashboard, TimelineService timeline, PracticeGoalService goals)
     {
         _db = db;
         _dashboard = dashboard;
         _timeline = timeline;
+        _goals = goals;
     }
 
     /// <summary>The overview for an active link, which the caller has checked with <see cref="CoachAccess"/>.</summary>
@@ -77,6 +80,9 @@ public sealed class StudentOverviewService
             NextFocus = dashboard.NextLever,
             Baseline = baseline is null ? null : ProgressController.BaselineResponse(baseline, roundCount),
             LatestReflections = reflections,
+            ActiveGoals = CoachAccess.Covers(link, CoachShare.Practice)
+                ? await _goals.CurrentForCoachAsync(link.CoachId, golferId, ct)
+                : new(),
         };
     }
 }

@@ -58,6 +58,11 @@ public sealed class AccountDeletionService
             if (message.AuthorId == userId) message.AuthorId = null;
         }
         _db.FeedbackReads.RemoveRange(await _db.FeedbackReads.Where(x => x.UserId == userId || x.GolferId == userId).ToListAsync(ct));
+        // Practice goals (#226): a golfer's go with them; those a coach set stay with the
+        // golfer, "from a former coach".
+        _db.PracticeGoals.RemoveRange(await _db.PracticeGoals.Where(x => x.GolferId == userId).ToListAsync(ct));
+        foreach (var goal in await _db.PracticeGoals.Where(x => x.GolferId != userId && x.CoachId == userId).ToListAsync(ct))
+            goal.CoachId = null;
         _db.Users.Remove(user);
 
         // One save, so one transaction: the account is deleted entirely or not at all.

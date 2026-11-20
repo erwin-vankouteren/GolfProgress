@@ -16,5 +16,8 @@ public sealed class PracticeSessionResponse
     public string? PrimaryGoal { get; init; }
     public string? Notes { get; init; }
 
+    /// <summary>The practice goal it counts towards (#229), if any.</summary>
+    public Guid? PracticeGoalId { get; init; }
+
     public DateTimeOffset CreatedAt { get; init; }
 }

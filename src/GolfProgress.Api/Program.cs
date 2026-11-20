@@ -285,6 +285,7 @@ builder.Services.AddScoped<GolfProgress.Api.Services.CoachInvitationService>();
 builder.Services.AddScoped<GolfProgress.Api.Security.CoachAccess>();
 builder.Services.AddScoped<GolfProgress.Api.Services.StudentOverviewService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.FeedbackService>();
+builder.Services.AddScoped<GolfProgress.Api.Services.PracticeGoalService>();
 
 var app = builder.Build();
 

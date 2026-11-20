@@ -269,6 +269,7 @@ public sealed class SqlServerPersistenceTests
         var roundId = await SeedRoundAsync(userId);
         var otherRoundId = await SeedRoundAsync(otherUserId);
         var coachMessageId = Guid.NewGuid();
+        var coachGoalId = Guid.NewGuid();
 
         await using (var db = _sql.CreateContext())
         {
@@ -333,6 +334,18 @@ public sealed class SqlServerPersistenceTests
                     UserId = otherUserId, GolferId = userId, TargetType = FeedbackTargetType.Round, TargetId = roundId,
                     ReadUpTo = DateTimeOffset.UtcNow
                 });
+            // Practice goals (#226): one set for the user, one the user set as the other's coach.
+            db.PracticeGoals.AddRange(
+                new PracticeGoal
+                {
+                    PracticeGoalId = Guid.NewGuid(), GolferId = userId, CoachId = otherUserId, Title = "Mine", TargetSessions = 4,
+                    StartsOn = new DateOnly(2026, 5, 1), EndsOn = new DateOnly(2026, 5, 20), CreatedAt = DateTimeOffset.UtcNow
+                },
+                new PracticeGoal
+                {
+                    PracticeGoalId = coachGoalId, GolferId = otherUserId, CoachId = userId, Title = "As coach", TargetSessions = 4,
+                    StartsOn = new DateOnly(2026, 5, 1), EndsOn = new DateOnly(2026, 5, 20), CreatedAt = DateTimeOffset.UtcNow
+                });
             await db.SaveChangesAsync();
         }
 
@@ -354,6 +367,7 @@ public sealed class SqlServerPersistenceTests
             var kept = await db.FeedbackMessages.SingleAsync(m => m.FeedbackMessageId == coachMessageId);
             Assert.Null(kept.CoachId);
             Assert.Null(kept.AuthorId);
+            Assert.Null((await db.PracticeGoals.SingleAsync(g => g.PracticeGoalId == coachGoalId)).CoachId);
         }
     }
 
@@ -382,8 +396,8 @@ public sealed class SqlServerPersistenceTests
                 .SingleAsync();
         }
 
-        // Users, the ten tables with a UserId, coaching's three columns and feedback's five.
-        Assert.Equal(19, counts.Count);
+        // Users, the ten tables with a UserId, coaching's three columns, feedback's five and goals' two.
+        Assert.Equal(21, counts.Count);
         return counts;
     }
 

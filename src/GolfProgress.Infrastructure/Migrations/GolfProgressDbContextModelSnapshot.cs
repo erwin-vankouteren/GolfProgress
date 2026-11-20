@@ -405,6 +405,66 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.ToTable("PasswordResetTokens", (string)null);
                 });
 
+            modelBuilder.Entity("GolfProgress.Domain.Entities.PracticeGoal", b =>
+                {
+                    b.Property<Guid>("PracticeGoalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("sysutcdatetime()");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateOnly>("EndsOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FocusArea")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("GolferId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SessionType")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<short>("TargetSessions")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("PracticeGoalId");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("GolferId", "Status", "EndsOn");
+
+                    b.ToTable("PracticeGoals", (string)null);
+                });
+
             modelBuilder.Entity("GolfProgress.Domain.Entities.PracticeSession", b =>
                 {
                     b.Property<Guid>("PracticeSessionId")
@@ -421,6 +481,9 @@ namespace GolfProgress.Infrastructure.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PracticeGoalId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateOnly>("PracticedAt")
                         .HasColumnType("date");
@@ -443,6 +506,8 @@ namespace GolfProgress.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PracticeSessionId");
+
+                    b.HasIndex("PracticeGoalId");
 
                     b.HasIndex("UserId", "PracticedAt");
 
@@ -847,13 +912,36 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GolfProgress.Domain.Entities.PracticeGoal", b =>
+                {
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId");
+
+                    b.HasOne("GolfProgress.Domain.Entities.User", "Golfer")
+                        .WithMany()
+                        .HasForeignKey("GolferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coach");
+
+                    b.Navigation("Golfer");
+                });
+
             modelBuilder.Entity("GolfProgress.Domain.Entities.PracticeSession", b =>
                 {
+                    b.HasOne("GolfProgress.Domain.Entities.PracticeGoal", "PracticeGoal")
+                        .WithMany()
+                        .HasForeignKey("PracticeGoalId");
+
                     b.HasOne("GolfProgress.Domain.Entities.User", "User")
                         .WithMany("PracticeSessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("PracticeGoal");
 
                     b.Navigation("User");
                 });

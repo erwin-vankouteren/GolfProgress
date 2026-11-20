@@ -36,6 +36,9 @@ public sealed class StudentOverviewResponse
 
     /// <summary>The newest reflections, at most 3; always empty when reflections aren't shared.</summary>
     public List<StudentReflectionResponse> LatestReflections { get; init; } = new();
+
+    /// <summary>The caller's current practice goals for the student (#227); empty when practice isn't shared.</summary>
+    public List<PracticeGoals.PracticeGoalResponse> ActiveGoals { get; init; } = new();
 }
 
 /// <summary>A round reflection as a coach sees it: with the date of its round.</summary>

@@ -35,6 +35,12 @@ public sealed class CreatePracticeSessionRequest : IValidatableObject
     [MaxLength(2000)]
     public string? Notes { get; init; }
 
+    /// <summary>
+    /// One of the golfer's active practice goals (#229) whose period includes the session's
+    /// date; the goal counts it towards its target.
+    /// </summary>
+    public Guid? PracticeGoalId { get; init; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (!IsoDate.TryParse(PracticedAt, out _))

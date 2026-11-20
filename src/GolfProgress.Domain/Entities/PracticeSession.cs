@@ -18,5 +18,9 @@ public class PracticeSession
     public string? PrimaryGoal { get; set; }
     public string? Notes { get; set; }
 
+    /// <summary>The coach's practice goal this session worked on (#229), if any.</summary>
+    public Guid? PracticeGoalId { get; set; }
+    public PracticeGoal? PracticeGoal { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 }

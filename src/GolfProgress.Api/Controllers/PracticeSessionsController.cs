@@ -2,6 +2,8 @@ using GolfProgress.Api.Contracts;
 using GolfProgress.Api.OpenApi;
 using GolfProgress.Api.Contracts.PracticeSessions;
 using GolfProgress.Api.Security;
+using GolfProgress.Api.Services;
+using GolfProgress.Api.ErrorHandling;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Domain.Enums;
 using GolfProgress.Infrastructure.Persistence;
@@ -22,7 +24,13 @@ public sealed class PracticeSessionsController : ControllerBase
 {
     private readonly GolfProgressDbContext _db;
 
-    public PracticeSessionsController(GolfProgressDbContext db) => _db = db;
+    private readonly PracticeGoalService _goals;
+
+    public PracticeSessionsController(GolfProgressDbContext db, PracticeGoalService goals)
+    {
+        _db = db;
+        _goals = goals;
+    }
 
     // POST /me/practice-sessions
     [HttpPost("/me/practice-sessions", Name = "createPracticeSession")]
@@ -34,6 +42,11 @@ public sealed class PracticeSessionsController : ControllerBase
     {
         var userId = User.GetUserId();
         var now = DateTimeOffset.UtcNow;
+        var practicedAt = IsoDate.Parse(request.PracticedAt);
+
+        // Only to one of the golfer's own active goals that covers the date (#229).
+        if (request.PracticeGoalId is { } goalId && !await _goals.CanLinkAsync(userId, goalId, practicedAt, ct))
+            return this.FieldError(nameof(request.PracticeGoalId), "Choose an active goal whose period includes this date.");
 
         // Both parse: CreatePracticeSessionRequest.Validate has already checked them.
         var session = new PracticeSession
@@ -47,6 +60,7 @@ public sealed class PracticeSessionsController : ControllerBase
             Tags = request.TagsOrNone.Select(t => t.Trim()).ToList(),
             PrimaryGoal = request.PrimaryGoal,
             Notes = request.Notes,
+            PracticeGoalId = request.PracticeGoalId,
             CreatedAt = now
         };
 
@@ -160,6 +174,7 @@ public sealed class PracticeSessionsController : ControllerBase
         Tags = s.Tags,
         PrimaryGoal = s.PrimaryGoal,
         Notes = includeNotes ? s.Notes : null,
+        PracticeGoalId = s.PracticeGoalId,
         CreatedAt = s.CreatedAt
     };
 }
