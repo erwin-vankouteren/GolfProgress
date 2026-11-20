@@ -79,6 +79,7 @@ export const plainMessages = defineMessages({
   tooManyMessages: { id: "feedback.tooMany", defaultMessage: "Too many messages this hour. Try again later." },
   writeSomethingFirst: { id: "feedback.empty", defaultMessage: "Write something first." },
   offlineCantSendMessage: { id: "feedback.offline", defaultMessage: "You're offline. Connect to send a message." },
+  newFromYourCoach: { id: "feedback.newFromYourCoach", defaultMessage: "New from your coach" },
   coachAlwaysSees: { id: "coaches.alwaysSees", defaultMessage: "Always sees your rounds and progress." },
   changeSharingFailed: {
     id: "coaches.changeFailed",
@@ -789,6 +790,31 @@ export const messagesWithValues = {
   removeCoachOf: defineMessage<{ name: string }>({
     id: "coaches.removeOf",
     defaultMessage: "Remove {name}",
+  }),
+  unreadOnRound: defineMessage<{ coach: string; date: string }>({
+    id: "feedback.unreadOnRound",
+    defaultMessage: "{coach} on your round of {date}",
+  }),
+  unreadOnReflection: defineMessage<{ coach: string; date: string }>({
+    id: "feedback.unreadOnReflection",
+    defaultMessage: "{coach} on your reflection on the round of {date}",
+  }),
+  unreadOnReflectionNoDate: defineMessage<{ coach: string }>({
+    id: "feedback.unreadOnReflectionNoDate",
+    defaultMessage: "{coach} on your reflection",
+  }),
+  unreadOnSession: defineMessage<{ coach: string; date: string }>({
+    id: "feedback.unreadOnSession",
+    defaultMessage: "{coach} on your practice session of {date}",
+  }),
+  newMessages: defineMessage<{ count: number }>({
+    id: "feedback.newMessages",
+    defaultMessage: "{count, plural, one {# new message} other {# new messages}}",
+  }),
+  moreUnreadFeedback: defineMessage<{ count: number }>({
+    id: "feedback.moreUnread",
+    defaultMessage:
+      "{count, plural, one {And # more new message on other items.} other {And # more new messages on other items.}}",
   }),
   feedbackEmptyGolfer: defineMessage<{ name: string }>({
     id: "feedback.emptyGolfer",

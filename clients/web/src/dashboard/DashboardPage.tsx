@@ -3,6 +3,7 @@ import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { Link } from "react-router";
 import { useDashboard, useFitnessScore, type Dashboard } from "../api/queries";
 import { LoadError, Skeleton } from "../common/states";
+import { NewFromYourCoach } from "../feedback/NewFromYourCoach";
 import { messages, type PlainMessage } from "../i18n/messages";
 import { LogRoundLink } from "../rounds/LogRound";
 import { ConfidenceBadge, PillarBars, formatPlayedDate } from "../rounds/score";
@@ -21,6 +22,7 @@ export function DashboardPage() {
       <h1>
         <FormattedMessage {...messages.home} />
       </h1>
+      <NewFromYourCoach />
       {dashboard.isPending ? (
         <Skeleton blocks={4} className="dashboard-grid" />
       ) : dashboard.isError ? (

@@ -59,3 +59,34 @@
   flex-wrap: wrap;
   gap: var(--space-sm);
 }
+
+/* New from your coach, on Home (#221). */
+
+.new-from-coach {
+  margin-bottom: var(--space-lg);
+  border-inline-start: 4px solid var(--color-primary);
+}
+
+.new-from-coach-list {
+  display: grid;
+  gap: var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.new-from-coach-about {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.new-from-coach-about a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  font-weight: var(--font-weight-label);
+}
+
+.new-from-coach-preview {
+  color: var(--color-text-secondary);
+}

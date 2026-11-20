@@ -51,7 +51,7 @@ function CoachFeedback({ golferId, targetType, targetId, Heading }: SectionProps
   const thread = useFeedbackThread(golferId, targetType, targetId);
   const student = useStudentOverview(golferId);
   const titleId = useId();
-  useMarkRead(golferId, thread.data, { invalidateStudents: true });
+  useMarkRead(golferId, targetType, targetId, thread.data, queryKeys.students);
 
   return (
     <section className="card feedback" aria-labelledby={titleId}>
@@ -84,7 +84,7 @@ function GolferFeedback({ targetType, targetId, Heading }: SectionProps) {
   const coaches = useCoaches();
   const titleId = useId();
   const Sub = below[Heading];
-  useMarkRead(golferId, thread.data, { invalidateStudents: false });
+  useMarkRead(golferId, targetType, targetId, thread.data, queryKeys.unreadFeedback);
 
   if (thread.isPending || coaches.isPending) return null;
 
@@ -138,13 +138,16 @@ function GolferFeedback({ targetType, targetId, Heading }: SectionProps) {
 }
 
 /**
- * Marks the golfer's threads read up to the newest message shown, once per new message.
- * For a coach it also refreshes the Students list, whose unread replies change.
+ * Marks the feedback on this item read up to the newest message shown, once per new
+ * message; other items stay unread. Then refreshes what counts it: the coach's Students
+ * list, or the golfer's "New from your coach".
  */
 function useMarkRead(
   golferId: string,
+  targetType: FeedbackTargetType,
+  targetId: string,
   thread: FeedbackMessage[] | undefined,
-  { invalidateStudents }: { invalidateStudents: boolean },
+  counts: readonly unknown[],
 ) {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -155,13 +158,11 @@ function useMarkRead(
     if (!golferId || !newest || (marked.current && newest <= marked.current)) return;
     marked.current = newest;
     void api
-      .POST("/feedback/read", { body: { golferId, upTo: newest } })
-      .then(() => {
-        if (invalidateStudents) void queryClient.invalidateQueries({ queryKey: queryKeys.students });
-      })
+      .POST("/feedback/read", { body: { golferId, targetType, targetId, upTo: newest } })
+      .then(() => queryClient.invalidateQueries({ queryKey: counts }))
       // Not being marked read isn't worth an error on screen: it's tried again next time.
       .catch(() => undefined);
-  }, [api, queryClient, golferId, newest, invalidateStudents]);
+  }, [api, queryClient, golferId, targetType, targetId, newest, counts]);
 }
 
 function Thread({

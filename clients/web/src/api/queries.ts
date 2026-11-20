@@ -35,6 +35,7 @@ export const queryKeys = {
   studentOverview: (golferId: string) => ["students", golferId, "overview"] as const,
   coachInvitation: (token: string) => ["coach-invitation", token] as const,
   feedback: ["feedback"] as const,
+  unreadFeedback: ["feedback", "unread"] as const,
   feedbackThread: (golferId: string, targetType: string, targetId: string) =>
     ["feedback", golferId, targetType, targetId] as const,
 };
@@ -97,6 +98,17 @@ export function useFeedbackThread(
   return useQuery({
     queryKey: queryKeys.feedbackThread(golferId, targetType, targetId),
     queryFn: async () => unwrap(await api.GET("/feedback", { params: { query: { golferId, targetType, targetId } } })),
+  });
+}
+
+/** "New from your coach" (#221): what the golfer hasn't read from their coaches. */
+export function useUnreadFeedback() {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.unreadFeedback,
+    // Like the dashboard it's on: current whenever the golfer comes back to the tab.
+    refetchOnWindowFocus: "always",
+    queryFn: async () => unwrap(await api.GET("/me/feedback/unread")),
   });
 }
 

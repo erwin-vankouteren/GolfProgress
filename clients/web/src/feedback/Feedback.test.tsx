@@ -163,7 +163,9 @@ describe("a coach's feedback on a student's round (#214)", () => {
 
     expect(await within(card).findByText("Can we look at my putting?")).toBeInTheDocument();
     expect(within(card).getByText("Sam")).toBeInTheDocument();
-    await waitFor(() => expect(reads).toEqual([{ golferId, upTo: "2026-11-02T09:00:00Z" }]));
+    await waitFor(() =>
+      expect(reads).toEqual([{ golferId, targetType: "Round", targetId: roundId, upTo: "2026-11-02T09:00:00Z" }]),
+    );
 
     await user.type(within(card).getByLabelText("Write feedback"), "  Lag putts to a metre.  ");
     await user.click(within(card).getByRole("button", { name: "Send" }));
@@ -266,7 +268,11 @@ describe("feedback from your coach (#216)", () => {
 
     expect(await within(card).findByText("Nice tempo.")).toBeInTheDocument();
     expect(within(card).getByText("Pro")).toBeInTheDocument();
-    await waitFor(() => expect(reads).toEqual([{ golferId: userId, upTo: "2026-11-02T09:00:00Z" }]));
+    await waitFor(() =>
+      expect(reads).toEqual([
+        { golferId: userId, targetType: "Round", targetId: roundId, upTo: "2026-11-02T09:00:00Z" },
+      ]),
+    );
 
     await user.type(within(card).getByLabelText("Message to Pro"), "Thanks!");
     await user.click(within(card).getByRole("button", { name: "Send" }));
