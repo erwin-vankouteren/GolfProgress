@@ -74,13 +74,55 @@ public sealed class UpdateFeedbackRequest
     public string Text { get; init; } = "";
 }
 
-/// <summary>Mark a golfer's threads read up to a time: the golfer their own, a coach theirs with the golfer.</summary>
+/// <summary>
+/// Mark the feedback on an item read up to a time: for the golfer every coach's thread on it,
+/// for a coach their own. Other items stay unread.
+/// </summary>
 public sealed class MarkFeedbackReadRequest
 {
     [Required] public Guid? GolferId { get; init; }
 
+    [Required, StringEnum(typeof(FeedbackTargetType))]
+    public string TargetType { get; init; } = "";
+
+    [Required] public Guid? TargetId { get; init; }
+
     /// <summary>Default now; a later time counts as now, and an earlier one than before changes nothing.</summary>
     public DateTimeOffset? UpTo { get; init; }
+}
+
+/// <summary>"New from your coach" (#220): what the golfer hasn't read yet.</summary>
+public sealed class UnreadFeedbackResponse
+{
+    /// <summary>Unread messages from coaches, on every item.</summary>
+    public int Count { get; init; }
+
+    /// <summary>The threads with unread messages, newest first, at most 5.</summary>
+    public List<UnreadFeedbackThreadResponse> Threads { get; init; } = new();
+}
+
+/// <summary>A coach's thread with unread messages, with what it's about, to link to it.</summary>
+public sealed class UnreadFeedbackThreadResponse
+{
+    [StringEnum(typeof(FeedbackTargetType))]
+    public string TargetType { get; init; } = "";
+    public Guid TargetId { get; init; }
+
+    /// <summary>The round it's on: the round itself, or a reflection's round; null for a practice session.</summary>
+    public Guid? RoundId { get; init; }
+
+    /// <summary>The date of the round or session (yyyy-MM-dd); null for a reflection without a round.</summary>
+    public string? OnDate { get; init; }
+
+    public Guid? CoachId { get; init; }
+    /// <summary>Null once the coach's account is deleted ("a former coach").</summary>
+    public string? CoachName { get; init; }
+
+    public int Unread { get; init; }
+    public DateTimeOffset NewestAt { get; init; }
+
+    /// <summary>The start of the newest unread message, at most 140 characters.</summary>
+    public string Preview { get; init; } = "";
 }
 
 public static class FeedbackLimits

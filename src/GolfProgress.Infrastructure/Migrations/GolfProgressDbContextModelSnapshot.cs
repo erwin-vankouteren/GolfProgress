@@ -208,10 +208,17 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.Property<Guid>("GolferId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("TargetType")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset>("ReadUpTo")
                         .HasColumnType("datetimeoffset");
 
-                    b.HasKey("UserId", "GolferId");
+                    b.HasKey("UserId", "GolferId", "TargetType", "TargetId");
 
                     b.HasIndex("GolferId");
 

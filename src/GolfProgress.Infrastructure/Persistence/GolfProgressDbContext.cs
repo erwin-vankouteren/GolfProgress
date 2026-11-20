@@ -400,7 +400,8 @@ public class GolfProgressDbContext : DbContext
         modelBuilder.Entity<FeedbackRead>(e =>
         {
             e.ToTable("FeedbackReads");
-            e.HasKey(x => new { x.UserId, x.GolferId });
+            e.HasKey(x => new { x.UserId, x.GolferId, x.TargetType, x.TargetId });
+            e.Property(x => x.TargetType).HasConversion<string>().HasMaxLength(32);
 
             e.HasOne<User>()
                 .WithMany()

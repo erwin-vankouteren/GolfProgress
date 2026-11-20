@@ -323,8 +323,16 @@ public sealed class SqlServerPersistenceTests
                     TargetType = FeedbackTargetType.Round, TargetId = otherRoundId, Text = "As coach", CreatedAt = DateTimeOffset.UtcNow
                 });
             db.FeedbackReads.AddRange(
-                new FeedbackRead { UserId = userId, GolferId = otherUserId, ReadUpTo = DateTimeOffset.UtcNow },
-                new FeedbackRead { UserId = otherUserId, GolferId = userId, ReadUpTo = DateTimeOffset.UtcNow });
+                new FeedbackRead
+                {
+                    UserId = userId, GolferId = otherUserId, TargetType = FeedbackTargetType.Round, TargetId = otherRoundId,
+                    ReadUpTo = DateTimeOffset.UtcNow
+                },
+                new FeedbackRead
+                {
+                    UserId = otherUserId, GolferId = userId, TargetType = FeedbackTargetType.Round, TargetId = roundId,
+                    ReadUpTo = DateTimeOffset.UtcNow
+                });
             await db.SaveChangesAsync();
         }
 

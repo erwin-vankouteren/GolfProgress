@@ -61,7 +61,7 @@ public sealed class FeedbackTests : IAsyncLifetime
         Assert.Equal(new[] { true, false }, coachView.Select(m => m.FromCoach));
         Assert.Equal(1, await UnreadRepliesAsync());
 
-        var read = await Coach().PostAsJsonAsync("/feedback/read", new { golferId = _annId });
+        var read = await Coach().PostAsJsonAsync("/feedback/read", Read(roundId));
         Assert.Equal(HttpStatusCode.NoContent, read.StatusCode);
         Assert.Equal(0, await UnreadRepliesAsync());
 
@@ -158,7 +158,10 @@ public sealed class FeedbackTests : IAsyncLifetime
         }
 
         Assert.Equal(HttpStatusCode.NotFound,
-            (await TestWorld.ClientFor(_factory, _benId).PostAsJsonAsync("/feedback/read", new { golferId = _annId })).StatusCode);
+            (await TestWorld.ClientFor(_factory, _benId).PostAsJsonAsync("/feedback/read", Read(roundId))).StatusCode);
+        // Nor can a coach mark read what they can't see.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await Coach().PostAsJsonAsync("/feedback/read", Read(reflectionId, "Reflection"))).StatusCode);
     }
 
     [Fact]
@@ -247,6 +250,69 @@ public sealed class FeedbackTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task TheGolfer_SeesWhatsNewFromTheirCoaches_WithWhatEachIsAbout()
+    {
+        await LinkAsync(_coachId);
+        var roundId = await RoundAsync(_annId);
+        var reflectionId = await ReflectAsync(roundId);
+        var sessionId = await PracticeAsync(_annId);
+        Assert.Equal(0, (await UnreadAsync()).Count);
+
+        await WriteAsync(Coach(), Message(roundId, "On the round"));
+        await WriteAsync(Coach(), Message(roundId, "And another thing"));
+        await WriteAsync(Coach(), Message(reflectionId, "On your reflection", type: "Reflection"));
+        await WriteAsync(Coach(), Message(sessionId, new string('p', 300), type: "PracticeSession"));
+        // The golfer's own messages aren't news to them.
+        await WriteAsync(Golfer(), Message(roundId, "My question", coachId: _coachId));
+
+        var unread = await UnreadAsync();
+        Assert.Equal(4, unread.Count);
+        Assert.Equal(new[] { "PracticeSession", "Reflection", "Round" }, unread.Threads.Select(t => t.TargetType));
+        var session = unread.Threads[0];
+        Assert.Null(session.RoundId);
+        Assert.Equal("2026-10-10", session.OnDate);
+        Assert.Equal(140, session.Preview.Length);
+        Assert.Equal(roundId, unread.Threads[1].RoundId);
+        Assert.Equal("2026-10-15", unread.Threads[1].OnDate);
+        var round = unread.Threads[2];
+        Assert.Equal(2, round.Unread);
+        Assert.Equal("Pro", round.CoachName);
+        Assert.Equal("And another thing", round.Preview);
+    }
+
+    [Fact]
+    public async Task OpeningOneThread_LeavesTheOthersUnread()
+    {
+        await LinkAsync(_coachId);
+        var first = await RoundAsync(_annId);
+        var second = await RoundAsync(_annId);
+        await WriteAsync(Coach(), Message(first, "On the first"));
+        await WriteAsync(Coach(), Message(second, "On the second, newer"));
+
+        // Read up to the newest message, but only on the second round.
+        Assert.Equal(HttpStatusCode.NoContent, (await Golfer().PostAsJsonAsync("/feedback/read", Read(second))).StatusCode);
+
+        var unread = await UnreadAsync();
+        Assert.Equal(1, unread.Count);
+        Assert.Equal(first, Assert.Single(unread.Threads).TargetId);
+
+        // Likewise for the coach's unread replies.
+        await WriteAsync(Golfer(), Message(first, "Reply one", coachId: _coachId));
+        await WriteAsync(Golfer(), Message(second, "Reply two", coachId: _coachId));
+        await Coach().PostAsJsonAsync("/feedback/read", Read(second));
+        Assert.Equal(1, await UnreadRepliesAsync());
+    }
+
+    [Fact]
+    public async Task MarkingRead_NeedsAKnownTargetType()
+    {
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await Golfer().PostAsJsonAsync("/feedback/read", Read(Guid.NewGuid(), "Lesson"))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await Golfer().PostAsJsonAsync("/feedback/read", new { golferId = _annId })).StatusCode);
+    }
+
+    [Fact]
     public async Task EveryEndpoint_NeedsASignedInUser()
     {
         var anonymous = _factory.CreateClient();
@@ -255,7 +321,8 @@ public sealed class FeedbackTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PostAsJsonAsync("/feedback", Message(Guid.NewGuid(), "x"))).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PatchAsJsonAsync($"/feedback/{Guid.NewGuid()}", new { text = "x" })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.DeleteAsync($"/feedback/{Guid.NewGuid()}")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PostAsJsonAsync("/feedback/read", new { golferId = _annId })).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PostAsJsonAsync("/feedback/read", Read(Guid.NewGuid()))).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/me/feedback/unread")).StatusCode);
     }
 
     private HttpClient Coach() => TestWorld.ClientFor(_factory, _coachId);
@@ -263,6 +330,12 @@ public sealed class FeedbackTests : IAsyncLifetime
 
     private object Message(Guid targetId, string text, string type = "Round", Guid? coachId = null) =>
         new { golferId = _annId, targetType = type, targetId, coachId, text };
+
+    private object Read(Guid targetId, string type = "Round") =>
+        new { golferId = _annId, targetType = type, targetId };
+
+    private async Task<UnreadPayload> UnreadAsync() =>
+        (await Golfer().GetFromJsonAsync<UnreadPayload>("/me/feedback/unread"))!;
 
     private string ThreadUrl(Guid targetId, string type = "Round") =>
         $"/feedback?golferId={_annId}&targetType={type}&targetId={targetId}";
@@ -330,4 +403,9 @@ public sealed class FeedbackTests : IAsyncLifetime
         Guid FeedbackMessageId, Guid? CoachId, string? CoachName, bool FromCoach, bool Mine, string Text, DateTimeOffset? EditedAt);
 
     private sealed record StudentPayload(int UnreadReplies);
+
+    private sealed record UnreadPayload(int Count, List<UnreadThreadPayload> Threads);
+
+    private sealed record UnreadThreadPayload(
+        string TargetType, Guid TargetId, Guid? RoundId, string? OnDate, Guid? CoachId, string? CoachName, int Unread, string Preview);
 }

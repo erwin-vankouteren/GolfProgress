@@ -2609,6 +2609,51 @@
         ]
       }
     },
+    "/me/feedback/unread": {
+      "get": {
+        "tags": [
+          "Feedback"
+        ],
+        "operationId": "getUnreadFeedback",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadFeedbackResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The access token is missing, invalid or expired. Refresh it and retry once.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. The traceId matches the server's log entry.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/rounds/{roundId}/micro-wins/generate": {
       "post": {
         "tags": [
@@ -5227,11 +5272,26 @@
       },
       "MarkFeedbackReadRequest": {
         "required": [
-          "golferId"
+          "golferId",
+          "targetId",
+          "targetType"
         ],
         "type": "object",
         "properties": {
           "golferId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetType": {
+            "minLength": 1,
+            "enum": [
+              "Round",
+              "Reflection",
+              "PracticeSession"
+            ],
+            "type": "string"
+          },
+          "targetId": {
             "type": "string",
             "format": "uuid"
           },
@@ -6118,6 +6178,84 @@
           },
           "sharePractice": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UnreadFeedbackResponse": {
+        "required": [
+          "count",
+          "threads"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnreadFeedbackThreadResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "UnreadFeedbackThreadResponse": {
+        "required": [
+          "coachId",
+          "coachName",
+          "newestAt",
+          "onDate",
+          "preview",
+          "roundId",
+          "targetId",
+          "targetType",
+          "unread"
+        ],
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "enum": [
+              "Round",
+              "Reflection",
+              "PracticeSession"
+            ],
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roundId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "onDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "coachId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "coachName": {
+            "type": "string",
+            "nullable": true
+          },
+          "unread": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newestAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preview": {
+            "type": "string"
           }
         },
         "additionalProperties": false

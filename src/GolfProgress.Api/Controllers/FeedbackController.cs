@@ -86,6 +86,21 @@ public sealed class FeedbackController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> MarkRead([FromBody] MarkFeedbackReadRequest request, CancellationToken ct) =>
-        await _feedback.MarkReadAsync(User.GetUserId(), request.GolferId!.Value, request.UpTo, ct) ? NoContent() : NotFound();
+    public async Task<IActionResult> MarkRead([FromBody] MarkFeedbackReadRequest request, CancellationToken ct)
+    {
+        if (!FeedbackService.TryParseTarget(request.TargetType, out var type))
+            return this.FieldError(nameof(request.TargetType), "targetType must be Round, Reflection or PracticeSession.");
+
+        return await _feedback.MarkReadAsync(User.GetUserId(), request.GolferId!.Value, type, request.TargetId!.Value, request.UpTo, ct)
+            ? NoContent()
+            : NotFound();
+    }
+
+    // GET /me/feedback/unread
+    //
+    // "New from your coach" on the dashboard (#220).
+    [HttpGet("/me/feedback/unread", Name = "getUnreadFeedback")]
+    [ProducesResponseType<UnreadFeedbackResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<UnreadFeedbackResponse>> Unread(CancellationToken ct) =>
+        Ok(await _feedback.UnreadForGolferAsync(User.GetUserId(), ct));
 }

@@ -157,23 +157,105 @@ public sealed class FeedbackService
     }
 
     /// <summary>
-    /// Marks the golfer's threads read up to [upTo] for the caller: the golfer, or a coach with
-    /// an active link. Never moves backwards, nor past now. False without access.
+    /// Marks the feedback on an item read up to [upTo] for the caller, who must be able to see
+    /// it. Never moves backwards, nor past now. False without access.
     /// </summary>
-    public async Task<bool> MarkReadAsync(Guid callerId, Guid golferId, DateTimeOffset? upTo, CancellationToken ct)
+    public async Task<bool> MarkReadAsync(
+        Guid callerId, Guid golferId, FeedbackTargetType type, Guid targetId, DateTimeOffset? upTo, CancellationToken ct)
     {
-        if (callerId != golferId && await _access.ActiveLinkAsync(callerId, golferId, ct) is null) return false;
+        if (!await CanSeeAsync(callerId, golferId, type, targetId, ct)) return false;
 
         var now = DateTimeOffset.UtcNow;
         var until = upTo is { } at && at < now ? at : now;
-        var read = await _db.FeedbackReads.FirstOrDefaultAsync(r => r.UserId == callerId && r.GolferId == golferId, ct);
+        var read = await _db.FeedbackReads.FirstOrDefaultAsync(
+            r => r.UserId == callerId && r.GolferId == golferId && r.TargetType == type && r.TargetId == targetId, ct);
         if (read is null)
-            _db.FeedbackReads.Add(new FeedbackRead { UserId = callerId, GolferId = golferId, ReadUpTo = until });
+            _db.FeedbackReads.Add(new FeedbackRead
+            {
+                UserId = callerId, GolferId = golferId, TargetType = type, TargetId = targetId, ReadUpTo = until,
+            });
         else if (until > read.ReadUpTo)
             read.ReadUpTo = until;
         await _db.SaveChangesAsync(ct);
         return true;
     }
+
+    /// <summary>
+    /// What the golfer hasn't read from their coaches (#220): the count, and the newest threads
+    /// with what each is about.
+    /// </summary>
+    public async Task<UnreadFeedbackResponse> UnreadForGolferAsync(Guid golferId, CancellationToken ct)
+    {
+        var reads = await ReadsAsync(golferId, golferId, ct);
+        var fromCoaches = await _db.FeedbackMessages.AsNoTracking()
+            .Where(m => m.GolferId == golferId && (m.AuthorId == null || m.AuthorId != golferId))
+            .ToListAsync(ct);
+        var unread = fromCoaches.Where(m => IsUnread(m, reads)).ToList();
+
+        var threads = unread
+            .GroupBy(m => (m.TargetType, m.TargetId, m.CoachId))
+            .Select(g => g.OrderByDescending(m => m.CreatedAt).ToList())
+            .OrderByDescending(g => g[0].CreatedAt)
+            .Take(5)
+            .ToList();
+
+        // What each is about, to link to it: a round, a reflection's round, or a session.
+        var roundIds = threads.Where(t => t[0].TargetType == FeedbackTargetType.Round).Select(t => t[0].TargetId).ToList();
+        var reflectionIds = threads.Where(t => t[0].TargetType == FeedbackTargetType.Reflection).Select(t => t[0].TargetId).ToList();
+        var sessionIds = threads.Where(t => t[0].TargetType == FeedbackTargetType.PracticeSession).Select(t => t[0].TargetId).ToList();
+        var reflectionRounds = await _db.Reflections.AsNoTracking()
+            .Where(r => reflectionIds.Contains(r.ReflectionId))
+            .ToDictionaryAsync(r => r.ReflectionId, r => r.RoundId, ct);
+        var allRoundIds = roundIds.Concat(reflectionRounds.Values.OfType<Guid>()).ToList();
+        var roundDates = await _db.Rounds.AsNoTracking()
+            .Where(r => allRoundIds.Contains(r.RoundId))
+            .ToDictionaryAsync(r => r.RoundId, r => r.PlayedAt, ct);
+        var sessionDates = await _db.PracticeSessions.AsNoTracking()
+            .Where(s => sessionIds.Contains(s.PracticeSessionId))
+            .ToDictionaryAsync(s => s.PracticeSessionId, s => s.PracticedAt, ct);
+        var coachIds = threads.Select(t => t[0].CoachId).OfType<Guid>().Distinct().ToList();
+        var coaches = await _db.Users.AsNoTracking().Where(u => coachIds.Contains(u.UserId)).ToListAsync(ct);
+        var names = coaches.ToDictionary(u => u.UserId, CoachInvitationService.DisplayNameOf);
+
+        return new UnreadFeedbackResponse
+        {
+            Count = unread.Count,
+            Threads = threads.Select(t =>
+            {
+                var newest = t[0];
+                Guid? roundId = newest.TargetType switch
+                {
+                    FeedbackTargetType.Round => newest.TargetId,
+                    FeedbackTargetType.Reflection => reflectionRounds.GetValueOrDefault(newest.TargetId),
+                    _ => null,
+                };
+                DateOnly? on = newest.TargetType == FeedbackTargetType.PracticeSession
+                    ? sessionDates.TryGetValue(newest.TargetId, out var practiced) ? practiced : null
+                    : roundId is { } id && roundDates.TryGetValue(id, out var played) ? played : null;
+                return new UnreadFeedbackThreadResponse
+                {
+                    TargetType = newest.TargetType.ToString(),
+                    TargetId = newest.TargetId,
+                    RoundId = roundId,
+                    OnDate = on?.ToString("yyyy-MM-dd"),
+                    CoachId = newest.CoachId,
+                    CoachName = newest.CoachId is { } c && names.TryGetValue(c, out var name) ? name : null,
+                    Unread = t.Count,
+                    NewestAt = newest.CreatedAt,
+                    Preview = newest.Text.Length <= 140 ? newest.Text : newest.Text[..139].TrimEnd() + "…",
+                };
+            }).ToList(),
+        };
+    }
+
+    private async Task<Dictionary<(FeedbackTargetType, Guid), DateTimeOffset>> ReadsAsync(
+        Guid userId, Guid golferId, CancellationToken ct) =>
+        await _db.FeedbackReads.AsNoTracking()
+            .Where(r => r.UserId == userId && r.GolferId == golferId)
+            .ToDictionaryAsync(r => (r.TargetType, r.TargetId), r => r.ReadUpTo, ct);
+
+    private static bool IsUnread(FeedbackMessage m, Dictionary<(FeedbackTargetType, Guid), DateTimeOffset> reads) =>
+        !reads.TryGetValue((m.TargetType, m.TargetId), out var readUpTo) || m.CreatedAt > readUpTo;
 
     /// <summary>
     /// Replies from each of the coach's students the coach hasn't read, on what the coach can
@@ -184,17 +266,18 @@ public sealed class FeedbackService
         var golferIds = links.Select(l => l.GolferId).ToList();
         var reads = await _db.FeedbackReads.AsNoTracking()
             .Where(r => r.UserId == coachId && golferIds.Contains(r.GolferId))
-            .ToDictionaryAsync(r => r.GolferId, r => r.ReadUpTo, ct);
+            .ToDictionaryAsync(r => (r.GolferId, r.TargetType, r.TargetId), r => r.ReadUpTo, ct);
         var replies = await _db.FeedbackMessages.AsNoTracking()
             .Where(m => m.CoachId == coachId && golferIds.Contains(m.GolferId) && m.AuthorId == m.GolferId)
-            .Select(m => new { m.GolferId, m.TargetType, m.CreatedAt })
+            .Select(m => new { m.GolferId, m.TargetType, m.TargetId, m.CreatedAt })
             .ToListAsync(ct);
 
         return links.ToDictionary(
             l => l.GolferId,
             l => replies.Count(m => m.GolferId == l.GolferId
                                     && CoachAccess.Covers(l, ShareFor(m.TargetType))
-                                    && (!reads.TryGetValue(l.GolferId, out var readUpTo) || m.CreatedAt > readUpTo)));
+                                    && (!reads.TryGetValue((m.GolferId, m.TargetType, m.TargetId), out var readUpTo)
+                                        || m.CreatedAt > readUpTo)));
     }
 
     /// <summary>
