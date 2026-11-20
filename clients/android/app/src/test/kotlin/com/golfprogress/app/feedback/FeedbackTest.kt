@@ -97,7 +97,7 @@ class FeedbackViewModelTest {
 
         val thread = (viewModel.state.value.view as FeedbackView.Threads).threads.single()
         assertEquals("Nice tempo.", thread.messages.single().text)
-        assertEquals(listOf(Fixtures.feedback(1, "", proId).createdAt), feedback.reads)
+        assertEquals(listOf(Fixtures.roundId(1) to Fixtures.feedback(1, "", proId).createdAt), feedback.reads)
 
         viewModel.setDraft(proId, "  Thanks!  ")
         viewModel.send(proId)

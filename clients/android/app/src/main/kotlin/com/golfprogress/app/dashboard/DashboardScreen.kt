@@ -32,6 +32,8 @@ import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.DashboardRoundSummary
 import com.golfprogress.api.generated.models.FitnessScoreResponse
 import com.golfprogress.app.R
+import com.golfprogress.app.feedback.NewFromYourCoachCard
+import com.golfprogress.app.feedback.UnreadDestination
 import com.golfprogress.app.ui.common.Confidence
 import com.golfprogress.app.ui.common.ConfidenceBadge
 import com.golfprogress.app.ui.common.EmptyState
@@ -54,11 +56,12 @@ fun DashboardScreen(
     onLogRound: () -> Unit,
     onOpenRound: (UUID) -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
+    onOpenPractice: (UUID) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Back on Home, e.g. from another tab or app: a round logged meanwhile shows.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
-    DashboardContent(state, viewModel::retry, viewModel::refresh, onLogRound, onOpenRound)
+    DashboardContent(state, viewModel::retry, viewModel::refresh, onLogRound, onOpenRound, onOpenPractice)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,6 +72,7 @@ fun DashboardContent(
     onRefresh: () -> Unit,
     onLogRound: () -> Unit,
     onOpenRound: (UUID) -> Unit,
+    onOpenPractice: (UUID) -> Unit = {},
 ) {
     PullToRefreshBox(
         isRefreshing = state.refreshing,
@@ -80,6 +84,16 @@ fun DashboardContent(
             verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.lg),
             modifier = Modifier.fillMaxSize(),
         ) {
+            state.unreadFeedback?.let { unread ->
+                item {
+                    NewFromYourCoachCard(unread) { destination ->
+                        when (destination) {
+                            is UnreadDestination.Round -> onOpenRound(destination.roundId)
+                            is UnreadDestination.Session -> onOpenPractice(destination.sessionId)
+                        }
+                    }
+                }
+            }
             when (val dashboard = state.dashboard) {
                 Load.Loading -> item { Skeleton(blocks = 4) }
                 is Load.Failed -> item { LoadError(R.string.dashboard_load_error, onRetry) }

@@ -106,19 +106,21 @@ class FeedbackViewModel
                         else -> FeedbackView.Threads(threads)
                     }
                 mutableState.update { it.copy(view = view) }
-                if (messages != null) markRead(golferId, messages)
+                if (messages != null) markRead(golferId, target, targetId, messages)
             }
         }
 
         private suspend fun markRead(
             golferId: UUID,
+            target: FeedbackTarget,
+            targetId: UUID,
             messages: List<FeedbackMessageResponse>,
         ) {
             val newest = newestMessageAt(messages) ?: return
             if (markedUpTo?.let { newest <= it } == true) return
             markedUpTo = newest
             // Not being marked read isn't worth an error on screen: it's tried again next time.
-            attempt { feedback.markRead(golferId, newest) }
+            attempt { feedback.markRead(golferId, target, targetId, newest) }
         }
 
         fun setDraft(

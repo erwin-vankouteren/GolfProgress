@@ -6,7 +6,7 @@ belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
 **M6 Juniors**. Inviting and managing coaches is built on the API, web and Android, the
 Students list on the API and web, and the student overview and a student's rounds and practice on the API and web, and
-feedback threads on the API and web, and the golfer's side of them on Android; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
+feedback threads on the API and web, the golfer's side of them on Android, and "New from your coach" on the API, web and Android; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
 read-only: a student scope (`clients/web/src/api/studentScope.ts`) points their queries at
 the coach's routes and leaves out every action.
 
@@ -203,8 +203,8 @@ widened ownership checks, so no existing golfer endpoint changes how it authoris
 | `GET /feedback?golferId&targetType&targetId` | The threads on an item: every coach's for the golfer, their own for a coach. `targetType` is `Round`, `Reflection` or `PracticeSession` |
 | `POST /feedback` | Write a message; the golfer names the coach (`coachId`) |
 | `PATCH`/`DELETE /feedback/{id}` | Edit or delete your own message |
-| `POST /feedback/read` | Mark a golfer's threads read up to a time |
-| `GET /me/feedback/unread` | Unread count and the newest threads, for the dashboard |
+| `POST /feedback/read` | Mark the feedback on one item read up to a time; other items stay unread |
+| `GET /me/feedback/unread` | Unread count and the newest threads (at most 5), with what each is about, for the dashboard |
 
 One authorisation policy decides every feedback and coach request: the caller is the
 golfer, or a coach with an active link whose sharing covers the item.
@@ -216,7 +216,7 @@ golfer, or a coach with an active link whose sharing covers the item.
 | `CoachInvitations` | Id, GolferId, Email, TokenHash, ShareReflections, SharePractice, CreatedAt, ExpiresAt, AcceptedAt, DeclinedAt, CancelledAt |
 | `CoachLinks` | Id, GolferId, CoachId, ShareReflections, SharePractice, CreatedAt, EndedAt, EndedBy (golfer or coach) |
 | `FeedbackMessages` | Id, GolferId, CoachId (whose thread; null once the coach's account is deleted), AuthorId (null for a deleted coach account), TargetType, TargetId, Text, CreatedAt, EditedAt |
-| `FeedbackReads` | UserId, GolferId, ReadUpTo |
+| `FeedbackReads` | UserId, GolferId, TargetType, TargetId, ReadUpTo: per item, so opening one thread leaves the others unread |
 | `PracticeGoals` | Id, GolferId, CoachId (null once the coach's account is deleted), Title, Details, FocusArea, SessionType, TargetSessions, StartsOn, EndsOn, Status (Active, Done, Dismissed), CreatedAt |
 | `PracticeSessions` | Gains PracticeGoalId |
 

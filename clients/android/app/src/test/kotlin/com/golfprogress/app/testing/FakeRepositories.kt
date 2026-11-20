@@ -18,6 +18,7 @@ import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.RoundTimelinePointResponse
+import com.golfprogress.api.generated.models.UnreadFeedbackResponse
 import com.golfprogress.api.generated.models.UserBaselineResponse
 import com.golfprogress.api.generated.models.UserResponse
 import com.golfprogress.app.data.CoachingRepository
@@ -245,8 +246,12 @@ class FakeFeedbackRepository(
     var threadFailsWith: Exception? = null,
 ) : FeedbackRepository {
     val written = mutableListOf<Pair<UUID, String>>()
-    val reads = mutableListOf<OffsetDateTime>()
+    val reads = mutableListOf<Pair<UUID, OffsetDateTime>>()
     var failWith: Exception? = null
+
+    /** What GET /me/feedback/unread answers; [unreadFailsWith] makes it throw. */
+    var unread: UnreadFeedbackResponse = UnreadFeedbackResponse(0, emptyList())
+    var unreadFailsWith: Exception? = null
 
     override suspend fun thread(
         golferId: UUID,
@@ -288,9 +293,16 @@ class FakeFeedbackRepository(
 
     override suspend fun markRead(
         golferId: UUID,
+        target: FeedbackTarget,
+        targetId: UUID,
         upTo: OffsetDateTime,
     ) {
-        reads += upTo
+        reads += targetId to upTo
+    }
+
+    override suspend fun unread(): UnreadFeedbackResponse {
+        unreadFailsWith?.let { throw it }
+        return unread
     }
 }
 

@@ -5,6 +5,7 @@ import com.golfprogress.api.generated.apis.FeedbackApi
 import com.golfprogress.api.generated.models.CreateFeedbackRequest
 import com.golfprogress.api.generated.models.FeedbackMessageResponse
 import com.golfprogress.api.generated.models.MarkFeedbackReadRequest
+import com.golfprogress.api.generated.models.UnreadFeedbackResponse
 import com.golfprogress.api.generated.models.UpdateFeedbackRequest
 import com.golfprogress.api.unwrap
 import com.golfprogress.app.feedback.FeedbackTarget
@@ -37,10 +38,16 @@ interface FeedbackRepository {
 
     suspend fun delete(id: UUID)
 
+    /** Marks the feedback on this item read; other items stay unread. */
     suspend fun markRead(
         golferId: UUID,
+        target: FeedbackTarget,
+        targetId: UUID,
         upTo: OffsetDateTime,
     )
+
+    /** "New from your coach" (#222): unread messages from coaches, and the newest threads. */
+    suspend fun unread(): UnreadFeedbackResponse
 }
 
 class ApiFeedbackRepository
@@ -82,8 +89,16 @@ class ApiFeedbackRepository
 
         override suspend fun markRead(
             golferId: UUID,
+            target: FeedbackTarget,
+            targetId: UUID,
             upTo: OffsetDateTime,
         ) {
-            api.service<FeedbackApi>().markFeedbackRead(MarkFeedbackReadRequest(golferId, upTo)).unwrap()
+            api
+                .service<FeedbackApi>()
+                .markFeedbackRead(
+                    MarkFeedbackReadRequest(golferId, MarkFeedbackReadRequest.TargetType.valueOf(target.name), targetId, upTo),
+                ).unwrap()
         }
+
+        override suspend fun unread(): UnreadFeedbackResponse = api.service<FeedbackApi>().getUnreadFeedback().unwrap()
     }

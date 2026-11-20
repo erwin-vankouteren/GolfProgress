@@ -147,7 +147,13 @@ fun MainScreen(
             OfflineBanner()
             NavHost(navController, startDestination = Destination.Home.route, modifier = Modifier.weight(1f)) {
                 val openRound = { id: UUID -> navController.navigate("rounds/$id") }
-                composable(Destination.Home.route) { DashboardScreen(onLogRound = logRound, onOpenRound = openRound) }
+                composable(Destination.Home.route) {
+                    DashboardScreen(
+                        onLogRound = logRound,
+                        onOpenRound = openRound,
+                        onOpenPractice = { id -> navController.navigate("practice/$id") },
+                    )
+                }
                 composable(Destination.Rounds.route) { RoundsListScreen(onOpenRound = openRound, onLogRound = logRound) }
                 // After saving, the new round's detail replaces the form: that score is the reward.
                 composable(Destination.LogRound.route) {

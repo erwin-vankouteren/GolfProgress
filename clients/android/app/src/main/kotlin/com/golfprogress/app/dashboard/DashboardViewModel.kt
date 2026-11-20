@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.golfprogress.api.generated.models.DashboardResponse
 import com.golfprogress.api.generated.models.FitnessScoreResponse
+import com.golfprogress.api.generated.models.UnreadFeedbackResponse
 import com.golfprogress.app.data.DashboardRepository
+import com.golfprogress.app.data.FeedbackRepository
 import com.golfprogress.app.ui.common.Load
 import com.golfprogress.app.ui.common.load
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +24,8 @@ data class DashboardState(
     val pillars: FitnessScoreResponse? = null,
     /** Pull to refresh in progress, with the previous dashboard still on screen. */
     val refreshing: Boolean = false,
+    /** "New from your coach" (#222): null when nothing's unread, or it couldn't be checked. */
+    val unreadFeedback: UnreadFeedbackResponse? = null,
 )
 
 /**
@@ -33,6 +37,7 @@ class DashboardViewModel
     @Inject
     constructor(
         private val repository: DashboardRepository,
+        private val feedback: FeedbackRepository,
     ) : ViewModel() {
         private val mutableState = MutableStateFlow(DashboardState())
         val state: StateFlow<DashboardState> = mutableState.asStateFlow()
@@ -58,6 +63,11 @@ class DashboardViewModel
             loading?.cancel()
             loading =
                 viewModelScope.launch {
+                    // Most golfers have no coach: a failed check shows nothing rather than an error.
+                    launch {
+                        val unread = (load { feedback.unread() } as? Load.Loaded)?.value?.takeIf { it.count > 0 }
+                        mutableState.update { it.copy(unreadFeedback = unread) }
+                    }
                     val result = load { repository.dashboard() }
                     // A failed refresh keeps the dashboard already on screen.
                     mutableState.update {

@@ -449,4 +449,18 @@
     <string name="feedback_too_many">Te veel berichten dit uur. Probeer het later opnieuw.</string>
     <string name="feedback_failed">Dat is niet gelukt. Probeer het opnieuw.</string>
     <string name="feedback_offline">Je bent offline. Maak verbinding om een bericht te versturen.</string>
+    <!-- Nieuw van je coach, op Home (#222) -->
+    <string name="new_from_your_coach">Nieuw van je coach</string>
+    <string name="unread_on_round">%1$s over je ronde van %2$s</string>
+    <string name="unread_on_reflection">%1$s over je reflectie op de ronde van %2$s</string>
+    <string name="unread_on_reflection_no_date">%1$s over je reflectie</string>
+    <string name="unread_on_session">%1$s over je training van %2$s</string>
+    <plurals name="new_messages">
+        <item quantity="one">%d nieuw bericht</item>
+        <item quantity="other">%d nieuwe berichten</item>
+    </plurals>
+    <plurals name="more_unread_feedback">
+        <item quantity="one">En nog %d nieuw bericht bij andere onderdelen.</item>
+        <item quantity="other">En nog %d nieuwe berichten bij andere onderdelen.</item>
+    </plurals>
 </resources>

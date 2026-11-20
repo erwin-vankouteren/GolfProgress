@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import com.golfprogress.api.ApiProblem
 import com.golfprogress.app.testing.FakeDashboardRepository
+import com.golfprogress.app.testing.FakeFeedbackRepository
 import com.golfprogress.app.testing.Fixtures
 import com.golfprogress.app.ui.common.Load
 import com.golfprogress.app.ui.theme.GolfProgressTheme
@@ -47,7 +48,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `loads the dashboard and the last round's pillars`() {
-        val viewModel = DashboardViewModel(FakeDashboardRepository())
+        val viewModel = DashboardViewModel(FakeDashboardRepository(), FakeFeedbackRepository())
 
         val state = viewModel.state.value
         assertEquals(Fixtures.dashboard(), (state.dashboard as Load.Loaded).value)
@@ -56,7 +57,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `a new user has no pillars to load`() {
-        val viewModel = DashboardViewModel(FakeDashboardRepository(dashboard = { Fixtures.emptyDashboard() }))
+        val viewModel = DashboardViewModel(FakeDashboardRepository(dashboard = { Fixtures.emptyDashboard() }), FakeFeedbackRepository())
 
         assertNull(viewModel.state.value.pillars)
     }
@@ -65,7 +66,7 @@ class DashboardViewModelTest {
     fun `a failure can be retried`() {
         var fail = true
         val repository = FakeDashboardRepository(dashboard = { if (fail) throw IOException("offline") else Fixtures.dashboard() })
-        val viewModel = DashboardViewModel(repository)
+        val viewModel = DashboardViewModel(repository, FakeFeedbackRepository())
         assertTrue(viewModel.state.value.dashboard is Load.Failed)
 
         fail = false
@@ -78,7 +79,7 @@ class DashboardViewModelTest {
     fun `a failed refresh keeps what's on screen`() {
         var fail = false
         val repository = FakeDashboardRepository(dashboard = { if (fail) throw ApiProblem(500) else Fixtures.dashboard() })
-        val viewModel = DashboardViewModel(repository)
+        val viewModel = DashboardViewModel(repository, FakeFeedbackRepository())
 
         fail = true
         viewModel.refresh()

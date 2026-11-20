@@ -448,4 +448,18 @@
     <string name="feedback_too_many">Too many messages this hour. Try again later.</string>
     <string name="feedback_failed">Couldn\'t do that. Please try again.</string>
     <string name="feedback_offline">You\'re offline. Connect to send a message.</string>
+    <!-- New from your coach, on Home (#222) -->
+    <string name="new_from_your_coach">New from your coach</string>
+    <string name="unread_on_round">%1$s on your round of %2$s</string>
+    <string name="unread_on_reflection">%1$s on your reflection on the round of %2$s</string>
+    <string name="unread_on_reflection_no_date">%1$s on your reflection</string>
+    <string name="unread_on_session">%1$s on your practice session of %2$s</string>
+    <plurals name="new_messages">
+        <item quantity="one">%d new message</item>
+        <item quantity="other">%d new messages</item>
+    </plurals>
+    <plurals name="more_unread_feedback">
+        <item quantity="one">And %d more new message on other items.</item>
+        <item quantity="other">And %d more new messages on other items.</item>
+    </plurals>
 </resources>
