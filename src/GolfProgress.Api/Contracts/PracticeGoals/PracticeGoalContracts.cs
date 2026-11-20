@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using GolfProgress.Api.Contracts.PracticeSessions;
 using GolfProgress.Api.OpenApi;
+using GolfProgress.Api.Services;
 using GolfProgress.Domain.Enums;
 
 namespace GolfProgress.Api.Contracts.PracticeGoals;
@@ -145,3 +146,40 @@ public sealed class UpdatePracticeGoalStatusRequest
 
 /// <summary>What the golfer can set a goal's status to.</summary>
 public enum PracticeGoalStatusChange { Done, Dismissed }
+
+/// <summary>
+/// "Did it work?" (#234): the goal's focus stat in the rounds during it and the two weeks
+/// after, against the 5 rounds before it started. Rounds that didn't track the stat don't count.
+/// </summary>
+public sealed class GoalOutcomeResponse
+{
+    [StringEnum(typeof(GoalFocusArea))]
+    public string? FocusArea { get; init; }
+
+    /// <summary>PuttsPer18, PenaltiesPer18, FairwaysPer18 or ScoreSpread (standard deviation of scores); null without a focus area.</summary>
+    [StringEnum(typeof(GoalStat))]
+    public string? Stat { get; init; }
+
+    /// <summary>True for fairways; for the others, lower is better.</summary>
+    public bool HigherIsBetter { get; init; }
+
+    public decimal? Before { get; init; }
+    public decimal? During { get; init; }
+
+    /// <summary>During minus before, rounded to one decimal.</summary>
+    public decimal? Change { get; init; }
+
+    public int RoundsBefore { get; init; }
+    public int RoundsDuring { get; init; }
+
+    /// <summary>The first and last date a round counts as during: the goal's start, and two weeks after its end.</summary>
+    public string DuringFrom { get; init; } = "";
+    public string DuringTo { get; init; } = "";
+
+    [StringEnum(typeof(ConfidenceLevel))]
+    public string Confidence { get; init; } = "Low";
+
+    /// <summary>Improved, Worse, Same, CantTellYet (too few rounds) or NotMeasured (no focus area).</summary>
+    [StringEnum(typeof(GoalVerdict))]
+    public string Verdict { get; init; } = "";
+}

@@ -6,7 +6,7 @@ belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
 **M6 Juniors**. Inviting and managing coaches is built on the API, web and Android, the
 Students list on the API and web, and the student overview and a student's rounds and practice on the API and web, and
-feedback threads on the API and web, the golfer's side of them on Android, and "New from your coach" on the API, web and Android, and practice goals on the API; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
+feedback threads on the API and web, the golfer's side of them on Android, and "New from your coach" on the API, web and Android, and practice goals with "Did it work?" on the API; the rest isn't yet. On the web, a student's rounds and practice are the golfer's own screens,
 read-only: a student scope (`clients/web/src/api/studentScope.ts`) points their queries at
 the coach's routes and leaves out every action.
 
@@ -123,7 +123,7 @@ and a period of at most 8 weeks.
   |---|---|
   | Putting | Putts per 18 holes |
   | Penalties | Penalties per 18 holes |
-  | Tee shots | Fairways hit (%) |
+  | Tee shots | Fairways hit per 18 holes (rounds don't record how many fairways there were, so not a percentage) |
   | Consistency | Spread of scores (standard deviation) |
 
   It's shown with a confidence level, like every other number in the app: with two rounds
@@ -170,6 +170,7 @@ whether a golfer, round or session exists.
 | `PATCH /me/coaches/{linkId}` | Change what a coach sees |
 | `DELETE /me/coaches/{linkId}` | Remove a coach |
 | `GET /me/practice-goals`, `/{id}` | Every coach's goals with progress, current ones first; one with its linked sessions |
+| `GET /me/practice-goals/{id}/outcome` | "Did it work?"; the coach's is `/coach/students/{golferId}/practice-goals/{id}/outcome` |
 | `PATCH /me/practice-goals/{id}` | Mark done or dismiss |
 | `POST /me/practice-sessions` | Gains an optional `practiceGoalId` (sessions aren't edited, so there's no PUT) |
 

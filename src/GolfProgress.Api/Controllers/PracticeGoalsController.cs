@@ -61,6 +61,15 @@ public sealed class PracticeGoalsController : ControllerBase
         return await _goals.SetStatusAsync(User.GetUserId(), id, status, ct) is { } goal ? Ok(goal) : NotFound();
     }
 
+    // GET /me/practice-goals/{id}/outcome
+    //
+    // "Did it work?" (#234).
+    [HttpGet("/me/practice-goals/{id:guid}/outcome", Name = "getMyPracticeGoalOutcome")]
+    [ProducesResponseType<GoalOutcomeResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GoalOutcomeResponse>> MyOutcome(Guid id, CancellationToken ct) =>
+        await _goals.OutcomeAsync(User.GetUserId(), id, coachId: null, ct) is { } outcome ? Ok(outcome) : NotFound();
+
     // ---------------------------------------------------------------- the coach
 
     // GET /coach/students/{golferId}/practice-goals
@@ -84,6 +93,16 @@ public sealed class PracticeGoalsController : ControllerBase
             is { } detail
             ? Ok(detail)
             : NotFound();
+    }
+
+    // GET /coach/students/{golferId}/practice-goals/{id}/outcome
+    [HttpGet("/coach/students/{golferId:guid}/practice-goals/{id:guid}/outcome", Name = "getStudentPracticeGoalOutcome")]
+    [ProducesResponseType<GoalOutcomeResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GoalOutcomeResponse>> StudentOutcome(Guid golferId, Guid id, CancellationToken ct)
+    {
+        if (await PracticeAccessAsync(golferId, ct) is null) return NotFound();
+        return await _goals.OutcomeAsync(golferId, id, User.GetUserId(), ct) is { } outcome ? Ok(outcome) : NotFound();
     }
 
     // POST /coach/students/{golferId}/practice-goals

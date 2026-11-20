@@ -155,6 +155,34 @@ public sealed class PracticeGoalService
             && g.StartsOn <= today && today <= g.EndsOn), ct);
     }
 
+    /// <summary>"Did it work?" for a goal (#234); null when it isn't the golfer's, or for a coach, theirs.</summary>
+    public async Task<GoalOutcomeResponse?> OutcomeAsync(Guid golferId, Guid goalId, Guid? coachId, CancellationToken ct)
+    {
+        var goal = await FindAsync(golferId, goalId, coachId, ct);
+        if (goal is null) return null;
+
+        var last = goal.EndsOn.AddDays(GoalOutcome.DaysAfter);
+        var rounds = await _db.Rounds.AsNoTracking()
+            .Where(r => r.UserId == golferId && r.PlayedAt <= last)
+            .ToListAsync(ct);
+        var result = GoalOutcome.Compute(goal.FocusArea, goal.StartsOn, goal.EndsOn, rounds);
+        return new GoalOutcomeResponse
+        {
+            FocusArea = goal.FocusArea?.ToString(),
+            Stat = result.Stat?.ToString(),
+            HigherIsBetter = result.HigherIsBetter,
+            Before = result.Before,
+            During = result.During,
+            Change = result.Change,
+            RoundsBefore = result.RoundsBefore,
+            RoundsDuring = result.RoundsDuring,
+            DuringFrom = goal.StartsOn.ToString("yyyy-MM-dd"),
+            DuringTo = last.ToString("yyyy-MM-dd"),
+            Confidence = result.Confidence.ToString(),
+            Verdict = result.Verdict.ToString(),
+        };
+    }
+
     private async Task<PracticeGoal?> FindAsync(Guid golferId, Guid goalId, Guid? coachId, CancellationToken ct) =>
         await _db.PracticeGoals.AsNoTracking().FirstOrDefaultAsync(
             g => g.PracticeGoalId == goalId && g.GolferId == golferId && (coachId == null || g.CoachId == coachId), ct);
