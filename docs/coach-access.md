@@ -147,6 +147,22 @@ a single App Service instance, and a row lock in the database makes sure each di
 out once even if that changes. When push notifications arrive, these become push
 notifications with the same preferences.
 
+As built (#240, #245):
+
+- Both go out at 7:00 UTC (`Digests__SendHourUtc`), the coach digest on Mondays. Each run
+  claims its day by inserting a `DigestRuns` row keyed on (kind, day): the instance whose
+  insert fails skips it. A run that was missed, e.g. while deploying, goes out at the next check.
+- Each covers what happened since the previous run of its kind. A golfer gets the feedback
+  digest when a coach's message arrived since then and is still unread, so a message is in
+  one digest rather than in one every day until it's read. The email lists every unread
+  thread, at most 5, like "New from your coach" in the apps.
+- The coach digest lists each active student with new rounds, practice sessions (only when
+  practice is shared) and replies in the coach's own threads (only on what's still shared).
+  Ended links and students with nothing new are left out; with no one left, there's no email.
+- Preferences are `emailFeedbackDigest` and `emailCoachDigest` on `GET`/`PATCH /me`, on by
+  default, also for accounts from before. Emails are in the user's chosen language, English
+  when they follow the device's, and end with a link to Preferences.
+
 ### Where the coach works
 
 Golfers use the coaching features on **web, iOS and Android**. The coach's own workspace

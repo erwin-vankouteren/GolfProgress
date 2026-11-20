@@ -286,6 +286,14 @@ builder.Services.AddScoped<GolfProgress.Api.Security.CoachAccess>();
 builder.Services.AddScoped<GolfProgress.Api.Services.StudentOverviewService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.FeedbackService>();
 builder.Services.AddScoped<GolfProgress.Api.Services.PracticeGoalService>();
+// Digest emails (#240, #245): the daily feedback digest and the weekly coach digest, sent
+// directly by their worker rather than through the outbox, whose queue is bounded.
+builder.Services.AddOptions<GolfProgress.Api.Configuration.DigestOptions>()
+    .Bind(builder.Configuration.GetSection(GolfProgress.Api.Configuration.DigestOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddScoped<GolfProgress.Api.Services.DigestService>();
+builder.Services.AddHostedService<GolfProgress.Api.Services.DigestWorker>();
 
 var app = builder.Build();
 

@@ -21,6 +21,12 @@ public enum MicroWinText
     FocusSet,
 }
 
+/// <summary>A thread in the feedback digest (#240): who wrote, on what, and the newest message's start.</summary>
+public sealed record FeedbackDigestItem(string? CoachName, FeedbackTargetType About, DateOnly? On, int Unread, string Preview);
+
+/// <summary>A student's week in the coach digest (#245).</summary>
+public sealed record StudentActivity(string Name, int Rounds, int Sessions, int Replies);
+
 /// <summary>The "next focus" recommendations, by their lever key.</summary>
 public enum LeverText { Penalties, ThreePutts, DamageControl, DataQuality, HoldSteady }
 
@@ -94,6 +100,31 @@ public abstract class ApiTexts
     /// <summary>A golfer's invitation to a coach (#184): who, what they'll see, and the link.</summary>
     public abstract (string Subject, string PlainText, string Html) CoachInvitationEmail(
         string golferName, string link, int days, bool shareReflections, bool sharePractice);
+
+    /// <summary>
+    /// The daily feedback digest (#240): how many unread messages, and the threads they're in.
+    /// <paramref name="link"/> opens the app; <paramref name="preferencesLink"/> is where it's switched off.
+    /// </summary>
+    public abstract (string Subject, string PlainText, string Html) FeedbackDigestEmail(
+        int unread, IReadOnlyList<FeedbackDigestItem> items, string link, string preferencesLink);
+
+    /// <summary>The weekly coach digest (#245): each active student's new rounds, sessions and replies.</summary>
+    public abstract (string Subject, string PlainText, string Html) CoachDigestEmail(
+        IReadOnlyList<StudentActivity> students, string link, string preferencesLink);
+
+    /// <summary>
+    /// A digest: an intro, a list, a link to the app, and a footer saying how to switch it off,
+    /// whose last words link to Preferences.
+    /// </summary>
+    protected static (string Subject, string PlainText, string Html) Digest(
+        string subject, string intro, IReadOnlyList<string> lines, string linkText, string link,
+        string footer, string preferencesText, string preferencesLink) => (
+        subject,
+        $"{intro}\n\n{string.Join("\n", lines.Select(l => $"- {l}"))}\n\n{linkText}:\n{link}\n\n" +
+        $"{footer} {preferencesText}:\n{preferencesLink}",
+        $"<p>{Html(intro)}</p><ul>{string.Concat(lines.Select(l => $"<li>{Html(l)}</li>"))}</ul>" +
+        $"<p><a href=\"{Html(link)}\">{Html(linkText)}</a></p>" +
+        $"<p style=\"color:#666;font-size:small\">{Html(footer)} <a href=\"{Html(preferencesLink)}\">{Html(preferencesText)}</a></p>");
 
     protected static string Html(string text) => System.Net.WebUtility.HtmlEncode(text);
 
@@ -236,6 +267,50 @@ internal sealed class EnglishTexts : ApiTexts
             $"{intro}\n\n{sees}\n\n{how}\n{link}\n\n{ignore}",
             $"<p>{Html(intro)}</p><p>{Html(sees)}</p><p>{Html(how)}<br>" +
             $"<a href=\"{Html(link)}\">View the invitation</a></p><p>{Html(ignore)}</p>");
+    }
+
+    public override (string Subject, string PlainText, string Html) FeedbackDigestEmail(
+        int unread, IReadOnlyList<FeedbackDigestItem> items, string link, string preferencesLink)
+    {
+        var coaches = items.Select(i => i.CoachName).Distinct().Count() > 1 ? "your coaches" : "your coach";
+        var lines = items.Select(i =>
+        {
+            var on = i.On?.ToString("d MMMM", Culture);
+            var about = (i.About, on) switch
+            {
+                (FeedbackTargetType.PracticeSession, { } d) => $"your practice session on {d}",
+                (FeedbackTargetType.PracticeSession, null) => "your practice session",
+                (FeedbackTargetType.Reflection, { } d) => $"your reflection on the round of {d}",
+                (FeedbackTargetType.Reflection, null) => "your reflection",
+                (_, { } d) => $"your round on {d}",
+                _ => "your round",
+            };
+            var more = i.Unread > 1 ? $" (and {i.Unread - 1} more)" : "";
+            return $"{i.CoachName ?? "A former coach"} on {about}: “{i.Preview}”{more}";
+        }).ToList();
+        return Digest(
+            $"New feedback from {coaches}",
+            unread == 1 ? $"You have 1 unread message from {coaches}." : $"You have {unread} unread messages from {coaches}.",
+            lines,
+            "Read it in GolfProgress", link,
+            "You get this email once a day when there's new feedback.", "Switch it off in Preferences", preferencesLink);
+    }
+
+    public override (string Subject, string PlainText, string Html) CoachDigestEmail(
+        IReadOnlyList<StudentActivity> students, string link, string preferencesLink)
+    {
+        var lines = students.Select(s => $"{s.Name}: " + JoinList(new[]
+        {
+            s.Rounds switch { 0 => null, 1 => "1 new round", var n => $"{n} new rounds" },
+            s.Sessions switch { 0 => null, 1 => "1 practice session", var n => $"{n} practice sessions" },
+            s.Replies switch { 0 => null, 1 => "1 reply to your feedback", var n => $"{n} replies to your feedback" },
+        }, "and")).ToList();
+        return Digest(
+            "Your students this week",
+            "Here's what your students did in GolfProgress this past week.",
+            lines,
+            "Open your students", link,
+            "You get this email once a week when your students have been active.", "Switch it off in Preferences", preferencesLink);
     }
 }
 
@@ -381,5 +456,49 @@ internal sealed class DutchTexts : ApiTexts
             $"{intro}\n\n{sees}\n\n{how}\n{link}\n\n{ignore}",
             $"<p>{Html(intro)}</p><p>{Html(sees)}</p><p>{Html(how)}<br>" +
             $"<a href=\"{Html(link)}\">Bekijk de uitnodiging</a></p><p>{Html(ignore)}</p>");
+    }
+
+    public override (string Subject, string PlainText, string Html) FeedbackDigestEmail(
+        int unread, IReadOnlyList<FeedbackDigestItem> items, string link, string preferencesLink)
+    {
+        var coaches = items.Select(i => i.CoachName).Distinct().Count() > 1 ? "je coaches" : "je coach";
+        var lines = items.Select(i =>
+        {
+            var on = i.On?.ToString("d MMMM", Culture);
+            var about = (i.About, on) switch
+            {
+                (FeedbackTargetType.PracticeSession, { } d) => $"je training van {d}",
+                (FeedbackTargetType.PracticeSession, null) => "je training",
+                (FeedbackTargetType.Reflection, { } d) => $"je reflectie op de ronde van {d}",
+                (FeedbackTargetType.Reflection, null) => "je reflectie",
+                (_, { } d) => $"je ronde van {d}",
+                _ => "je ronde",
+            };
+            var more = i.Unread > 1 ? $" (en nog {i.Unread - 1})" : "";
+            return $"{i.CoachName ?? "Een voormalige coach"} over {about}: „{i.Preview}”{more}";
+        }).ToList();
+        return Digest(
+            $"Nieuwe feedback van {coaches}",
+            unread == 1 ? $"Je hebt 1 ongelezen bericht van {coaches}." : $"Je hebt {unread} ongelezen berichten van {coaches}.",
+            lines,
+            "Lees het in GolfProgress", link,
+            "Je krijgt deze e-mail één keer per dag als er nieuwe feedback is.", "Zet hem uit bij Voorkeuren", preferencesLink);
+    }
+
+    public override (string Subject, string PlainText, string Html) CoachDigestEmail(
+        IReadOnlyList<StudentActivity> students, string link, string preferencesLink)
+    {
+        var lines = students.Select(s => $"{s.Name}: " + JoinList(new[]
+        {
+            s.Rounds switch { 0 => null, 1 => "1 nieuwe ronde", var n => $"{n} nieuwe rondes" },
+            s.Sessions switch { 0 => null, 1 => "1 training", var n => $"{n} trainingen" },
+            s.Replies switch { 0 => null, 1 => "1 reactie op je feedback", var n => $"{n} reacties op je feedback" },
+        }, "en")).ToList();
+        return Digest(
+            "Je leerlingen deze week",
+            "Dit hebben je leerlingen de afgelopen week in GolfProgress gedaan.",
+            lines,
+            "Open je leerlingen", link,
+            "Je krijgt deze e-mail één keer per week als je leerlingen actief zijn geweest.", "Zet hem uit bij Voorkeuren", preferencesLink);
     }
 }

@@ -122,6 +122,12 @@ public sealed class UsersController : ControllerBase
         if (request.Sent(nameof(request.Typical18Score)))
             changed |= Update(user.Typical18Score, request.Typical18Score, v => user.Typical18Score = v);
 
+        if (request.Sent(nameof(request.EmailFeedbackDigest)))
+            changed |= Update(user.EmailFeedbackDigest, request.EmailFeedbackDigest!.Value, v => user.EmailFeedbackDigest = v);
+
+        if (request.Sent(nameof(request.EmailCoachDigest)))
+            changed |= Update(user.EmailCoachDigest, request.EmailCoachDigest!.Value, v => user.EmailCoachDigest = v);
+
         if (changed)
         {
             user.UpdatedAt = DateTimeOffset.UtcNow;
@@ -269,6 +275,8 @@ public sealed class UsersController : ControllerBase
         GoalFocus = user.GoalFocus ?? new List<string>(),
         CreatedAt = user.CreatedAt,
         UpdatedAt = user.UpdatedAt,
-        HasStudents = hasStudents
+        HasStudents = hasStudents,
+        EmailFeedbackDigest = user.EmailFeedbackDigest,
+        EmailCoachDigest = user.EmailCoachDigest,
     };
 }

@@ -28,6 +28,7 @@ public class GolfProgressDbContext : DbContext
     public DbSet<FeedbackMessage> FeedbackMessages => Set<FeedbackMessage>();
     public DbSet<FeedbackRead> FeedbackReads => Set<FeedbackRead>();
     public DbSet<PracticeGoal> PracticeGoals => Set<PracticeGoal>();
+    public DbSet<DigestRun> DigestRuns => Set<DigestRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -447,6 +448,14 @@ public class GolfProgressDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.GolferId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ---------- DIGEST RUNS (#240, #245): the key is the lock that sends each digest once.
+        modelBuilder.Entity<DigestRun>(e =>
+        {
+            e.ToTable("DigestRuns");
+            e.HasKey(x => new { x.Kind, x.Period });
+            e.Property(x => x.Kind).HasConversion<string>().HasMaxLength(16);
         });
     }
 

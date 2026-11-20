@@ -10,6 +10,7 @@ namespace GolfProgress.Api.Contracts.Users;
 /// PATCH /me (#82). Every field is optional: a field left out of the body is
 /// unchanged. Timezone, language, handicapIndex and typical18Score are cleared by
 /// sending null; the other fields can't be null. A null language follows the device's.
+/// emailFeedbackDigest and emailCoachDigest switch the digest emails on or off (#240).
 ///
 /// System.Text.Json only calls a setter for a property that is in the JSON, so each
 /// setter records that its field was sent. That is how a field sent as null is told
@@ -30,6 +31,8 @@ public sealed class UpdateMeRequest : IValidatableObject
     private List<string>? _goalFocus;
     private decimal? _handicapIndex;
     private int? _typical18Score;
+    private bool? _emailFeedbackDigest;
+    private bool? _emailCoachDigest;
 
     /// <summary>Whether the body included <paramref name="property"/>, even as null.</summary>
     public bool Sent(string property) => _sent.Contains(property);
@@ -60,6 +63,12 @@ public sealed class UpdateMeRequest : IValidatableObject
     [Range(18, 200, ErrorMessage = "Typical18Score must be between 18 and 200.")]
     public int? Typical18Score { get => _typical18Score; init => Set(ref _typical18Score, value); }
 
+    /// <summary>The daily email about unread feedback from a coach.</summary>
+    public bool? EmailFeedbackDigest { get => _emailFeedbackDigest; init => Set(ref _emailFeedbackDigest, value); }
+
+    /// <summary>The weekly email about students' activity, for coaches.</summary>
+    public bool? EmailCoachDigest { get => _emailCoachDigest; init => Set(ref _emailCoachDigest, value); }
+
     private void Set<T>(ref T field, T value, [System.Runtime.CompilerServices.CallerMemberName] string property = "")
     {
         field = value;
@@ -85,6 +94,12 @@ public sealed class UpdateMeRequest : IValidatableObject
 
         if (Sent(nameof(Language)) && Language is not null && !TryParseName<AppLanguage>(Language, out _))
             yield return Error(nameof(Language), $"Language must be one of: {string.Join(", ", Enum.GetNames<AppLanguage>())}, or null.");
+
+        if (Sent(nameof(EmailFeedbackDigest)) && EmailFeedbackDigest is null)
+            yield return Error(nameof(EmailFeedbackDigest), "EmailFeedbackDigest can't be null.");
+
+        if (Sent(nameof(EmailCoachDigest)) && EmailCoachDigest is null)
+            yield return Error(nameof(EmailCoachDigest), "EmailCoachDigest can't be null.");
 
         if (Sent(nameof(GoalFocus)))
         {

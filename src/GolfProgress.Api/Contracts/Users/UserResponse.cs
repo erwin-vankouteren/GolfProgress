@@ -26,5 +26,11 @@ namespace GolfProgress.Api.Contracts.Users
 
         /// <summary>Whether someone's invitation made this user their coach (#199).</summary>
         public bool HasStudents { get; init; }
+
+        /// <summary>The daily email about unread feedback from a coach (#240).</summary>
+        public bool EmailFeedbackDigest { get; init; } = true;
+
+        /// <summary>The weekly email about students' activity, for coaches (#245).</summary>
+        public bool EmailCoachDigest { get; init; } = true;
     }
 }

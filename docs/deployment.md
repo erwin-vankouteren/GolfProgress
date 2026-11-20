@@ -125,6 +125,10 @@ is right on a developer's machine; anywhere else a warning at startup says so.
 | `CoachInvitations__LifetimeDays` | 7 | How long an invitation link works |
 | `CoachInvitations__MaxCoaches` | 3 | Coaches a golfer can have, active and invited together |
 | `CoachInvitations__MaxPerDay` | 10 | Invitation emails a golfer can send a day |
+| `Digests__SendHourUtc` | 7 | The hour (UTC) the daily feedback digest (#240) and the weekly coach digest (#245) go out. Their links go to the reset page's origin: `/`, `/students` and `/profile` |
+| `Digests__CoachDigestDay` | `Monday` | The day the coach digest goes out |
+| `Digests__CheckIntervalMinutes` | 15 | How often the worker checks whether a digest is due |
+| `Digests__Enabled` | `true` | Turns the digests off, e.g. in tests. A `DigestRuns` row per digest and day makes sure each goes out once, however many instances run |
 
 In Azure, the Bicep sets the provider up (see "API"), in two passes, because a domain
 can only be used once it's verified:

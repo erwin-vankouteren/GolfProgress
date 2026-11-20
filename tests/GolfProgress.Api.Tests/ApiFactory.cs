@@ -40,6 +40,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         // The retention worker would purge on startup, racing tests that count
         // saves; its logic is tested directly through EventRetentionService.
         Environment.SetEnvironmentVariable("EventRetention__Enabled", "false");
+
+        // Likewise the digest worker; DigestTests call DigestService with a fixed time.
+        Environment.SetEnvironmentVariable("Digests__Enabled", "false");
     }
 
     private readonly string _databaseName = $"golfprogress-tests-{Guid.NewGuid()}";

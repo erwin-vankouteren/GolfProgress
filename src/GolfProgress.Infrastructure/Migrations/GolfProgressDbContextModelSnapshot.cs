@@ -115,6 +115,29 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.ToTable("CoachLinks", (string)null);
                 });
 
+            modelBuilder.Entity("GolfProgress.Domain.Entities.DigestRun", b =>
+                {
+                    b.Property<string>("Kind")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateOnly>("Period")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Sent")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Kind", "Period");
+
+                    b.ToTable("DigestRuns", (string)null);
+                });
+
             modelBuilder.Entity("GolfProgress.Domain.Entities.EventLog", b =>
                 {
                     b.Property<Guid>("EventLogId")
@@ -681,6 +704,12 @@ namespace GolfProgress.Infrastructure.Migrations
 
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("EmailCoachDigest")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EmailFeedbackDigest")
+                        .HasColumnType("bit");
 
                     b.Property<string>("GoalFocus")
                         .IsRequired()

@@ -7370,6 +7370,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "emailFeedbackDigest": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "emailCoachDigest": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -7486,6 +7494,8 @@
           "createdAt",
           "displayName",
           "email",
+          "emailCoachDigest",
+          "emailFeedbackDigest",
           "goalFocus",
           "handicapIndex",
           "hasStudents",
@@ -7564,6 +7574,12 @@
             "format": "date-time"
           },
           "hasStudents": {
+            "type": "boolean"
+          },
+          "emailFeedbackDigest": {
+            "type": "boolean"
+          },
+          "emailCoachDigest": {
             "type": "boolean"
           }
         },

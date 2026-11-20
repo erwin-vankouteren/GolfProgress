@@ -25,6 +25,12 @@ public class User
     /// <summary>The language the user chose in their profile; null follows the device.</summary>
     public AppLanguage? Language { get; set; }
 
+    /// <summary>The daily email about unread feedback from a coach (#240). On unless switched off.</summary>
+    public bool EmailFeedbackDigest { get; set; } = true;
+
+    /// <summary>The weekly email to a coach about their students' activity (#245). On unless switched off.</summary>
+    public bool EmailCoachDigest { get; set; } = true;
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
