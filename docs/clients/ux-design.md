@@ -108,7 +108,7 @@ Every chart has a text alternative (a summary sentence or a table) for screen re
 | Screen | Content | Endpoints |
 |---|---|---|
 | Profile | Display name, email, handicap, typical 18-hole score | `GET /me`, `PATCH /me` |
-| Preferences | Units, tracking mode, goal focus areas | `PATCH /me` |
+| Preferences | Units, tracking mode, goal focus areas, language, and the digest emails: feedback from your coach, and for coaches their students' week | `PATCH /me` |
 | Change password | Current and new password | `POST /me/password` |
 | Sign out | Ends this session | `POST /auth/logout` |
 | Delete account | Explains what is deleted, asks for the password, then deletes everything | `DELETE /me` |

@@ -99,6 +99,17 @@ export function preferencesOf(me: Me): Preferences {
   };
 }
 
+/** The digest emails (#241), on or off. */
+export type EmailPreferences = { emailFeedbackDigest: boolean; emailCoachDigest: boolean };
+
+export function emailPreferencesOf(me: Me): EmailPreferences {
+  // Missing from an older API's response: those emails don't exist there, so leave them on.
+  return {
+    emailFeedbackDigest: me.emailFeedbackDigest ?? true,
+    emailCoachDigest: me.emailCoachDigest ?? true,
+  };
+}
+
 /** Ticks or unticks an area; no more than three can be ticked. */
 export function toggleGoalFocus(current: GoalFocusArea[], area: GoalFocusArea): GoalFocusArea[] {
   if (current.includes(area)) return current.filter((a) => a !== area);

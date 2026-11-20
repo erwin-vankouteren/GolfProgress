@@ -591,6 +591,15 @@ export const plainMessages = defineMessages({
     id: "profile.languageHint",
     defaultMessage: "The app, your micro-wins and your next focus are shown in this language.",
   },
+  emails: { id: "profile.emails", defaultMessage: "Emails" },
+  emailFeedbackDigest: {
+    id: "profile.emailFeedbackDigest",
+    defaultMessage: "A daily email when your coach has sent you new feedback",
+  },
+  emailCoachDigest: {
+    id: "profile.emailCoachDigest",
+    defaultMessage: "A weekly email about what your students logged and replied",
+  },
   changePassword: { id: "profile.changePassword", defaultMessage: "Change password" },
   currentPassword: { id: "profile.currentPassword", defaultMessage: "Current password" },
   newPassword: { id: "profile.newPassword", defaultMessage: "New password" },

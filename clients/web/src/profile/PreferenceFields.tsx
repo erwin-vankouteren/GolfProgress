@@ -12,6 +12,7 @@ import {
   toggleGoalFocus,
   trackingModes,
   unitOptions,
+  type EmailPreferences,
   type GoalFocusArea,
   type TrackingMode,
   type Units,
@@ -194,6 +195,45 @@ export function GoalFocusField({
           </label>
         );
       })}
+    </fieldset>
+  );
+}
+
+/** The digest emails (#241): the coach digest only for coaches, as only they get it. */
+export function EmailsField({
+  value,
+  onChange,
+  coach,
+}: {
+  value: EmailPreferences;
+  onChange: (next: Partial<EmailPreferences>) => void;
+  coach: boolean;
+}) {
+  return (
+    <fieldset className="choice-group">
+      <Legend label={messages.emails} />
+      <label className="choice">
+        <input
+          type="checkbox"
+          checked={value.emailFeedbackDigest}
+          onChange={(e) => onChange({ emailFeedbackDigest: e.target.checked })}
+        />
+        <span className="choice-label">
+          <FormattedMessage {...messages.emailFeedbackDigest} />
+        </span>
+      </label>
+      {coach && (
+        <label className="choice">
+          <input
+            type="checkbox"
+            checked={value.emailCoachDigest}
+            onChange={(e) => onChange({ emailCoachDigest: e.target.checked })}
+          />
+          <span className="choice-label">
+            <FormattedMessage {...messages.emailCoachDigest} />
+          </span>
+        </label>
+      )}
     </fieldset>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   checkNewPassword,
+  emailPreferencesOf,
   parseDecimal,
   preferencesOf,
   toProfileRequest,
@@ -72,6 +73,14 @@ describe("preferences", () => {
   it("ignores goal focus areas this build doesn't know", () => {
     const me = { units: "Metric", trackingMode: "Balanced", goalFocus: ["Driving", "Putting"] } as unknown as Me;
     expect(preferencesOf(me).goalFocus).toEqual(["Putting"]);
+  });
+
+  it("keeps the digest emails on when an older API doesn't say (#241)", () => {
+    expect(emailPreferencesOf({} as Me)).toEqual({ emailFeedbackDigest: true, emailCoachDigest: true });
+    expect(emailPreferencesOf({ emailFeedbackDigest: false, emailCoachDigest: true } as Me)).toEqual({
+      emailFeedbackDigest: false,
+      emailCoachDigest: true,
+    });
   });
 });
 

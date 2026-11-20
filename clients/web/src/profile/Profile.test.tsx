@@ -15,7 +15,12 @@ const me = {
   goalFocus: ["Putting"],
   createdAt: "2026-05-01T10:00:00Z",
   updatedAt: "2026-05-01T10:00:00Z",
+  hasStudents: false,
+  emailFeedbackDigest: true,
+  emailCoachDigest: true,
 };
+
+const emails = { emailFeedbackDigest: true, emailCoachDigest: true };
 
 /** A fake API holding the profile in memory; PATCH merges into it, as the API does. */
 function renderProfile(path = "/profile", handlers: Record<string, Handler> = {}) {
@@ -80,7 +85,9 @@ describe("profile (#111)", () => {
     await user.click(within(preferences).getByRole("radio", { name: /Detailed/ }));
     await user.click(within(preferences).getByRole("button", { name: "Save" }));
     await within(preferences).findByRole("status");
-    expect(patches).toEqual([{ units: "Metric", trackingMode: "Detailed", goalFocus: ["Putting"], language: null }]);
+    expect(patches).toEqual([
+      { units: "Metric", trackingMode: "Detailed", goalFocus: ["Putting"], ...emails, language: null },
+    ]);
 
     await router.navigate("/rounds/new");
     expect(await screen.findByLabelText(/Fairways hit/, { selector: "input" })).toBeInTheDocument();
@@ -96,10 +103,38 @@ describe("profile (#111)", () => {
     await user.click(within(preferences).getByRole("button", { name: "Save" }));
 
     expect(await region("Voorkeuren")).toBeInTheDocument();
-    expect(patches).toEqual([{ units: "Metric", trackingMode: "Minimal", goalFocus: ["Putting"], language: "Dutch" }]);
+    expect(patches).toEqual([
+      { units: "Metric", trackingMode: "Minimal", goalFocus: ["Putting"], ...emails, language: "Dutch" },
+    ]);
     expect(document.documentElement.lang).toBe("nl");
     // The API's own texts follow: requests from now on ask for Dutch.
     await waitFor(() => expect(requests.at(-1)?.headers.get("Accept-Language")).toBe("nl"));
+  });
+
+  it("switches the feedback digest off; only a coach sees the weekly digest (#241)", async () => {
+    const { user, patches } = renderProfile();
+    const preferences = await region("Preferences");
+    const emailSwitches = within(preferences).getByRole("group", { name: "Emails" });
+
+    expect(within(emailSwitches).getAllByRole("checkbox")).toHaveLength(1);
+    await user.click(within(emailSwitches).getByRole("checkbox", { name: /daily email when your coach/ }));
+    await user.click(within(preferences).getByRole("button", { name: "Save" }));
+
+    await within(preferences).findByRole("status");
+    expect(patches).toEqual([expect.objectContaining({ emailFeedbackDigest: false, emailCoachDigest: true })]);
+  });
+
+  it("lets a coach switch the weekly digest off", async () => {
+    const { user, patches } = renderProfile("/profile", {
+      "GET /me": () => json(200, { ...me, hasStudents: true }),
+    });
+    const preferences = await region("Preferences");
+
+    await user.click(within(preferences).getByRole("checkbox", { name: /weekly email about what your students/ }));
+    await user.click(within(preferences).getByRole("button", { name: "Save" }));
+
+    await within(preferences).findByRole("status");
+    expect(patches).toEqual([expect.objectContaining({ emailFeedbackDigest: true, emailCoachDigest: false })]);
   });
 
   it("names each language in that language, and the device's next to its option", async () => {

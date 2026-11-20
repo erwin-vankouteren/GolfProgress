@@ -13,6 +13,7 @@ import { messages, type PlainMessage } from "../i18n/messages";
 import { useSession } from "../session/SessionContext";
 import { Section, TextField } from "./fields";
 import {
+  EmailsField,
   GoalFocusField,
   LanguageField,
   SaveStatus,
@@ -22,10 +23,12 @@ import {
 } from "./PreferenceFields";
 import {
   checkNewPassword,
+  emailPreferencesOf,
   preferencesOf,
   profileValuesOf,
   toProfileRequest,
   validateProfile,
+  type EmailPreferences,
   type Me,
   type PasswordError,
   type Preferences,
@@ -208,10 +211,16 @@ function PreferencesSection({ me }: { me: Me }) {
   const update = useUpdateMe();
   const [values, setValues] = useState<Preferences>(() => preferencesOf(me));
   const [language, setLanguage] = useState<LanguageChoice>(() => choiceOf(me.language));
+  const [emails, setEmails] = useState<EmailPreferences>(() => emailPreferencesOf(me));
   const [formError, setFormError] = useState<string>();
 
   const change = (next: Partial<Preferences>) => {
     setValues((v) => ({ ...v, ...next }));
+    update.reset();
+  };
+
+  const changeEmails = (next: Partial<EmailPreferences>) => {
+    setEmails((v) => ({ ...v, ...next }));
     update.reset();
   };
 
@@ -220,7 +229,7 @@ function PreferencesSection({ me }: { me: Me }) {
     if (update.isPending || !online) return;
     setFormError(undefined);
     // Saved, the app switches to the language straight away (LanguageProvider).
-    update.mutate({ ...values, language }, { onError: (error) => setFormError(saveFailed(error, intl)) });
+    update.mutate({ ...values, ...emails, language }, { onError: (error) => setFormError(saveFailed(error, intl)) });
   };
 
   return (
@@ -236,6 +245,7 @@ function PreferencesSection({ me }: { me: Me }) {
             update.reset();
           }}
         />
+        <EmailsField value={emails} onChange={changeEmails} coach={me.hasStudents} />
         <SaveStatus saved={update.isSuccess} error={formError} />
         <OfflineHint />
         <div>

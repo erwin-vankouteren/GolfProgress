@@ -265,7 +265,7 @@ A unique index allows one active link per golfer and coach.
 | Dashboard | **New from your coach** while anything is unread |
 | Practice | **Goals from your coach**, with progress, above the session list; Log session suggests a goal |
 | Goal detail | The goal, linked sessions, and "Did it work?" |
-| Preferences | The two digest emails |
+| Preferences | The two digest emails, under "Emails": the weekly one only for coaches |
 
 **Coach** (web first, then iOS and Android)
 
