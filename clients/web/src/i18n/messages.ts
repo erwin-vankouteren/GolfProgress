@@ -31,6 +31,16 @@ export const plainMessages = defineMessages({
   },
   studentNoActivity: { id: "students.noActivity", defaultMessage: "No activity yet" },
   showMoreStudents: { id: "students.showMore", defaultMessage: "Show more students" },
+  backToStudents: { id: "students.back", defaultMessage: "Back to students" },
+  studentOverviewLoadError: {
+    id: "students.overviewLoadError",
+    defaultMessage: "Couldn't load this student's overview.",
+  },
+  studentGone: { id: "students.gone", defaultMessage: "You don't coach this golfer any more." },
+  theirNextFocus: { id: "students.nextFocus", defaultMessage: "Their next focus" },
+  recentRounds: { id: "students.recentRounds", defaultMessage: "Recent rounds" },
+  latestReflections: { id: "students.latestReflections", defaultMessage: "Latest reflections" },
+  noReflectionsYet: { id: "students.noReflections", defaultMessage: "No reflections yet." },
   coachAlwaysSees: { id: "coaches.alwaysSees", defaultMessage: "Always sees your rounds and progress." },
   changeSharingFailed: {
     id: "coaches.changeFailed",
@@ -741,6 +751,26 @@ export const messagesWithValues = {
   removeCoachOf: defineMessage<{ name: string }>({
     id: "coaches.removeOf",
     defaultMessage: "Remove {name}",
+  }),
+  studentNoRounds: defineMessage<{ name: string }>({
+    id: "students.noRounds",
+    defaultMessage: "{name} hasn't logged a round yet. Their scores and next focus appear here after the first.",
+  }),
+  studentBaselineBasedOn: defineMessage<{ count: number }>({
+    id: "students.baselineBasedOn",
+    defaultMessage: "Based on {count, plural, one {their last round} other {their last # rounds}}.",
+  }),
+  studentTrend: defineMessage<{ first: number; last: number; count: number }>({
+    id: "students.trend",
+    defaultMessage: "Fitness score from {first} to {last} over their last {count} scored rounds.",
+  }),
+  reflectionsNotShared: defineMessage<{ name: string }>({
+    id: "students.reflectionsNotShared",
+    defaultMessage: "{name} doesn't share reflections with you.",
+  }),
+  reflectionOnRound: defineMessage<{ date: string }>({
+    id: "students.reflectionOnRound",
+    defaultMessage: "Round of {date}",
   }),
   stopCoachingOf: defineMessage<{ name: string }>({
     id: "students.stopOf",

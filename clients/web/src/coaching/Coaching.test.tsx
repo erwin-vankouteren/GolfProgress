@@ -37,7 +37,12 @@ const noContent = () => new Response(null, { status: 204 });
 
 // Both pages load lazily: loaded here, a test doesn't spend its wait on the import.
 beforeAll(async () => {
-  await Promise.all([import("../profile/ProfilePage"), import("./CoachInvitationPage"), import("./StudentsPage")]);
+  await Promise.all([
+    import("../profile/ProfilePage"),
+    import("./CoachInvitationPage"),
+    import("./StudentsPage"),
+    import("./StudentOverviewPage"),
+  ]);
 });
 const coachesRegion = () => screen.findByRole("region", { name: "Coaches" });
 
@@ -331,6 +336,175 @@ describe("Students (#200)", () => {
 
     expect(await screen.findByRole("heading", { name: "Ann" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Show more students" })).not.toBeInTheDocument();
+  });
+});
+
+const overview = {
+  golferId: student.golferId,
+  displayName: "Sam",
+  shareReflections: true,
+  sharePractice: false,
+  lastRound: {
+    roundId: "r2",
+    playedAt: "2026-11-01",
+    totalStrokes: 88,
+    fitnessScore: 66,
+    fitnessConfidence: "Medium",
+  },
+  recentRounds: [
+    {
+      roundId: "r1",
+      playedAt: "2026-10-20",
+      holes: 18,
+      totalStrokes: 92,
+      totalPutts: null,
+      penalties: null,
+      threePutts: null,
+      blowUpHoles: null,
+      fitnessScoreTotal: 58,
+      fitnessConfidence: "Medium",
+      microWinTitle: null,
+    },
+    {
+      roundId: "r2",
+      playedAt: "2026-11-01",
+      holes: 18,
+      totalStrokes: 88,
+      totalPutts: null,
+      penalties: null,
+      threePutts: null,
+      blowUpHoles: null,
+      fitnessScoreTotal: 66,
+      fitnessConfidence: "Medium",
+      microWinTitle: null,
+    },
+  ],
+  monthlyFitnessAvg: 66,
+  monthlyFitnessChange: 4,
+  nextFocus: {
+    roundId: "r2",
+    userId: student.golferId,
+    leverKey: "three_putts",
+    title: "Lag putting",
+    recommendation: "Practise long putts to within a metre.",
+    rationale: "Three-putts cost the most strokes.",
+    confidenceLevel: "Medium",
+    createdAt: "2026-11-02T10:00:00Z",
+  },
+  baseline: {
+    userId: student.golferId,
+    windowRounds: 5,
+    sampleSize: 2,
+    avgScore: 90,
+    scoreStdDev: 2,
+    avgPutts: null,
+    avgPenalties: null,
+    avgThreePutts: null,
+    avgBlowUpHoles: null,
+    avgFairwaysHit: null,
+    avgGir: null,
+    completenessRatio: 0.5,
+    confidenceLevel: "Low",
+    computedAt: "2026-11-01T10:00:00Z",
+  },
+  latestReflections: [
+    {
+      reflectionId: "f1",
+      roundId: "r2",
+      playedAt: "2026-11-01",
+      focusRating: 4,
+      moodRating: null,
+      frustrationSpillover: null,
+      whatWorked: "Tempo on the tee",
+      whatToRepeat: null,
+      oneChangeNext: null,
+      createdAt: "2026-11-01T18:00:00Z",
+    },
+  ],
+};
+const overviewPath = `/students/${student.golferId}`;
+const overviewApi = `GET /coach/students/${student.golferId}/overview`;
+
+describe("a student's overview (#203)", () => {
+  it("opens from Students, with what they share, their trend, next focus, baseline and reflections", async () => {
+    const { user } = renderSignedIn("/students", {
+      "GET /me": () => json(200, { ...me, hasStudents: true }),
+      "GET /coach/students": () => json(200, [student]),
+      [overviewApi]: () => json(200, overview),
+    });
+
+    await user.click(await screen.findByRole("link", { name: "Sam" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Sam" })).toBeInTheDocument();
+    expect(screen.getByText("You see: Rounds and progress and Reflections and notes")).toBeInTheDocument();
+    expect(screen.getByText("Nov 1, 2026 · 88 strokes")).toBeInTheDocument();
+    const focus = screen.getByRole("region", { name: "Their next focus" });
+    expect(within(focus).getByText("Lag putting")).toBeInTheDocument();
+    expect(screen.getByText("Based on their last 2 rounds.")).toBeInTheDocument();
+    expect(screen.getByText("Fitness score from 58 to 66 over their last 2 scored rounds.")).toBeInTheDocument();
+    const rounds = within(screen.getByRole("table", { name: "Recent rounds" })).getAllByRole("row");
+    expect(rounds[1]).toHaveTextContent("Nov 1, 2026");
+    const reflections = screen.getByRole("region", { name: "Latest reflections" });
+    expect(within(reflections).getByRole("heading", { name: "Round of Nov 1, 2026" })).toBeInTheDocument();
+    expect(within(reflections).getByText("Tempo on the tee")).toBeInTheDocument();
+  });
+
+  it("says so when reflections aren't shared, and when there's no round yet", async () => {
+    renderSignedIn(overviewPath, {
+      "GET /me": () => json(200, { ...me, hasStudents: true }),
+      [overviewApi]: () =>
+        json(200, {
+          ...overview,
+          shareReflections: false,
+          lastRound: null,
+          recentRounds: [],
+          nextFocus: null,
+          baseline: null,
+          monthlyFitnessAvg: null,
+          monthlyFitnessChange: null,
+          latestReflections: [],
+        }),
+    });
+
+    expect(await screen.findByText(/Sam hasn't logged a round yet/)).toBeInTheDocument();
+    expect(screen.getByText("Sam doesn't share reflections with you.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Their next focus" })).not.toBeInTheDocument();
+  });
+
+  it("offers Try again when it can't load, and says when they're no longer a student", async () => {
+    let status = 500;
+    const { user } = renderSignedIn(overviewPath, {
+      "GET /me": () => json(200, { ...me, hasStudents: true }),
+      [overviewApi]: () => json(status, { status }),
+    });
+
+    const tryAgain = await screen.findByRole("button", { name: "Try again" }, { timeout: 3000 });
+    expect(screen.getByText("Couldn't load this student's overview.")).toBeInTheDocument();
+    status = 404;
+    await user.click(tryAgain);
+
+    expect(await screen.findByText("You don't coach this golfer any more.")).toBeInTheDocument();
+    expect(screen.queryByText("Sam")).not.toBeInTheDocument();
+  });
+
+  it("stops coaching after asking, and goes back to Students", async () => {
+    let students = [student];
+    const { router, user } = renderSignedIn(overviewPath, {
+      "GET /me": () => json(200, { ...me, hasStudents: students.length > 0 }),
+      "GET /coach/students": () => json(200, students),
+      [overviewApi]: () => json(200, overview),
+      [`DELETE /coach/students/${student.golferId}`]: () => {
+        students = [];
+        return noContent();
+      },
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Stop coaching Sam" }));
+    const dialog = await screen.findByRole("dialog", { name: "Stop coaching this golfer?" });
+    await user.click(within(dialog).getByRole("button", { name: "Stop coaching" }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/students"));
+    expect(await screen.findByText(/No students yet/)).toBeInTheDocument();
   });
 });
 

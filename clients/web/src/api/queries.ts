@@ -30,6 +30,8 @@ export const queryKeys = {
   monthlyReview: (monthStart: string) => ["progress", "review", monthStart] as const,
   coaches: ["coaches"] as const,
   students: ["students"] as const,
+  // Under students, so stopping coaching or a changed list refreshes it too.
+  studentOverview: (golferId: string) => ["students", golferId, "overview"] as const,
   coachInvitation: (token: string) => ["coach-invitation", token] as const,
 };
 
@@ -65,6 +67,16 @@ export function useStudentList() {
       const total = lastPage.total ?? loaded;
       return loaded < total && lastPage.students.length > 0 ? loaded : undefined;
     },
+  });
+}
+
+/** A coach's overview of one student before a lesson (#203). A 404 means they no longer coach them. */
+export function useStudentOverview(golferId: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.studentOverview(golferId),
+    queryFn: async () =>
+      unwrap(await api.GET("/coach/students/{golferId}/overview", { params: { path: { golferId } } })),
   });
 }
 

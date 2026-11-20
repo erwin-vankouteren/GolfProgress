@@ -18,6 +18,9 @@ const ProgressPage = lazy(() => import("../progress/ProgressPage").then((m) => (
 const ProfilePage = lazy(() => import("../profile/ProfilePage").then((m) => ({ default: m.ProfilePage })));
 const OnboardingPage = lazy(() => import("../profile/OnboardingPage").then((m) => ({ default: m.OnboardingPage })));
 const StudentsPage = lazy(() => import("../coaching/StudentsPage").then((m) => ({ default: m.StudentsPage })));
+const StudentOverviewPage = lazy(() =>
+  import("../coaching/StudentOverviewPage").then((m) => ({ default: m.StudentOverviewPage })),
+);
 const CoachInvitationPage = lazy(() =>
   import("../coaching/CoachInvitationPage").then((m) => ({ default: m.CoachInvitationPage })),
 );
@@ -70,6 +73,7 @@ export const routes: RouteObject[] = [
           { path: "practice/:sessionId", element: <PracticeDetailPage /> },
           { path: "progress", element: loading(<ProgressPage />) },
           { path: "students", element: loading(<StudentsPage />) },
+          { path: "students/:golferId", element: loading(<StudentOverviewPage />) },
           { path: "profile", element: loading(<ProfilePage />) },
           { path: "*", element: <NotFoundPage /> },
         ],

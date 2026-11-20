@@ -45,3 +45,41 @@
   margin: 0 0 var(--space-lg);
   padding-left: var(--space-lg);
 }
+
+/* A student's overview (#203). */
+
+.student-overview-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.student-overview-header > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.student-overview-header h1 {
+  margin-bottom: var(--space-xxs);
+}
+
+.student-overview-header p {
+  margin: 0;
+}
+
+.student-reflections {
+  display: grid;
+  gap: var(--space-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.student-reflections h3 {
+  margin: 0 0 var(--space-xxs);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-label);
+}

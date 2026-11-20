@@ -90,7 +90,13 @@ export function ReflectionSection({ roundId, Heading }: { roundId: string; Headi
   );
 }
 
-function SavedReflection({ reflection }: { reflection: Schemas["ReflectionResponse"] }) {
+/** What a saved reflection shows; also a student's reflection on a coach's overview (#203). */
+export type ReflectionContent = Pick<
+  Schemas["ReflectionResponse"],
+  "createdAt" | "focusRating" | "moodRating" | "frustrationSpillover" | "whatWorked" | "whatToRepeat" | "oneChangeNext"
+>;
+
+export function SavedReflection({ reflection }: { reflection: ReflectionContent }) {
   const intl = useIntl();
 
   return (

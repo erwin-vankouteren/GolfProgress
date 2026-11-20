@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
+import { Link } from "react-router";
 import { ApiProblem, unwrap, type Schemas } from "../api";
 import { queryKeys, useStudentList } from "../api/queries";
 import { useApi } from "../app/ApiContext";
@@ -59,31 +60,14 @@ export function StudentsPage() {
 
 function Student({ student }: { student: Schemas["StudentResponse"] }) {
   const intl = useIntl();
-  const api = useApi();
-  const online = useOnline();
-  const queryClient = useQueryClient();
-  const [confirming, setConfirming] = useState(false);
-  // Also GET /me: without students, the section leaves the navigation.
-  const refresh = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.students }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.me }),
-    ]);
-  const stop = useMutation({
-    mutationFn: async () =>
-      unwrap(await api.DELETE("/coach/students/{golferId}", { params: { path: { golferId: student.golferId } } })),
-    onSuccess: refresh,
-    onError: (error) => {
-      // Removed by the golfer meanwhile: the list shows what's true now.
-      if (error instanceof ApiProblem && error.status === 404) void refresh();
-    },
-  });
   const items = intl.formatList(sharedItems(student).map((item) => intl.formatMessage(sharedLabels[item])));
 
   return (
     <li className="card">
       <div>
-        <h2>{student.displayName}</h2>
+        <h2>
+          <Link to={`/students/${student.golferId}`}>{student.displayName}</Link>
+        </h2>
         <p className="hint">
           {student.lastActivityOn ? (
             <FormattedMessage
@@ -106,11 +90,53 @@ function Student({ student }: { student: Schemas["StudentResponse"] }) {
           <FormattedMessage {...messages.studentShares} values={{ items }} />
         </p>
       </div>
+      <StopCoachingButton golferId={student.golferId} name={student.displayName} />
+    </li>
+  );
+}
+
+/**
+ * Stop coaching, after asking (#189). On the Students list and a student's overview;
+ * [onStopped] runs once it's done, or once the golfer turns out to have removed you already.
+ */
+export function StopCoachingButton({
+  golferId,
+  name,
+  onStopped,
+}: {
+  golferId: string;
+  name: string;
+  onStopped?: () => void;
+}) {
+  const intl = useIntl();
+  const api = useApi();
+  const online = useOnline();
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  // Also GET /me: without students, the section leaves the navigation.
+  const refresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.students }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+    ]);
+    onStopped?.();
+  };
+  const stop = useMutation({
+    mutationFn: async () => unwrap(await api.DELETE("/coach/students/{golferId}", { params: { path: { golferId } } })),
+    onSuccess: refresh,
+    onError: (error) => {
+      // Removed by the golfer meanwhile: the list shows what's true now.
+      if (error instanceof ApiProblem && error.status === 404) void refresh();
+    },
+  });
+
+  return (
+    <>
       <button
         type="button"
         className="button"
         disabled={!online}
-        aria-label={intl.formatMessage(messages.stopCoachingOf, { name: student.displayName })}
+        aria-label={intl.formatMessage(messages.stopCoachingOf, { name })}
         onClick={() => {
           stop.reset();
           setConfirming(true);
@@ -136,6 +162,6 @@ function Student({ student }: { student: Schemas["StudentResponse"] }) {
           onCancel={() => setConfirming(false)}
         />
       )}
-    </li>
+    </>
   );
 }

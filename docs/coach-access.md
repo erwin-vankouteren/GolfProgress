@@ -5,7 +5,7 @@ reflections, gives feedback on them, and sets practice goals. For juniors, coach
 belt exams ([`junior-belts.md`](junior-belts.md)). The work is planned for
 milestone **M5 Coaching**, after the public launch, for adult golfers; juniors follow in
 **M6 Juniors**. Inviting and managing coaches is built on the API, web and Android, the
-Students list on the API and web, and the student overview on the API; the rest isn't yet.
+Students list on the API and web, and the student overview on the API and web; the rest isn't yet.
 
 Background: the product overview (`docs/golfprogress-overview.pdf`, "Coming next").
 The rest of the system is in [`architecture.md`](architecture.md), and the existing screens
