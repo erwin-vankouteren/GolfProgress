@@ -215,7 +215,7 @@ without a focus area, doesn't change the focus. Deliberately not done (yet): kee
 same focus for a number of rounds regardless of the stats.
 
 A coach's change to a goal refreshes the golfer's cached Home: the cache is cleared for the
-user in any saved row's  or  (#14, #226).
+user in any saved row's `UserId` or `GolferId` (#14, #226).
 
 ## Authentication
 
