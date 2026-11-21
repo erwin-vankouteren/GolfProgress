@@ -293,7 +293,7 @@ coaches instead of the junior.
 
 ## Open questions
 
-- **Pricing:** is coaching free, part of a paid plan for golfers, or paid by coaches?
+- ~~**Pricing:**~~ settled (#303): an add-on to the golfer's subscription, free for coaches. See [`payments.md`](payments.md).
 - **Golfers' own goals:** should golfers set practice goals without a coach?
 - **Academies:** a club or academy with several coaches sharing students.
 - **Attachments:** coaches often teach with video; out of scope for now.
