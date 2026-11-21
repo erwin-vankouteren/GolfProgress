@@ -250,6 +250,37 @@ public sealed class FeedbackTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ADeletedGolfersThreads_LeaveNothingAboutThemInTheCoachsLog()
+    {
+        await LinkAsync(_coachId);
+        var annsRound = await RoundAsync(_annId);
+        await WriteAsync(Coach(), Message(annsRound, "About Ann's round"));
+        // Ben's thread with the same coach, which stays.
+        await _factory.WithDbAsync(async db =>
+        {
+            db.CoachLinks.Add(new CoachLink
+            {
+                CoachLinkId = Guid.NewGuid(), GolferId = _benId, CoachId = _coachId,
+                ShareReflections = true, SharePractice = true, CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        });
+        var bensRound = await RoundAsync(_benId);
+        await WriteAsync(Coach(), new { golferId = _benId, targetType = "Round", targetId = bensRound, text = "About Ben's round" });
+
+        await _factory.WithDbAsync(async db =>
+            Assert.True(await new AccountDeletionService(db).DeleteAsync(_annId, CancellationToken.None)));
+
+        await _factory.WithDbAsync(async db =>
+        {
+            var left = await db.Events.Where(e => e.UserId == _coachId && e.EventType == "FeedbackWritten").ToListAsync();
+            var only = Assert.Single(left);
+            Assert.DoesNotContain(_annId.ToString(), only.PayloadJson!.RootElement.GetRawText());
+            Assert.Contains(_benId.ToString(), only.PayloadJson!.RootElement.GetRawText());
+        });
+    }
+
+    [Fact]
     public async Task TheGolfer_SeesWhatsNewFromTheirCoaches_WithWhatEachIsAbout()
     {
         await LinkAsync(_coachId);

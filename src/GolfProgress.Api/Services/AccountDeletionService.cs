@@ -50,7 +50,13 @@ public sealed class AccountDeletionService
         _db.CoachLinks.RemoveRange(await _db.CoachLinks.Where(x => x.GolferId == userId || x.CoachId == userId).ToListAsync(ct));
         // Feedback (#212): a golfer's threads go with them. What a coach wrote stays with the
         // golfers it was written for, without the author: "a former coach".
-        _db.FeedbackMessages.RemoveRange(await _db.FeedbackMessages.Where(x => x.GolferId == userId).ToListAsync(ct));
+        var threads = await _db.FeedbackMessages.Where(x => x.GolferId == userId).ToListAsync(ct);
+        _db.FeedbackMessages.RemoveRange(threads);
+        // A coach's "FeedbackWritten" events about those messages hold the golfer's id in
+        // their payload: they go too, so nothing in the coach's log points at the golfer.
+        var threadIds = threads.Select(x => x.FeedbackMessageId).Cast<Guid?>().ToList();
+        _db.Events.RemoveRange(await _db.Events
+            .Where(x => x.EventType == "FeedbackWritten" && threadIds.Contains(x.RelatedId)).ToListAsync(ct));
         foreach (var message in await _db.FeedbackMessages
                      .Where(x => x.GolferId != userId && (x.CoachId == userId || x.AuthorId == userId)).ToListAsync(ct))
         {
