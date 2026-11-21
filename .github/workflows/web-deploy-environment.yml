@@ -45,7 +45,7 @@ jobs:
     steps:
       # First, because the steps below run in clients/web.
       - name: Check out the commit CI tested
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
@@ -53,7 +53,7 @@ jobs:
         run: test -n "$API_URL" || { echo "::error::Set the ${{ inputs.prefix }}_API_URL variable on the ${{ inputs.environment }} environment."; exit 1; }
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: clients/web/.nvmrc
           cache: npm
