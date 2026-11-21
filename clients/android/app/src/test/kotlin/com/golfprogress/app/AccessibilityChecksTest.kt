@@ -115,7 +115,7 @@ class AccessibilityChecksTest {
 
     @Test
     fun rounds() {
-        val viewModel = RoundsListViewModel(oneRound())
+        val viewModel = RoundsListViewModel(oneRound(), SavedStateHandle())
         check { RoundsListScreen(onOpenRound = {}, onLogRound = {}, viewModel = viewModel) }
     }
 
@@ -139,7 +139,8 @@ class AccessibilityChecksTest {
 
     @Test
     fun practice() {
-        val viewModel = PracticeListViewModel(FakePracticeRepository(listOf(Fixtures.practiceSession(1))), FakeGoalsRepository())
+        val viewModel =
+            PracticeListViewModel(FakePracticeRepository(listOf(Fixtures.practiceSession(1))), FakeGoalsRepository(), SavedStateHandle())
         check { PracticeListScreen(onOpen = {}, onLogPractice = {}, viewModel = viewModel) }
     }
 

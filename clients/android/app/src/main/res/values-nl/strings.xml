@@ -513,4 +513,70 @@
         <item quantity="one">(%d ronde)</item>
         <item quantity="other">(%d rondes)</item>
     </plurals>
+
+    <!-- Coach workspace (#208) -->
+    <string name="students">Leerlingen</string>
+    <string name="student">Leerling</string>
+    <string name="open_students">Je leerlingen</string>
+    <string name="students_load_error">Je leerlingen konden niet worden geladen.</string>
+    <string name="students_empty">Nog geen leerlingen. Als je de uitnodiging van een golfer accepteert, verschijnt die hier.</string>
+    <string name="show_more_students">Meer leerlingen tonen</string>
+    <string name="student_last_activity">Laatste activiteit: %1$s</string>
+    <string name="student_no_activity">Nog geen activiteit</string>
+    <plurals name="student_unread_replies">
+        <item quantity="one">%d ongelezen reactie</item>
+        <item quantity="other">%d ongelezen reacties</item>
+    </plurals>
+    <string name="student_shares">Jij ziet: %1$s</string>
+    <string name="stop_coaching">Stoppen als coach</string>
+    <string name="stop_coaching_of">Stoppen als coach van %1$s</string>
+    <string name="stop_coaching_title">Stoppen als coach van deze golfer?</string>
+    <string name="stop_coaching_body">Je verliest direct de toegang tot wat deze golfer deelt. Wat je hebt geschreven blijft bij de golfer.</string>
+    <string name="stop_coaching_failed">Stoppen als coach is niet gelukt. Probeer het opnieuw.</string>
+    <string name="student_gone">Je bent niet meer de coach van deze golfer.</string>
+    <string name="student_overview_load_error">Het overzicht van deze leerling kon niet worden geladen.</string>
+    <string name="student_no_rounds">%1$s heeft nog geen ronde ingevoerd. Na de eerste ronde verschijnen hier de scores en de volgende focus.</string>
+    <string name="their_next_focus">Hun volgende focus</string>
+    <string name="recent_rounds">Recente rondes</string>
+    <string name="latest_reflections">Laatste reflecties</string>
+    <string name="no_reflections_yet">Nog geen reflecties.</string>
+    <string name="reflections_not_shared">%1$s deelt geen reflecties met je.</string>
+    <string name="practice_not_shared">Deze golfer deelt geen training met je.</string>
+    <string name="student_practice_empty">Nog geen training ingevoerd.</string>
+    <string name="student_rounds_empty">Nog geen rondes ingevoerd.</string>
+    <string name="all_rounds">Alle rondes</string>
+    <string name="practice_sessions">Trainingen</string>
+    <plurals name="student_baseline_based_on">
+        <item quantity="one">Gebaseerd op de laatste ronde.</item>
+        <item quantity="other">Gebaseerd op de laatste %d rondes.</item>
+    </plurals>
+    <string name="student_trend">Fitnessscore van %1$d naar %2$d over de laatste %3$d rondes met een score.</string>
+    <string name="feedback_title">Feedback</string>
+    <string name="feedback_empty_coach">Nog geen feedback. Wat viel je op?</string>
+    <string name="your_goals_for_student">Jouw trainingsdoelen</string>
+    <string name="set_practice_goal">Trainingsdoel instellen</string>
+    <string name="no_goals_yet">Nog geen doelen. Stel er een in voor de volgende trainingen.</string>
+    <string name="change_goal">Doel wijzigen</string>
+    <string name="remove_goal">Doel verwijderen</string>
+    <string name="remove_goal_title">Dit doel verwijderen?</string>
+    <string name="remove_goal_body">Je leerling ziet het niet meer. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="goal_has_sessions">Er tellen trainingen mee voor dit doel, dus het kan niet worden verwijderd. Wijzig de einddatum om het eerder te laten eindigen.</string>
+    <string name="goal_no_sessions_coach">Nog geen trainingen voor dit doel.</string>
+    <string name="goal_for_student">Voor %1$s</string>
+    <string name="goal_title">Titel</string>
+    <string name="goal_details">Toelichting (optioneel)</string>
+    <string name="goal_focus_area_hint">Werkte het? vergelijkt deze statistiek vóór en tijdens het doel, en zolang het doel loopt is het hun volgende focus.</string>
+    <string name="goal_no_focus_area">Geen</string>
+    <string name="goal_any_session_type">Alle</string>
+    <string name="goal_target_sessions">Trainingen</string>
+    <string name="goal_starts">Begint</string>
+    <string name="goal_ends">Eindigt</string>
+    <string name="goal_ends_hint">Hooguit 8 weken na het begin.</string>
+    <string name="goal_title_required">Geef het doel een titel.</string>
+    <string name="goal_end_before_start">Het einde kan niet vóór het begin liggen.</string>
+    <string name="goal_end_in_past">Het einde kan niet in het verleden liggen.</string>
+    <string name="goal_target_range">Kies 1 tot %1$d trainingen.</string>
+    <string name="goal_too_long">Een doel duurt hooguit %1$d weken.</string>
+    <string name="goal_save_failed">Het doel kon niet worden opgeslagen. Probeer het opnieuw.</string>
+    <string name="goal_offline">Je bent offline. Maak verbinding om het doel op te slaan.</string>
 </resources>

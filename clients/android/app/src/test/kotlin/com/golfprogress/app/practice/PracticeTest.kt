@@ -90,7 +90,7 @@ class PracticeViewModelsTest {
     @Test
     fun `the list pages until the total`() {
         val repository = FakePracticeRepository((1..25).map { Fixtures.practiceSession(it) })
-        val viewModel = PracticeListViewModel(repository, FakeGoalsRepository())
+        val viewModel = PracticeListViewModel(repository, FakeGoalsRepository(), SavedStateHandle())
         assertEquals(20, viewModel.state.value.sessions.size)
 
         viewModel.loadMore()
@@ -165,7 +165,7 @@ class PracticeScreensTest {
                     Fixtures.practiceSession(2, sessionType = "Fitness"),
                 ),
             )
-        val viewModel = PracticeListViewModel(repository, FakeGoalsRepository())
+        val viewModel = PracticeListViewModel(repository, FakeGoalsRepository(), SavedStateHandle())
         compose.setContent { GolfProgressTheme { PracticeListScreen(onOpen = {}, onLogPractice = {}, viewModel = viewModel) } }
 
         compose.onNode(hasContentDescription("May 19, 2026, Putting, 45 min")).assertIsDisplayed()

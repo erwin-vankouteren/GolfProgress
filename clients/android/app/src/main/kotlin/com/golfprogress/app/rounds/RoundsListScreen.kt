@@ -69,6 +69,7 @@ fun RoundsListScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
     RoundsListContent(
         state = state,
+        readOnly = viewModel.studentId != null,
         onRetry = viewModel::retry,
         onRefresh = viewModel::refresh,
         onLoadMore = viewModel::loadMore,
@@ -92,6 +93,8 @@ fun RoundsListContent(
     onAskToDelete: (RoundResponse) -> Unit,
     onConfirmDelete: () -> Unit,
     onCancelDelete: () -> Unit,
+    /** A student's rounds, for their coach (#208): no logging or deleting. */
+    readOnly: Boolean = false,
 ) {
     val list = rememberLazyListState()
     // Load the next page a few rows before the end.
@@ -114,12 +117,18 @@ fun RoundsListContent(
                 Load.Loading -> item { Skeleton(blocks = 4, blockHeight = 64) }
                 is Load.Failed -> item { LoadError(R.string.rounds_load_error, onRetry) }
                 is Load.Loaded ->
-                    if (state.rounds.isEmpty()) {
+                    if (state.rounds.isEmpty() && readOnly) {
+                        item { EmptyState(R.string.student_rounds_empty) }
+                    } else if (state.rounds.isEmpty()) {
                         item { EmptyState(R.string.rounds_empty, action = R.string.log_first_round, onAction = onLogRound) }
                     } else {
                         items(state.rounds, key = { it.roundId }) { round ->
-                            SwipeToDelete(onDelete = { onAskToDelete(round) }) {
-                                RoundRow(round, onOpen = { onOpenRound(round.roundId) }, onDelete = { onAskToDelete(round) })
+                            if (readOnly) {
+                                RoundRow(round, onOpen = { onOpenRound(round.roundId) }, onDelete = null)
+                            } else {
+                                SwipeToDelete(onDelete = { onAskToDelete(round) }) {
+                                    RoundRow(round, onOpen = { onOpenRound(round.roundId) }, onDelete = { onAskToDelete(round) })
+                                }
                             }
                         }
                         if (state.hasMore) item { MoreRounds(state, onLoadMore) }
@@ -178,7 +187,8 @@ private fun SwipeToDelete(
 private fun RoundRow(
     round: RoundResponse,
     onOpen: () -> Unit,
-    onDelete: () -> Unit,
+    /** Null on a student's rounds, which are read-only. */
+    onDelete: (() -> Unit)?,
 ) {
     val deleteLabel = stringResource(R.string.delete_round)
     val strokes = pluralStringResource(R.plurals.strokes_count, round.totalStrokes, round.totalStrokes)
@@ -196,13 +206,15 @@ private fun RoundRow(
                 .clickable(role = Role.Button, onClick = onOpen)
                 .clearAndSetSemantics {
                     contentDescription = listOf(date, place, strokes, score).joinToString(", ")
-                    customActions =
-                        listOf(
-                            CustomAccessibilityAction(deleteLabel) {
-                                onDelete()
-                                true
-                            },
-                        )
+                    if (onDelete != null) {
+                        customActions =
+                            listOf(
+                                CustomAccessibilityAction(deleteLabel) {
+                                    onDelete()
+                                    true
+                                },
+                            )
+                    }
                 },
     ) {
         Row(

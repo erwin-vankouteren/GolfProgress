@@ -204,7 +204,7 @@ class GoalScreensTest {
     @Test
     fun `Practice shows the goal from the coach, with its progress, and opens it`() {
         var opened: UUID? = null
-        val viewModel = PracticeListViewModel(FakePracticeRepository(listOf(Fixtures.practiceSession(1))), repository())
+        val viewModel = PracticeListViewModel(FakePracticeRepository(listOf(Fixtures.practiceSession(1))), repository(), SavedStateHandle())
         compose.setContent {
             CompositionLocalProvider(LocalOnline provides true) {
                 GolfProgressTheme {

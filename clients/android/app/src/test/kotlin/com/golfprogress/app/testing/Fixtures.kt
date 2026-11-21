@@ -13,12 +13,16 @@ import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.MonthlyReviewResponse
 import com.golfprogress.api.generated.models.MonthlyTimelinePointResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
+import com.golfprogress.api.generated.models.PracticeGoalResponse
 import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.RoundTimelinePointResponse
+import com.golfprogress.api.generated.models.StudentOverviewResponse
+import com.golfprogress.api.generated.models.StudentResponse
 import com.golfprogress.api.generated.models.UserBaselineResponse
 import com.golfprogress.api.generated.models.UserResponse
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -343,5 +347,70 @@ object Fixtures {
         confidenceLevel = FitnessScoreResponse.ConfidenceLevel.Medium,
         computedAt = now,
         explanation = FitnessScoreExplanation(90.0, 3.0, 3, 1, false),
+    )
+
+    /** A student of the signed-in coach (#208). */
+    val studentId: UUID = UUID.fromString("5a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d")
+
+    fun goalId(i: Int): UUID = UUID.fromString("00000000-0000-0000-0001-%012d".format(i))
+
+    /** A goal the coach set, from today for four weeks. */
+    fun goal(
+        i: Int = 1,
+        title: String = "Lag putts inside 1 metre",
+        status: PracticeGoalResponse.Status = PracticeGoalResponse.Status.Active,
+        linked: Int = 0,
+    ) = PracticeGoalResponse(
+        practiceGoalId = goalId(i),
+        golferId = studentId,
+        coachId = userId,
+        coachName = "Pro",
+        title = title,
+        details = null,
+        focusArea = PracticeGoalResponse.FocusArea.Putting,
+        sessionType = "Putting",
+        targetSessions = 6,
+        linkedSessions = linked,
+        startsOn = LocalDate.now().toString(),
+        endsOn = LocalDate.now().plusDays(28).toString(),
+        status = status,
+        createdAt = now,
+        updatedAt = null,
+    )
+
+    fun student(
+        name: String = "Ann",
+        id: UUID = studentId,
+        unreadReplies: Int = 0,
+        shareReflections: Boolean = true,
+        sharePractice: Boolean = true,
+    ) = StudentResponse(
+        golferId = id,
+        displayName = name,
+        lastActivityOn = LocalDate.parse("2026-05-08"),
+        unreadReplies = unreadReplies,
+        shareReflections = shareReflections,
+        sharePractice = sharePractice,
+    )
+
+    fun studentOverview(
+        name: String = "Ann",
+        withRounds: Boolean = true,
+        shareReflections: Boolean = true,
+        sharePractice: Boolean = true,
+        goals: List<PracticeGoalResponse> = emptyList(),
+    ) = StudentOverviewResponse(
+        golferId = studentId,
+        displayName = name,
+        shareReflections = shareReflections,
+        sharePractice = sharePractice,
+        lastRound = if (withRounds) lastRound() else null,
+        recentRounds = if (withRounds) timeline() else emptyList(),
+        monthlyFitnessAvg = if (withRounds) 66.0 else null,
+        monthlyFitnessChange = null,
+        nextFocus = if (withRounds) nextLever() else null,
+        baseline = null,
+        latestReflections = emptyList(),
+        activeGoals = goals,
     )
 }

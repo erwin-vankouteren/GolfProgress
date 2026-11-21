@@ -37,6 +37,11 @@ than fit comfortably on a phone.
 **Log round** is the main action, reachable in one tap from every section: a centre tab
 button on iOS and Android, and a primary button in the web header.
 
+**Students**, the coach's workspace, appears once someone has accepted the user as their
+coach: a section in the web sidebar, and on iOS and Android an icon in the top bar next to
+Profile. A student's rounds and practice open on the golfer's own screens, read-only
+([`../coach-access.md`](../coach-access.md) → "Screens").
+
 Signed-out users only see the authentication screens.
 
 ## Screens

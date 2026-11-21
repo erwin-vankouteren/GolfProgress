@@ -33,6 +33,8 @@ sealed interface FeedbackView {
 
     data class Threads(
         val threads: List<GolferThread>,
+        /** Set when a coach looks at a student's item (#208): their one thread, with this student. */
+        val studentName: String? = null,
     ) : FeedbackView
 }
 
@@ -70,6 +72,9 @@ class FeedbackViewModel
         private var item: Triple<UUID, FeedbackTarget, UUID>? = null
         private var markedUpTo: OffsetDateTime? = null
 
+        /** The signed-in coach and the student's name, on a student's item; null for the golfer's own. */
+        private var asCoach: Pair<UUID, String>? = null
+
         /** Shows [targetId]'s threads for [golferId]; again for the same item does nothing. */
         fun start(
             golferId: UUID,
@@ -82,6 +87,21 @@ class FeedbackViewModel
             reload()
         }
 
+        /**
+         * Shows [coachId]'s own thread with the student [golferId] on an item of theirs (#208):
+         * the API answers only that one, and the coach can always write in it.
+         */
+        fun startAsCoach(
+            golferId: UUID,
+            studentName: String,
+            coachId: UUID,
+            target: FeedbackTarget,
+            targetId: UUID,
+        ) {
+            asCoach = coachId to studentName
+            start(golferId, target, targetId)
+        }
+
         fun retry() {
             mutableState.update { it.copy(view = FeedbackView.Loading) }
             reload()
@@ -89,6 +109,20 @@ class FeedbackViewModel
 
         private fun reload() {
             val (golferId, target, targetId) = item ?: return
+            asCoach?.let { (coachId, studentName) ->
+                viewModelScope.launch {
+                    val messages = attempt { feedback.thread(golferId, target, targetId) }
+                    val view =
+                        if (messages == null) {
+                            FeedbackView.Failed
+                        } else {
+                            FeedbackView.Threads(listOf(GolferThread(coachId, studentName, messages, canWrite = true)), studentName)
+                        }
+                    mutableState.update { it.copy(view = view) }
+                    if (messages != null) markRead(golferId, target, targetId, messages)
+                }
+                return
+            }
             viewModelScope.launch {
                 // Each on its own: a golfer who never had a coach sees nothing, not an error,
                 // when either fails; an error shows only where there'd be a thread.

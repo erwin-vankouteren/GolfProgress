@@ -7,7 +7,10 @@ import com.golfprogress.api.ApiProblem
 import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.PracticeGoalResponse
 import com.golfprogress.api.generated.models.PracticeSessionResponse
+import com.golfprogress.app.coaching.studentId
+import com.golfprogress.app.data.GoalReader
 import com.golfprogress.app.data.GoalsRepository
+import com.golfprogress.app.data.PracticeReader
 import com.golfprogress.app.data.PracticeRepository
 import com.golfprogress.app.goals.NO_GOAL
 import com.golfprogress.app.goals.goalsToShow
@@ -37,20 +40,31 @@ data class PracticeListState(
     val loadingMore: Boolean = false,
     val moreFailed: Boolean = false,
     val refreshing: Boolean = false,
-    /** Goals from the golfer's coach (#231), shown above the sessions; none if they can't load. */
+    /**
+     * Goals from the golfer's coach (#231), shown above the sessions; none if they can't load.
+     * On a student's screens, the ones the coach set for them.
+     */
     val goals: List<PracticeGoalResponse> = emptyList(),
 ) {
     val hasMore: Boolean get() = total?.let { sessions.size < it } ?: false
 }
 
-/** The practice list (#105): newest first, a page at a time until X-Total-Count. */
+/**
+ * The practice list (#105): newest first, a page at a time until X-Total-Count. On a
+ * student's screens, their sessions, read-only, and the goals their coach set (#208).
+ */
 @HiltViewModel
 class PracticeListViewModel
     @Inject
     constructor(
         private val repository: PracticeRepository,
         private val goals: GoalsRepository,
+        savedState: SavedStateHandle,
     ) : ViewModel() {
+        /** The student whose practice this is; null for the golfer's own. */
+        val studentId: UUID? = savedState.studentId()
+        private val reader: PracticeReader = studentId?.let(repository::student) ?: repository
+        private val goalReader: GoalReader = studentId?.let(goals::student) ?: goals
         private val mutableState = MutableStateFlow(PracticeListState())
         val state: StateFlow<PracticeListState> = mutableState.asStateFlow()
         private var loading: Job? = null
@@ -75,10 +89,10 @@ class PracticeListViewModel
                 viewModelScope.launch {
                     // Most golfers have no coach: goals that fail to load just don't show.
                     launch {
-                        val loaded = (load { goals.goals() } as? Load.Loaded)?.value
+                        val loaded = (load { goalReader.goals() } as? Load.Loaded)?.value
                         if (loaded != null) mutableState.update { it.copy(goals = goalsToShow(loaded)) }
                     }
-                    val page = load { repository.page(skip = 0, take = PAGE_SIZE) }
+                    val page = load { reader.page(skip = 0, take = PAGE_SIZE) }
                     mutableState.update {
                         when (page) {
                             is Load.Loaded ->
@@ -101,7 +115,7 @@ class PracticeListViewModel
             mutableState.update { it.copy(loadingMore = true, moreFailed = false) }
             loading =
                 viewModelScope.launch {
-                    when (val page = load { repository.page(skip = current.sessions.size, take = PAGE_SIZE) }) {
+                    when (val page = load { reader.page(skip = current.sessions.size, take = PAGE_SIZE) }) {
                         is Load.Loaded ->
                             mutableState.update {
                                 val total = if (page.value.items.isEmpty()) it.sessions.size else page.value.total ?: it.total
@@ -298,7 +312,7 @@ data class PracticeDetailState(
     val deleted: Boolean = false,
 )
 
-/** A practice session's detail (#105): every field, and Delete. */
+/** A practice session's detail (#105): every field, and Delete; read-only on a student's screens (#208). */
 @HiltViewModel
 class PracticeDetailViewModel
     @Inject
@@ -307,6 +321,10 @@ class PracticeDetailViewModel
         savedState: SavedStateHandle,
     ) : ViewModel() {
         private val id: UUID = UUID.fromString(checkNotNull(savedState.get<String>(SESSION_ID)))
+
+        /** The student whose session this is; null for the golfer's own. */
+        val studentId: UUID? = savedState.studentId()
+        private val reader: PracticeReader = studentId?.let(repository::student) ?: repository
         private val mutableState = MutableStateFlow(PracticeDetailState())
         val state: StateFlow<PracticeDetailState> = mutableState.asStateFlow()
 
@@ -321,7 +339,7 @@ class PracticeDetailViewModel
 
         private fun reload() {
             viewModelScope.launch {
-                val session = load { repository.session(id) }
+                val session = load { reader.session(id) }
                 mutableState.update { it.copy(session = session) }
             }
         }

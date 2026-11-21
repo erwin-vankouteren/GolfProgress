@@ -242,13 +242,19 @@ fun RoundForm(
 fun DateField(
     date: LocalDate,
     onChange: (LocalDate) -> Unit,
+    @StringRes label: Int = R.string.date,
+    /** Under the field: an error when [isError], otherwise a hint. */
+    supporting: String? = null,
+    isError: Boolean = false,
 ) {
     var picking by rememberSaveable { mutableStateOf(false) }
     OutlinedTextField(
         value = formatDate(date.toString()),
         onValueChange = {},
         readOnly = true,
-        label = { Text(stringResource(R.string.date)) },
+        label = { Text(stringResource(label)) },
+        isError = isError,
+        supportingText = supporting?.let { { Text(it) } },
         trailingIcon = {
             IconButton(onClick = { picking = true }) {
                 Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.choose_date))

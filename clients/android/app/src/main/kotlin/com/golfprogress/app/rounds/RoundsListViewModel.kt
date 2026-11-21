@@ -1,8 +1,11 @@
 package com.golfprogress.app.rounds
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.golfprogress.api.generated.models.RoundResponse
+import com.golfprogress.app.coaching.studentId
+import com.golfprogress.app.data.RoundReader
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.ui.common.Load
 import com.golfprogress.app.ui.common.load
@@ -36,14 +39,18 @@ data class RoundsListState(
 /**
  * The round list (#97): newest first, a page at a time with skip/take until
  * X-Total-Count. Reloads from the top when it comes back into view, so a round logged,
- * edited or deleted elsewhere shows.
+ * edited or deleted elsewhere shows. On a student's screens, their rounds, read-only (#208).
  */
 @HiltViewModel
 class RoundsListViewModel
     @Inject
     constructor(
         private val repository: RoundsRepository,
+        savedState: SavedStateHandle,
     ) : ViewModel() {
+        /** The student whose rounds these are; null for the golfer's own. */
+        val studentId: UUID? = savedState.studentId()
+        private val reader: RoundReader = studentId?.let(repository::student) ?: repository
         private val mutableState = MutableStateFlow(RoundsListState())
         val state: StateFlow<RoundsListState> = mutableState.asStateFlow()
         private var loading: Job? = null
@@ -67,7 +74,7 @@ class RoundsListViewModel
             loading?.cancel()
             loading =
                 viewModelScope.launch {
-                    val page = load { repository.page(skip = 0, take = PAGE_SIZE) }
+                    val page = load { reader.page(skip = 0, take = PAGE_SIZE) }
                     mutableState.update {
                         when (page) {
                             is Load.Loaded ->
@@ -87,7 +94,7 @@ class RoundsListViewModel
             mutableState.update { it.copy(loadingMore = true, moreFailed = false) }
             loading =
                 viewModelScope.launch {
-                    when (val page = load { repository.page(skip = current.rounds.size, take = PAGE_SIZE) }) {
+                    when (val page = load { reader.page(skip = current.rounds.size, take = PAGE_SIZE) }) {
                         is Load.Loaded ->
                             mutableState.update {
                                 // An empty page means the total was stale: stop asking.

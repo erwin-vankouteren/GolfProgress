@@ -117,7 +117,7 @@ class RoundsViewModelsTest {
     @Test
     fun `the list pages until the total`() {
         val repository = FakeRoundsRepository(rounds(45))
-        val viewModel = RoundsListViewModel(repository)
+        val viewModel = RoundsListViewModel(repository, SavedStateHandle())
         assertEquals(20, viewModel.state.value.rounds.size)
 
         viewModel.loadMore()
@@ -132,7 +132,7 @@ class RoundsViewModelsTest {
     @Test
     fun `deleting from the list asks first, then removes the round`() {
         val repository = FakeRoundsRepository(rounds(3))
-        val viewModel = RoundsListViewModel(repository)
+        val viewModel = RoundsListViewModel(repository, SavedStateHandle())
         val second = viewModel.state.value.rounds[1]
 
         viewModel.askToDelete(second)
@@ -147,7 +147,7 @@ class RoundsViewModelsTest {
     @Test
     fun `a failed delete keeps the dialog open and says so`() {
         val repository = FakeRoundsRepository(rounds(1))
-        val viewModel = RoundsListViewModel(repository)
+        val viewModel = RoundsListViewModel(repository, SavedStateHandle())
         viewModel.askToDelete(viewModel.state.value.rounds[0])
 
         repository.failWith = IOException()
@@ -233,7 +233,7 @@ class RoundsScreensTest {
     private var addReflectionFor: UUID? = null
 
     private fun showList(repository: FakeRoundsRepository): RoundsListViewModel {
-        val viewModel = RoundsListViewModel(repository)
+        val viewModel = RoundsListViewModel(repository, SavedStateHandle())
         compose.setContent {
             CompositionLocalProvider(LocalOnline provides true) {
                 GolfProgressTheme { RoundsListScreen(onOpenRound = { opened = it }, onLogRound = {}, viewModel = viewModel) }

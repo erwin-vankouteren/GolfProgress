@@ -16,11 +16,14 @@ import com.golfprogress.api.generated.models.MonthlyReviewResponse
 import com.golfprogress.api.generated.models.MonthlyTimelinePointResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
 import com.golfprogress.api.generated.models.PracticeGoalDetailResponse
+import com.golfprogress.api.generated.models.PracticeGoalRequest
 import com.golfprogress.api.generated.models.PracticeGoalResponse
 import com.golfprogress.api.generated.models.PracticeSessionResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
 import com.golfprogress.api.generated.models.RoundTimelinePointResponse
+import com.golfprogress.api.generated.models.StudentOverviewResponse
+import com.golfprogress.api.generated.models.StudentResponse
 import com.golfprogress.api.generated.models.UnreadFeedbackResponse
 import com.golfprogress.api.generated.models.UserBaselineResponse
 import com.golfprogress.api.generated.models.UserResponse
@@ -29,10 +32,14 @@ import com.golfprogress.app.data.DashboardRepository
 import com.golfprogress.app.data.FeedbackRepository
 import com.golfprogress.app.data.GoalsRepository
 import com.golfprogress.app.data.Page
+import com.golfprogress.app.data.PracticeReader
 import com.golfprogress.app.data.PracticeRepository
 import com.golfprogress.app.data.ProfileChanges
 import com.golfprogress.app.data.ProgressRepository
+import com.golfprogress.app.data.RoundReader
 import com.golfprogress.app.data.RoundsRepository
+import com.golfprogress.app.data.StudentGoals
+import com.golfprogress.app.data.StudentRepository
 import com.golfprogress.app.data.UserRepository
 import com.golfprogress.app.di.RepositoryModule
 import com.golfprogress.app.feedback.FeedbackTarget
@@ -228,6 +235,11 @@ class FakeRoundsRepository(
 
     override suspend fun reflections(roundId: UUID): List<ReflectionResponse> = reflections
 
+    /** Each student's rounds, as their coach reads them (#208). */
+    val students = mutableMapOf<UUID, FakeRoundsRepository>()
+
+    override fun student(golferId: UUID): RoundReader = students.getOrPut(golferId) { FakeRoundsRepository() }
+
     val added = mutableListOf<Pair<UUID, CreateReflectionRequest>>()
 
     override suspend fun addReflection(
@@ -340,6 +352,81 @@ class FakeGoalsRepository(
     }
 
     override suspend fun outcome(id: UUID): GoalOutcomeResponse = outcomes[id] ?: throw java.io.IOException()
+
+    /** The goals the coach set for each student (#208). */
+    val students = mutableMapOf<UUID, FakeStudentGoals>()
+
+    override fun student(golferId: UUID): StudentGoals = students.getOrPut(golferId) { FakeStudentGoals() }
+}
+
+/** A coach's goals for one student: setting answers a goal with the request's title, as Fixtures.goal. */
+class FakeStudentGoals(
+    var goals: List<PracticeGoalResponse> = emptyList(),
+    val details: MutableMap<UUID, PracticeGoalDetailResponse> = mutableMapOf(),
+    val outcomes: MutableMap<UUID, GoalOutcomeResponse> = mutableMapOf(),
+) : StudentGoals {
+    val set = mutableListOf<PracticeGoalRequest>()
+    val changed = mutableListOf<Pair<UUID, PracticeGoalRequest>>()
+    val removed = mutableListOf<UUID>()
+    var failWith: Exception? = null
+
+    override suspend fun goals(): List<PracticeGoalResponse> = goals
+
+    override suspend fun goal(id: UUID): PracticeGoalDetailResponse? = details[id]
+
+    override suspend fun outcome(id: UUID): GoalOutcomeResponse = outcomes[id] ?: throw java.io.IOException()
+
+    override suspend fun set(request: PracticeGoalRequest): PracticeGoalResponse {
+        failWith?.let { throw it }
+        set += request
+        return Fixtures.goal(9, title = request.title).also { goals = goals + it }
+    }
+
+    override suspend fun change(
+        id: UUID,
+        request: PracticeGoalRequest,
+    ): PracticeGoalResponse {
+        failWith?.let { throw it }
+        changed += id to request
+        return (details[id]?.goal ?: goals.first { it.practiceGoalId == id }).copy(title = request.title)
+    }
+
+    override suspend fun remove(id: UUID) {
+        failWith?.let { throw it }
+        removed += id
+        goals = goals.filterNot { it.practiceGoalId == id }
+        details.remove(id)
+    }
+}
+
+/** The coach's students in memory (#208): [overviews] by golfer, [stopped] records Stop coaching. */
+class FakeStudentRepository(
+    var students: List<StudentResponse> = emptyList(),
+    val overviews: MutableMap<UUID, StudentOverviewResponse> = mutableMapOf(),
+) : StudentRepository {
+    val stopped = mutableListOf<UUID>()
+    var failWith: Exception? = null
+    var stopFailsWith: Exception? = null
+
+    override suspend fun students(
+        skip: Int,
+        take: Int,
+    ): Page<StudentResponse> {
+        failWith?.let { throw it }
+        return Page(students.drop(skip).take(take), students.size)
+    }
+
+    override suspend fun overview(golferId: UUID): StudentOverviewResponse? {
+        failWith?.let { throw it }
+        return overviews[golferId]
+    }
+
+    override suspend fun stopCoaching(golferId: UUID) {
+        stopFailsWith?.let { throw it }
+        stopped += golferId
+        overviews.remove(golferId)
+        students = students.filterNot { it.golferId == golferId }
+    }
 }
 
 /** The fakes the Hilt graph hands out; [reset] before each test. */
@@ -360,6 +447,8 @@ object FakeRepositories {
         private set
     lateinit var goals: FakeGoalsRepository
         private set
+    lateinit var students: FakeStudentRepository
+        private set
 
     fun reset() {
         dashboard = FakeDashboardRepository()
@@ -370,6 +459,7 @@ object FakeRepositories {
         coaching = FakeCoachingRepository()
         feedback = FakeFeedbackRepository()
         goals = FakeGoalsRepository()
+        students = FakeStudentRepository()
     }
 
     init {
@@ -403,6 +493,9 @@ object FakeRepositoryModule {
 
     @Provides
     fun goals(): GoalsRepository = FakeRepositories.goals
+
+    @Provides
+    fun students(): StudentRepository = FakeRepositories.students
 }
 
 /** Practice sessions in memory, newest first; creating answers id 8. */
@@ -440,6 +533,11 @@ class FakePracticeRepository(
         deleted += id
         sessions.removeAll { it.practiceSessionId == id }
     }
+
+    /** Each student's sessions, as their coach reads them (#208); set failWith to a 404 for "not shared". */
+    val students = mutableMapOf<UUID, FakePracticeRepository>()
+
+    override fun student(golferId: UUID): PracticeReader = students.getOrPut(golferId) { FakePracticeRepository() }
 }
 
 /** Progress in memory: twelve months, a timeline, a baseline and reviews by month. */

@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -25,17 +26,23 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.golfprogress.api.ApiProblem
 import com.golfprogress.api.SessionType
 import com.golfprogress.api.generated.models.GoalOutcomeResponse
 import com.golfprogress.api.generated.models.PracticeGoalDetailResponse
 import com.golfprogress.api.generated.models.PracticeGoalResponse
 import com.golfprogress.api.knownSessionType
 import com.golfprogress.app.R
+import com.golfprogress.app.coaching.studentId
+import com.golfprogress.app.data.GoalReader
 import com.golfprogress.app.data.GoalsRepository
+import com.golfprogress.app.data.StudentGoals
 import com.golfprogress.app.practice.sessionTypeName
 import com.golfprogress.app.rounds.Fact
 import com.golfprogress.app.ui.common.Confidence
@@ -70,11 +77,20 @@ data class GoalDetailState(
     val confirmDismiss: Boolean = false,
     val changing: Boolean = false,
     val changeFailed: Boolean = false,
+    /** The coach asked to remove the goal (#208), waiting for them to confirm. */
+    val confirmRemove: Boolean = false,
+    val removeProblem: RemoveGoalProblem? = null,
+    /** Set once removed: the screen goes back. */
+    val removed: Boolean = false,
 )
+
+/** Why the coach couldn't remove a goal. */
+enum class RemoveGoalProblem { HasSessions, Failed, CantConnect }
 
 /**
  * A goal from the golfer's coach (#231): what it is, progress, the linked sessions and
- * "Did it work?" (#236); Mark done, and Dismiss after asking.
+ * "Did it work?" (#236); Mark done, and Dismiss after asking. On a student's screens, a goal
+ * the coach set for them (#208), which they can change, or remove after asking.
  */
 @HiltViewModel
 class GoalDetailViewModel
@@ -83,7 +99,13 @@ class GoalDetailViewModel
         private val goals: GoalsRepository,
         savedState: SavedStateHandle,
     ) : ViewModel() {
-        private val id: UUID = UUID.fromString(checkNotNull(savedState.get<String>(GOAL_ID)))
+        val goalId: UUID = UUID.fromString(checkNotNull(savedState.get<String>(GOAL_ID)))
+        private val id get() = goalId
+
+        /** The student the goal is for, when the coach looks at it; null for the golfer's own. */
+        val studentId: UUID? = savedState.studentId()
+        private val studentGoals: StudentGoals? = studentId?.let(goals::student)
+        private val reader: GoalReader = studentGoals ?: goals
         private val mutableState = MutableStateFlow(GoalDetailState())
         val state: StateFlow<GoalDetailState> = mutableState.asStateFlow()
 
@@ -96,19 +118,48 @@ class GoalDetailViewModel
             reload()
         }
 
+        /** Back in view, e.g. after the coach changed it: quietly, keeping what's shown if it fails. */
+        fun refresh() {
+            val current = state.value
+            if (current.goal is Load.Loaded && !current.removed) reload()
+        }
+
         fun retryOutcome() {
             mutableState.update { it.copy(outcome = Load.Loading) }
             viewModelScope.launch {
-                val outcome = load { goals.outcome(id) }
+                val outcome = load { reader.outcome(id) }
                 mutableState.update { it.copy(outcome = outcome) }
+            }
+        }
+
+        fun askRemove() = mutableState.update { it.copy(confirmRemove = true, removeProblem = null) }
+
+        fun cancelRemove() = mutableState.update { if (it.changing) it else it.copy(confirmRemove = false, removeProblem = null) }
+
+        fun confirmRemove() {
+            val student = studentGoals ?: return
+            if (state.value.changing) return
+            mutableState.update { it.copy(changing = true, removeProblem = null) }
+            viewModelScope.launch {
+                val error = (load { student.remove(id) } as? Load.Failed)?.error
+                val status = (error as? ApiProblem)?.status
+                mutableState.update {
+                    when {
+                        // Removed, or gone already: what was asked for has happened.
+                        error == null || status == 404 -> it.copy(changing = false, confirmRemove = false, removed = true)
+                        status == 409 -> it.copy(changing = false, removeProblem = RemoveGoalProblem.HasSessions)
+                        error is ApiProblem -> it.copy(changing = false, removeProblem = RemoveGoalProblem.Failed)
+                        else -> it.copy(changing = false, removeProblem = RemoveGoalProblem.CantConnect)
+                    }
+                }
             }
         }
 
         private fun reload() {
             viewModelScope.launch {
                 coroutineScope {
-                    val goal = async { load { goals.goal(id) } }
-                    val outcome = async { load { goals.outcome(id) } }
+                    val goal = async { load { reader.goal(id) } }
+                    val outcome = async { load { reader.outcome(id) } }
                     val loaded = goal.await()
                     mutableState.update { it.copy(goal = loaded, outcome = outcome.await()) }
                 }
@@ -155,8 +206,15 @@ fun GoalDetailScreen(
     onOpenSession: (UUID) -> Unit,
     viewModel: GoalDetailViewModel = hiltViewModel(),
     online: Boolean = isOnline(),
+    /** On a student's screens (#208): Change goal opens the form for this goal. */
+    onChange: (UUID) -> Unit = {},
+    /** On a student's screens: once the coach removed it. */
+    onRemoved: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
+    LaunchedEffect(state.removed) { if (state.removed) onRemoved() }
+    val forCoach = viewModel.studentId != null
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(DesignTokens.Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.lg),
@@ -169,8 +227,20 @@ fun GoalDetailScreen(
                 if (detail == null) {
                     Text(stringResource(R.string.goal_gone), style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    GoalContent(detail, state.outcome, viewModel::retryOutcome, onOpenSession)
-                    if (detail.goal.isOpen) {
+                    GoalContent(detail, state.outcome, viewModel::retryOutcome, onOpenSession, forCoach)
+                    // The coach changes or removes their goal until the golfer marks it done or dismisses it.
+                    if (forCoach && detail.goal.isOpen) {
+                        Button(
+                            onClick = { onChange(viewModel.goalId) },
+                            enabled = online && !state.changing,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+                        ) { Text(stringResource(R.string.change_goal)) }
+                        OutlinedButton(
+                            onClick = viewModel::askRemove,
+                            enabled = online && !state.changing,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+                        ) { Text(stringResource(R.string.remove_goal)) }
+                    } else if (!forCoach && detail.goal.isOpen) {
                         if (state.changeFailed && !state.confirmDismiss) {
                             Text(stringResource(R.string.goal_change_failed), color = MaterialTheme.colorScheme.error)
                         }
@@ -201,6 +271,27 @@ fun GoalDetailScreen(
             onDismiss = viewModel::cancelDismiss,
         )
     }
+
+    if (state.confirmRemove) {
+        ConfirmDialog(
+            title = R.string.remove_goal_title,
+            body = R.string.remove_goal_body,
+            confirm = R.string.remove_goal,
+            busy = state.changing,
+            error =
+                state.removeProblem?.let {
+                    stringResource(
+                        when (it) {
+                            RemoveGoalProblem.HasSessions -> R.string.goal_has_sessions
+                            RemoveGoalProblem.Failed -> R.string.goal_change_failed
+                            RemoveGoalProblem.CantConnect -> R.string.auth_cant_connect
+                        },
+                    )
+                },
+            onConfirm = viewModel::confirmRemove,
+            onDismiss = viewModel::cancelRemove,
+        )
+    }
 }
 
 @Composable
@@ -209,14 +300,16 @@ private fun GoalContent(
     outcome: Load<GoalOutcomeResponse>,
     onRetryOutcome: () -> Unit,
     onOpenSession: (UUID) -> Unit,
+    /** The coach's own goal for a student: who it's from goes without saying. */
+    forCoach: Boolean = false,
 ) {
     val goal = detail.goal
     Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)) {
         Text(goal.title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
         val from = goal.coachName?.let { stringResource(R.string.goal_from, it) } ?: stringResource(R.string.goal_from_former_coach)
         Text(
-            listOf(
-                from,
+            listOfNotNull(
+                from.takeUnless { forCoach },
                 stringResource(R.string.goal_period, formatDate(goal.startsOn), formatDate(goal.endsOn)),
                 stringResource(statusLabel(goal.status)),
             ).joinToString(" · "),
@@ -242,7 +335,10 @@ private fun GoalContent(
 
     SectionCard(R.string.goal_sessions) {
         if (detail.sessions.isEmpty()) {
-            Text(stringResource(R.string.goal_no_sessions), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(if (forCoach) R.string.goal_no_sessions_coach else R.string.goal_no_sessions),
+                style = MaterialTheme.typography.bodyLarge,
+            )
         }
         detail.sessions.forEach { session ->
             val text = formatDate(session.practicedAt) + " · " + sessionTypeName(session.knownSessionType)
@@ -339,21 +435,55 @@ fun GoalsFromYourCoach(
     onOpen: (UUID) -> Unit,
 ) {
     if (goals.isEmpty()) return
-    SectionCard(R.string.goals_from_your_coach) {
-        goals.forEach { goal ->
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = DesignTokens.touchTarget)
-                        .clickable(role = Role.Button) { onOpen(goal.practiceGoalId) }
-                        .semantics(mergeDescendants = true) {}
-                        .padding(vertical = DesignTokens.Spacing.xs),
-                verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs),
-            ) {
-                Text(goal.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                GoalProgress(goal)
-            }
+    SectionCard(R.string.goals_from_your_coach) { GoalRows(goals, onOpen) }
+}
+
+/**
+ * The goals a coach set for a student (#208), on the student's practice and overview, with
+ * Set a practice goal: shown even before the first, as that's where it's set.
+ */
+@Composable
+fun YourGoalsForStudent(
+    goals: List<PracticeGoalResponse>,
+    onOpen: (UUID) -> Unit,
+    onSetGoal: () -> Unit,
+    online: Boolean = isOnline(),
+) {
+    SectionCard(R.string.your_goals_for_student) {
+        if (goals.isEmpty()) {
+            Text(
+                stringResource(R.string.no_goals_yet),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        GoalRows(goals, onOpen)
+        OutlinedButton(
+            onClick = onSetGoal,
+            enabled = online,
+            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+        ) { Text(stringResource(R.string.set_practice_goal)) }
+    }
+}
+
+@Composable
+private fun GoalRows(
+    goals: List<PracticeGoalResponse>,
+    onOpen: (UUID) -> Unit,
+) {
+    goals.forEach { goal ->
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = DesignTokens.touchTarget)
+                    .clickable(role = Role.Button) { onOpen(goal.practiceGoalId) }
+                    .semantics(mergeDescendants = true) {}
+                    .padding(vertical = DesignTokens.Spacing.xs),
+            verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs),
+        ) {
+            Text(goal.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            GoalProgress(goal)
         }
     }
 }

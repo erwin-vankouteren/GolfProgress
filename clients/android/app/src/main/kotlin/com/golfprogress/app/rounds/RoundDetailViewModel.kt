@@ -9,6 +9,8 @@ import com.golfprogress.api.generated.models.MicroWinResponse
 import com.golfprogress.api.generated.models.NextLeverResponse
 import com.golfprogress.api.generated.models.ReflectionResponse
 import com.golfprogress.api.generated.models.RoundResponse
+import com.golfprogress.app.coaching.studentId
+import com.golfprogress.app.data.RoundReader
 import com.golfprogress.app.data.RoundsRepository
 import com.golfprogress.app.ui.common.Load
 import com.golfprogress.app.ui.common.load
@@ -47,7 +49,7 @@ data class RoundDetailState(
  * A round's detail (#97): the score with its pillars and why, micro-wins, the next
  * focus, the stats and its reflections, from GET /rounds/{id}, /fitness-score,
  * /micro-wins, /next-lever and /reflections. Reloads when it comes back into view, e.g.
- * after editing.
+ * after editing. On a student's screens, their round, read-only (#208).
  */
 @HiltViewModel
 class RoundDetailViewModel
@@ -57,6 +59,10 @@ class RoundDetailViewModel
         savedState: SavedStateHandle,
     ) : ViewModel() {
         val roundId: UUID = UUID.fromString(checkNotNull(savedState.get<String>(RoundFormViewModel.ROUND_ID)))
+
+        /** The student whose round this is; null for the golfer's own. */
+        val studentId: UUID? = savedState.studentId()
+        private val reader: RoundReader = studentId?.let(repository::student) ?: repository
         private val mutableState = MutableStateFlow(RoundDetailState())
         val state: StateFlow<RoundDetailState> = mutableState.asStateFlow()
 
@@ -85,11 +91,11 @@ class RoundDetailViewModel
 
         private suspend fun loadDetail(): RoundDetail? =
             coroutineScope {
-                val round = async { repository.round(roundId) }
-                val score = async { repository.fitnessScore(roundId) }
-                val wins = async { repository.microWins(roundId) }
-                val lever = async { repository.nextLever(roundId) }
-                val reflections = async { repository.reflections(roundId) }
+                val round = async { reader.round(roundId) }
+                val score = async { reader.fitnessScore(roundId) }
+                val wins = async { reader.microWins(roundId) }
+                val lever = async { reader.nextLever(roundId) }
+                val reflections = async { reader.reflections(roundId) }
                 round.await()?.let {
                     RoundDetail(it, score.await(), wins.await(), lever.await(), reflections.await().sortedByDescending { r -> r.createdAt })
                 }

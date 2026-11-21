@@ -63,6 +63,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.golfprogress.api.ApiProblem
 import com.golfprogress.api.SessionType
 import com.golfprogress.api.generated.models.CreatePracticeSessionRequest
 import com.golfprogress.api.generated.models.PracticeSessionResponse
@@ -73,6 +74,7 @@ import com.golfprogress.app.feedback.FeedbackTarget
 import com.golfprogress.app.feedback.NoFeedback
 import com.golfprogress.app.goals.GoalsFromYourCoach
 import com.golfprogress.app.goals.NO_GOAL
+import com.golfprogress.app.goals.YourGoalsForStudent
 import com.golfprogress.app.rounds.DateField
 import com.golfprogress.app.rounds.Fact
 import com.golfprogress.app.rounds.FormProblem
@@ -111,8 +113,12 @@ fun PracticeListScreen(
     onLogPractice: () -> Unit,
     viewModel: PracticeListViewModel = hiltViewModel(),
     onOpenGoal: (UUID) -> Unit = {},
+    /** On a student's practice (#208): Set a practice goal. */
+    onSetGoal: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // A student's practice, for their coach: read-only, with the goals they set.
+    val readOnly = viewModel.studentId != null
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
     val list = rememberLazyListState()
     LaunchedEffect(list, state.sessions.size) {
@@ -130,24 +136,40 @@ fun PracticeListScreen(
             verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.sm),
             modifier = Modifier.fillMaxSize(),
         ) {
-            if (state.goals.isNotEmpty()) item { GoalsFromYourCoach(state.goals, onOpenGoal) }
-            when (state.first) {
+            val first = state.first
+            // Practice no longer shared: nothing of it to show, goals included.
+            val notShared = readOnly && first is Load.Failed && (first.error as? ApiProblem)?.status == 404
+            if (readOnly && !notShared && first is Load.Loaded) {
+                item { YourGoalsForStudent(state.goals, onOpenGoal, onSetGoal) }
+            } else if (!readOnly && state.goals.isNotEmpty()) {
+                item { GoalsFromYourCoach(state.goals, onOpenGoal) }
+            }
+            when (first) {
                 Load.Loading -> item { Skeleton(blocks = 4, blockHeight = 64) }
-                is Load.Failed -> item { LoadError(R.string.practice_load_error, viewModel::retry) }
+                is Load.Failed ->
+                    if (notShared) {
+                        item { EmptyState(R.string.practice_not_shared) }
+                    } else {
+                        item { LoadError(R.string.practice_load_error, viewModel::retry) }
+                    }
                 is Load.Loaded ->
-                    if (state.sessions.isEmpty()) {
+                    if (state.sessions.isEmpty() && readOnly) {
+                        item { EmptyState(R.string.student_practice_empty) }
+                    } else if (state.sessions.isEmpty()) {
                         item { EmptyState(R.string.practice_empty, action = R.string.log_practice, onAction = onLogPractice) }
                     } else {
-                        item {
-                            Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.md)) {
-                                Button(onClick = onLogPractice, modifier = Modifier.heightIn(min = DesignTokens.touchTarget)) {
-                                    Text(stringResource(R.string.log_practice))
+                        if (!readOnly) {
+                            item {
+                                Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.md)) {
+                                    Button(onClick = onLogPractice, modifier = Modifier.heightIn(min = DesignTokens.touchTarget)) {
+                                        Text(stringResource(R.string.log_practice))
+                                    }
+                                    Text(
+                                        stringResource(R.string.practice_habits_hint),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
                                 }
-                                Text(
-                                    stringResource(R.string.practice_habits_hint),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
                             }
                         }
                         items(state.sessions, key = { it.practiceSessionId }) { session ->
@@ -410,11 +432,14 @@ fun PracticeDetailScreen(
                 } else {
                     SessionDetail(session)
                     feedback(FeedbackTarget.PracticeSession, session.practiceSessionId)
-                    OutlinedButton(
-                        onClick = viewModel::askToDelete,
-                        enabled = online,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
-                    ) { Text(stringResource(R.string.delete_practice), color = MaterialTheme.colorScheme.error) }
+                    // A student's session, for their coach (#208), is read-only.
+                    if (viewModel.studentId == null) {
+                        OutlinedButton(
+                            onClick = viewModel::askToDelete,
+                            enabled = online,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+                        ) { Text(stringResource(R.string.delete_practice), color = MaterialTheme.colorScheme.error) }
+                    }
                 }
             }
         }

@@ -56,6 +56,28 @@ fun FeedbackSection(
     viewModel: FeedbackViewModel = hiltViewModel(key = "feedback-$target-$targetId"),
 ) {
     LaunchedEffect(golferId, target, targetId) { viewModel.start(golferId, target, targetId) }
+    FeedbackWithViewModel(viewModel)
+}
+
+/**
+ * The coach's own feedback thread with a student, under the student's round, reflection or
+ * session (#208): always shown, so the coach can write first.
+ */
+@Composable
+fun CoachFeedbackSection(
+    golferId: UUID,
+    studentName: String,
+    coachId: UUID,
+    target: FeedbackTarget,
+    targetId: UUID,
+    viewModel: FeedbackViewModel = hiltViewModel(key = "coach-feedback-$target-$targetId"),
+) {
+    LaunchedEffect(golferId, target, targetId) { viewModel.startAsCoach(golferId, studentName, coachId, target, targetId) }
+    FeedbackWithViewModel(viewModel)
+}
+
+@Composable
+private fun FeedbackWithViewModel(viewModel: FeedbackViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     FeedbackContent(
         state = state,
@@ -101,9 +123,9 @@ fun FeedbackContent(
         FeedbackView.Failed ->
             SectionCard(R.string.feedback_from_your_coach) { LoadError(R.string.feedback_load_error, actions.onRetry) }
         is FeedbackView.Threads ->
-            SectionCard(R.string.feedback_from_your_coach) {
+            SectionCard(if (view.studentName != null) R.string.feedback_title else R.string.feedback_from_your_coach) {
                 view.threads.forEach { thread ->
-                    Thread(thread, showName = view.threads.size > 1, state, actions, online)
+                    Thread(thread, showName = view.threads.size > 1, view.studentName, state, actions, online)
                 }
             }
     }
@@ -125,6 +147,8 @@ fun FeedbackContent(
 private fun Thread(
     thread: GolferThread,
     showName: Boolean,
+    /** Set for a coach's thread with a student: the other side is the student. */
+    studentName: String?,
     state: FeedbackState,
     actions: FeedbackActions,
     online: Boolean,
@@ -141,12 +165,16 @@ private fun Thread(
         }
         if (thread.messages.isEmpty()) {
             Text(
-                stringResource(R.string.feedback_empty_golfer, name),
+                if (studentName != null) {
+                    stringResource(R.string.feedback_empty_coach)
+                } else {
+                    stringResource(R.string.feedback_empty_golfer, name)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        thread.messages.forEach { Message(it, state, actions, online) }
+        thread.messages.forEach { Message(it, studentName, state, actions, online) }
         val coachId = thread.coachId
         if (thread.canWrite && coachId != null) Composer(coachId, name, state, actions, online)
     }
@@ -155,6 +183,7 @@ private fun Thread(
 @Composable
 private fun Message(
     message: FeedbackMessageResponse,
+    studentName: String?,
     state: FeedbackState,
     actions: FeedbackActions,
     online: Boolean,
@@ -163,6 +192,8 @@ private fun Message(
     val author =
         when {
             message.mine -> stringResource(R.string.feedback_you)
+            // In a coach's thread, what isn't theirs is the student's reply.
+            studentName != null -> studentName
             else -> message.coachName ?: stringResource(R.string.feedback_former_coach)
         }
     val whenText = message.createdAt.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale))

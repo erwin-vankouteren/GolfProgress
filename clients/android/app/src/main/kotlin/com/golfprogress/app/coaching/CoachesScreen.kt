@@ -46,7 +46,7 @@ import com.golfprogress.app.ui.common.isOnline
 import com.golfprogress.app.ui.theme.DesignTokens
 import com.golfprogress.app.ui.theme.LocalPalette
 
-private val sharedLabels =
+internal val sharedLabels =
     mapOf(
         SharedItem.Rounds to R.string.share_rounds,
         SharedItem.Reflections to R.string.share_reflections,

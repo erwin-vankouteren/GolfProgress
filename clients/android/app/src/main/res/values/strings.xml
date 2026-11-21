@@ -512,4 +512,70 @@
         <item quantity="one">(%d round)</item>
         <item quantity="other">(%d rounds)</item>
     </plurals>
+
+    <!-- Coach workspace (#208) -->
+    <string name="students">Students</string>
+    <string name="student">Student</string>
+    <string name="open_students">Your students</string>
+    <string name="students_load_error">Couldn\'t load your students.</string>
+    <string name="students_empty">No students yet. When you accept a golfer\'s invitation, they appear here.</string>
+    <string name="show_more_students">Show more students</string>
+    <string name="student_last_activity">Last activity: %1$s</string>
+    <string name="student_no_activity">No activity yet</string>
+    <plurals name="student_unread_replies">
+        <item quantity="one">%d unread reply</item>
+        <item quantity="other">%d unread replies</item>
+    </plurals>
+    <string name="student_shares">You see: %1$s</string>
+    <string name="stop_coaching">Stop coaching</string>
+    <string name="stop_coaching_of">Stop coaching %1$s</string>
+    <string name="stop_coaching_title">Stop coaching this golfer?</string>
+    <string name="stop_coaching_body">You lose access to what they share straight away. What you wrote for them stays with them.</string>
+    <string name="stop_coaching_failed">Couldn\'t stop coaching this golfer. Please try again.</string>
+    <string name="student_gone">You don\'t coach this golfer any more.</string>
+    <string name="student_overview_load_error">Couldn\'t load this student\'s overview.</string>
+    <string name="student_no_rounds">%1$s hasn\'t logged a round yet. Their scores and next focus appear here after the first.</string>
+    <string name="their_next_focus">Their next focus</string>
+    <string name="recent_rounds">Recent rounds</string>
+    <string name="latest_reflections">Latest reflections</string>
+    <string name="no_reflections_yet">No reflections yet.</string>
+    <string name="reflections_not_shared">%1$s doesn\'t share reflections with you.</string>
+    <string name="practice_not_shared">This golfer doesn\'t share practice with you.</string>
+    <string name="student_practice_empty">No practice logged yet.</string>
+    <string name="student_rounds_empty">No rounds logged yet.</string>
+    <string name="all_rounds">All rounds</string>
+    <string name="practice_sessions">Practice sessions</string>
+    <plurals name="student_baseline_based_on">
+        <item quantity="one">Based on their last round.</item>
+        <item quantity="other">Based on their last %d rounds.</item>
+    </plurals>
+    <string name="student_trend">Fitness score from %1$d to %2$d over their last %3$d scored rounds.</string>
+    <string name="feedback_title">Feedback</string>
+    <string name="feedback_empty_coach">No feedback yet. What did you notice?</string>
+    <string name="your_goals_for_student">Your practice goals</string>
+    <string name="set_practice_goal">Set a practice goal</string>
+    <string name="no_goals_yet">No goals yet. Set one for their next practice sessions.</string>
+    <string name="change_goal">Change goal</string>
+    <string name="remove_goal">Remove goal</string>
+    <string name="remove_goal_title">Remove this goal?</string>
+    <string name="remove_goal_body">Your student no longer sees it. This can\'t be undone.</string>
+    <string name="goal_has_sessions">Sessions count towards this goal, so it can\'t be removed. Change its end date to end it sooner.</string>
+    <string name="goal_no_sessions_coach">No sessions towards it yet.</string>
+    <string name="goal_for_student">For %1$s</string>
+    <string name="goal_title">Title</string>
+    <string name="goal_details">Details (optional)</string>
+    <string name="goal_focus_area_hint">Did it work? compares this stat before and during the goal, and it\'s their next focus while the goal lasts.</string>
+    <string name="goal_no_focus_area">None</string>
+    <string name="goal_any_session_type">Any</string>
+    <string name="goal_target_sessions">Sessions</string>
+    <string name="goal_starts">Starts</string>
+    <string name="goal_ends">Ends</string>
+    <string name="goal_ends_hint">At most 8 weeks after the start.</string>
+    <string name="goal_title_required">Give the goal a title.</string>
+    <string name="goal_end_before_start">The end can\'t be before the start.</string>
+    <string name="goal_end_in_past">The end can\'t be in the past.</string>
+    <string name="goal_target_range">Choose 1 to %1$d sessions.</string>
+    <string name="goal_too_long">A goal can last at most %1$d weeks.</string>
+    <string name="goal_save_failed">Couldn\'t save the goal. Please try again.</string>
+    <string name="goal_offline">You\'re offline. Connect to save the goal.</string>
 </resources>

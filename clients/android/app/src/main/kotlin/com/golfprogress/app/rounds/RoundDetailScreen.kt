@@ -77,6 +77,7 @@ fun RoundDetailScreen(
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
     RoundDetailContent(
         state = state,
+        readOnly = viewModel.studentId != null,
         onRetry = viewModel::retry,
         onEdit = { onEdit(viewModel.roundId) },
         onAskToDelete = viewModel::askToDelete,
@@ -98,6 +99,8 @@ fun RoundDetailContent(
     online: Boolean = isOnline(),
     onAddReflection: () -> Unit = {},
     feedback: FeedbackSlot = NoFeedback,
+    /** A student's round, for their coach (#208): no editing, deleting or reflecting. */
+    readOnly: Boolean = false,
 ) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(DesignTokens.Spacing.lg),
@@ -110,17 +113,19 @@ fun RoundDetailContent(
                 if (detail.value == null) {
                     RoundGone()
                 } else {
-                    Detail(detail.value, onAddReflection, online, feedback)
-                    Button(
-                        onClick = onEdit,
-                        enabled = online,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
-                    ) { Text(stringResource(R.string.edit_round)) }
-                    OutlinedButton(
-                        onClick = onAskToDelete,
-                        enabled = online,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
-                    ) { Text(stringResource(R.string.delete_round), color = MaterialTheme.colorScheme.error) }
+                    Detail(detail.value, onAddReflection, online, feedback, readOnly)
+                    if (!readOnly) {
+                        Button(
+                            onClick = onEdit,
+                            enabled = online,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+                        ) { Text(stringResource(R.string.edit_round)) }
+                        OutlinedButton(
+                            onClick = onAskToDelete,
+                            enabled = online,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+                        ) { Text(stringResource(R.string.delete_round), color = MaterialTheme.colorScheme.error) }
+                    }
                 }
         }
     }
@@ -144,6 +149,7 @@ private fun Detail(
     onAddReflection: () -> Unit,
     online: Boolean,
     feedback: FeedbackSlot,
+    readOnly: Boolean,
 ) {
     val round = detail.round
     Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)) {
@@ -178,7 +184,12 @@ private fun Detail(
 
     StatsCard(round)
     feedback(FeedbackTarget.Round, round.roundId)
-    ReflectionsCard(detail.reflections, onAddReflection, online, feedback)
+    // A coach sees reflections only when they're shared, and can't add one.
+    if (!readOnly) {
+        ReflectionsCard(detail.reflections, onAddReflection, online, feedback)
+    } else if (detail.reflections.isNotEmpty()) {
+        ReflectionsCard(detail.reflections, onAdd = null, online, feedback)
+    }
 }
 
 /** "Hilversum · 18 holes · 88 strokes", or without the course when there's none. */
@@ -260,7 +271,8 @@ private fun StatsCard(round: RoundResponse) {
 @Composable
 private fun ReflectionsCard(
     reflections: List<ReflectionResponse>,
-    onAdd: () -> Unit,
+    /** Null on a student's round. */
+    onAdd: (() -> Unit)?,
     online: Boolean,
     feedback: FeedbackSlot,
 ) {
@@ -272,11 +284,13 @@ private fun ReflectionsCard(
             ReflectionView(it)
             feedback(FeedbackTarget.Reflection, it.reflectionId)
         }
-        OutlinedButton(
-            onClick = onAdd,
-            enabled = online,
-            modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
-        ) { Text(stringResource(if (reflections.isEmpty()) R.string.add_reflection else R.string.add_another_reflection)) }
+        if (onAdd != null) {
+            OutlinedButton(
+                onClick = onAdd,
+                enabled = online,
+                modifier = Modifier.fillMaxWidth().heightIn(min = DesignTokens.touchTarget),
+            ) { Text(stringResource(if (reflections.isEmpty()) R.string.add_reflection else R.string.add_another_reflection)) }
+        }
     }
 }
 
