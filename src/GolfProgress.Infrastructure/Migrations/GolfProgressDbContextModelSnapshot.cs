@@ -783,6 +783,10 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("StripeCustomerId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("Timezone")
                         .HasColumnType("nvarchar(max)");
 
@@ -807,6 +811,10 @@ namespace GolfProgress.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasFilter("[Email] IS NOT NULL");
+
+                    b.HasIndex("StripeCustomerId")
+                        .IsUnique()
+                        .HasFilter("[StripeCustomerId] IS NOT NULL");
 
                     b.ToTable("Users", (string)null);
                 });

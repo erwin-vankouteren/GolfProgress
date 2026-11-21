@@ -31,6 +31,9 @@ public class User
     /// <summary>The weekly email to a coach about their students' activity (#245). On unless switched off.</summary>
     public bool EmailCoachDigest { get; set; } = true;
 
+    /// <summary>The Stripe customer for subscribing on the web (#310); set at the first checkout.</summary>
+    public string? StripeCustomerId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 

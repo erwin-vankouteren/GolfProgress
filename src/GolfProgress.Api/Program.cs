@@ -300,6 +300,9 @@ builder.Services.AddOptions<GolfProgress.Api.Configuration.PaymentsOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 builder.Services.AddScoped<GolfProgress.Api.Services.PlanService>();
+// Subscribing on the web with Stripe (#310).
+builder.Services.AddSingleton<GolfProgress.Api.Services.Payments.IStripeGateway, GolfProgress.Api.Services.Payments.StripeGateway>();
+builder.Services.AddScoped<GolfProgress.Api.Services.Payments.StripeSubscriptions>();
 
 var app = builder.Build();
 

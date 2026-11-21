@@ -24,6 +24,7 @@ public sealed class UsersController : ControllerBase
     private readonly AccountDeletionService _accountDeletion;
     private readonly ILogger<UsersController> _logger;
     private readonly PlanService _plans;
+    private readonly GolfProgress.Api.Services.Payments.StripeSubscriptions _stripe;
 
     public UsersController(
         GolfProgressDbContext db,
@@ -31,9 +32,11 @@ public sealed class UsersController : ControllerBase
         LoginThrottle passwordThrottle,
         AccountDeletionService accountDeletion,
         ILogger<UsersController> logger,
-        PlanService plans)
+        PlanService plans,
+        GolfProgress.Api.Services.Payments.StripeSubscriptions stripe)
     {
         _plans = plans;
+        _stripe = stripe;
         _db = db;
         _hasher = hasher;
         _passwordThrottle = passwordThrottle;
@@ -221,6 +224,7 @@ public sealed class UsersController : ControllerBase
     [HttpDelete("/me", Name = "deleteMe")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     [ResponseHeader(StatusCodes.Status429TooManyRequests, "Retry-After", "integer", "Seconds to wait before retrying.")]
     public async Task<IActionResult> DeleteCurrent([FromBody] DeleteAccountRequest request, CancellationToken ct)
@@ -242,6 +246,19 @@ public sealed class UsersController : ControllerBase
             _hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
         {
             return this.FieldError(nameof(request.Password), "The password is incorrect.");
+        }
+
+        // Nobody should keep paying for an account that's gone (#310): if Stripe can't be reached,
+        // nothing is deleted and they can try again. A Google Play subscription is cancelled in Play.
+        try
+        {
+            await _stripe.CancelAllAsync(userId, ct);
+        }
+        catch (Exception e) when (e is Stripe.StripeException or HttpRequestException)
+        {
+            _logger.LogWarning(e, "Couldn't cancel the Stripe subscription of account {UserId} before deleting it.", userId);
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "Your subscription couldn't be cancelled, so your account wasn't deleted. Please try again.");
         }
 
         await _accountDeletion.DeleteAsync(userId, ct);

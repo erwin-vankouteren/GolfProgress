@@ -85,6 +85,9 @@ public class GolfProgressDbContext : DbContext
             e.Property(x => x.Units).HasConversion<string>();
             e.Property(x => x.TrackingMode).HasConversion<string>();
             e.Property(x => x.Language).HasConversion<string>().HasMaxLength(16);
+            // Stripe sends its customer id with every subscription event: that's how one finds its user.
+            e.Property(x => x.StripeCustomerId).HasMaxLength(64);
+            e.HasIndex(x => x.StripeCustomerId).IsUnique().HasFilter("[StripeCustomerId] IS NOT NULL");
 
             e.Property(x => x.GoalFocus)
                 .HasConversion(stringListConverter, stringListComparer)

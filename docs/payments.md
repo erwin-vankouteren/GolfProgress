@@ -131,10 +131,17 @@ everyone is in the launch period: `plan` is `Trial` and `trialEndsAt` is null.
 
 ## Setup outside the code (yours)
 
-1. **Stripe:** account in the Netherlands; products Premium and Coaching, each with a
-   monthly and a yearly price; Stripe Tax on; Customer Portal configured; a webhook to
-   `https://api.golfprogress.app/webhooks/stripe`. Secret key and webhook secret go into
-   Key Vault. Test mode for staging, live mode for production.
+1. **Stripe**, in test mode for staging and live mode for production:
+   - Products **GolfProgress** (€2.99 a month, €29 a year) and **Coaching** (€1.99, €19),
+     prices including tax. Their four `price_…` ids go into `stripePrices` in
+     `infra/<environment>.bicepparam`.
+   - **Stripe Tax** on, **Customer Portal** set up (switching period, adding and removing
+     Coaching, cancelling, invoices), and the terms' URL `https://<web>/terms` under
+     Settings → Public details: checkout asks to accept it.
+   - A **webhook** to `https://<api>/webhooks/stripe` for `checkout.session.completed` and
+     `customer.subscription.created`, `.updated` and `.deleted`.
+   - Into the environment's Key Vault, **before** setting `stripePrices`: the secret key as
+     `stripe-secret-key`, the webhook's signing secret as `stripe-webhook-secret`.
 2. **Google Play:** the two subscriptions and their base plans in Play Console; a Pub/Sub
    topic for real-time notifications with a push subscription to
    `https://api.golfprogress.app/webhooks/google-play`; the release service account gets

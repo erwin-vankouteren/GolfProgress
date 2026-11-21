@@ -38,6 +38,12 @@ param apiUrl string = ''
 @description('Where alerts go. Empty: no alerts (fine for staging, not for production).')
 param alertEmail string = ''
 
+@description('Stripe price ids, price_… (docs/payments.md → "Setup outside the code"): { premiumMonth, premiumYear, coachingMonth, coachingYear }. Empty leaves subscribing on the web off. Put the secrets in Key Vault first, as stripe-secret-key and stripe-webhook-secret: the settings refer to them.')
+param stripePrices object = {}
+
+@description('When subscriptions start (docs/payments.md → "Existing accounts"), as an ISO date such as 2027-01-15T00:00:00Z. Empty: the free launch period.')
+param paymentsLaunchDate string = ''
+
 var isProduction = environment == 'production'
 var suffix = take(uniqueString(resourceGroup().id), 6)
 var apiName = '${name}-api-${environment}'
@@ -241,11 +247,26 @@ var baseSettings = [
   { name: 'Cors__AllowedOrigins__0', value: webOrigin }
   { name: 'PasswordReset__LinkBaseUrl', value: '${webOrigin}/reset-password' }
   { name: 'CoachInvitations__LinkBaseUrl', value: '${webOrigin}/coach-invitation' }
+  { name: 'Payments__WebAppUrl', value: webOrigin }
   { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }
   { name: 'ClientConfig__MinimumVersions__Ios', value: minimumVersions.ios }
   { name: 'ClientConfig__MinimumVersions__Android', value: minimumVersions.android }
   { name: 'ClientConfig__MinimumVersions__Web', value: minimumVersions.web }
 ]
+
+var paymentSettings = concat(
+  empty(paymentsLaunchDate) ? [] : [{ name: 'Payments__LaunchDate', value: paymentsLaunchDate }],
+  empty(stripePrices)
+    ? []
+    : [
+        { name: 'Payments__Stripe__SecretKey', value: '@Microsoft.KeyVault(${keyVaultRef};SecretName=stripe-secret-key)' }
+        { name: 'Payments__Stripe__WebhookSecret', value: '@Microsoft.KeyVault(${keyVaultRef};SecretName=stripe-webhook-secret)' }
+        { name: 'Payments__Stripe__PremiumMonthPrice', value: stripePrices.premiumMonth }
+        { name: 'Payments__Stripe__PremiumYearPrice', value: stripePrices.premiumYear }
+        { name: 'Payments__Stripe__CoachingMonthPrice', value: stripePrices.coachingMonth }
+        { name: 'Payments__Stripe__CoachingYearPrice', value: stripePrices.coachingYear }
+      ]
+)
 
 var emailSettings = emailConfigured
   ? [
@@ -269,7 +290,7 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
       http20Enabled: true
       alwaysOn: true
       healthCheckPath: '/client-config'
-      appSettings: concat(baseSettings, emailSettings)
+      appSettings: concat(baseSettings, emailSettings, paymentSettings)
     }
   }
 }
