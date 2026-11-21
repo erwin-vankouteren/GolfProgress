@@ -14,3 +14,6 @@ param stripePrices = {
   coachingMonth: 'price_1UeC840mE1am7zBupDhDdcV0'
   coachingYear: 'price_1UeC8r0mE1am7zBu3w2H4X3j'
 }
+// Subscriptions started on staging, to try the trial, read-only and subscribing there:
+// accounts from before have their trial end 30 days later (docs/payments.md).
+param paymentsLaunchDate = '2026-11-01T00:00:00Z'
