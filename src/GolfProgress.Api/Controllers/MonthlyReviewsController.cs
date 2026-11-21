@@ -27,6 +27,7 @@ public sealed class MonthlyReviewsController : ControllerBase
 
     // POST /me/monthly-reviews/generate
     [HttpPost("/me/monthly-reviews/generate", Name = "generateMonthlyReview")]
+    [RequiresSubscription]
     [ProducesResponseType<MonthlyReviewResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

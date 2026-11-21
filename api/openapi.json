@@ -2805,6 +2805,16 @@
           }
         },
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
@@ -3687,6 +3697,16 @@
           }
         },
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Created",
             "headers": {
@@ -3899,6 +3919,16 @@
           }
         ],
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "204": {
             "description": "No Content"
           },
@@ -4277,6 +4307,16 @@
           }
         },
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
@@ -4418,6 +4458,16 @@
           }
         },
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Created",
             "headers": {
@@ -4639,6 +4689,16 @@
           }
         },
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
@@ -4713,6 +4773,16 @@
           }
         ],
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "204": {
             "description": "No Content"
           },
@@ -7200,6 +7270,46 @@
         },
         "additionalProperties": false
       },
+      "SubscriptionResponse": {
+        "required": [
+          "cancelsAt",
+          "coachingAddOn",
+          "period",
+          "renewsAt",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "enum": [
+              "Stripe",
+              "GooglePlay"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "enum": [
+              "Month",
+              "Year"
+            ],
+            "type": "string"
+          },
+          "renewsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "coachingAddOn": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "UnreadFeedbackResponse": {
         "required": [
           "count",
@@ -7491,6 +7601,7 @@
       },
       "UserResponse": {
         "required": [
+          "coaching",
           "createdAt",
           "displayName",
           "email",
@@ -7500,8 +7611,11 @@
           "handicapIndex",
           "hasStudents",
           "language",
+          "plan",
+          "subscription",
           "timezone",
           "trackingMode",
+          "trialEndsAt",
           "typical18Score",
           "units",
           "updatedAt",
@@ -7581,6 +7695,30 @@
           },
           "emailCoachDigest": {
             "type": "boolean"
+          },
+          "plan": {
+            "enum": [
+              "Trial",
+              "Subscribed",
+              "ReadOnly"
+            ],
+            "type": "string"
+          },
+          "trialEndsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "coaching": {
+            "type": "boolean"
+          },
+          "subscription": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionResponse"
+              }
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": false

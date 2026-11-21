@@ -305,7 +305,11 @@ class GolfProgressApiTest {
               "updatedAt": "2026-05-01T09:30:00+00:00",
               "hasStudents": false,
               "emailFeedbackDigest": true,
-              "emailCoachDigest": true
+              "emailCoachDigest": true,
+              "plan": "Trial",
+              "trialEndsAt": null,
+              "coaching": true,
+              "subscription": null
             }
         """
 

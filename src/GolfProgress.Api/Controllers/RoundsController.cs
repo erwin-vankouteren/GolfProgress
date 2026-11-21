@@ -45,6 +45,7 @@ public sealed class RoundsController : ControllerBase
     // and GET /me/dashboard and POST /rounds/{id}/next-lever compute it from the
     // round and the current baseline when asked.
     [HttpPost("/me/rounds", Name = "createRound")]
+    [RequiresSubscription]
     [ProducesResponseType<RoundResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ResponseHeader(StatusCodes.Status201Created, "Location", "string", "URL of the created round.")]
@@ -104,6 +105,7 @@ public sealed class RoundsController : ControllerBase
     // the other rounds it was or now is an input to: see
     // ProgressComputationService.RoundsAffectedBy. All of it is one save.
     [HttpPut("/rounds/{id:guid}", Name = "updateRound")]
+    [RequiresSubscription]
     [ProducesResponseType<RoundResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -139,6 +141,7 @@ public sealed class RoundsController : ControllerBase
     // Deletes the round with its fitness score, micro-wins and reflections (#81), then
     // rescores the rounds it was an input to and the current baseline, in one save.
     [HttpDelete("/rounds/{id:guid}", Name = "deleteRound")]
+    [RequiresSubscription]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Delete(Guid id, CancellationToken ct)

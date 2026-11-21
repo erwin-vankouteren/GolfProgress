@@ -19,6 +19,7 @@ public sealed class ReflectionsController : ControllerBase
 
     // POST /rounds/{roundId}/reflections
     [HttpPost("/rounds/{roundId:guid}/reflections", Name = "createReflection")]
+    [RequiresSubscription]
     [ProducesResponseType<ReflectionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

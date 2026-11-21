@@ -18,6 +18,10 @@ const me = {
   hasStudents: false,
   emailFeedbackDigest: true,
   emailCoachDigest: true,
+  plan: "Trial",
+  trialEndsAt: null,
+  coaching: true,
+  subscription: null,
 };
 
 const emails = { emailFeedbackDigest: true, emailCoachDigest: true };

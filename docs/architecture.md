@@ -383,6 +383,7 @@ Users delete their account in the app (Profile → Delete account), as both stor
 | Feedback threads on their rounds, reflections and sessions, and how far they've read | `FeedbackMessages`, `FeedbackReads` |
 | Their coaches' log entries for messages in those threads, which name the golfer | `Events` (`FeedbackWritten`) |
 | Practice goals their coaches set for them | `PracticeGoals` |
+| What they subscribed to: provider ids, status and dates (no payment details) | `Subscriptions` |
 
 What they wrote or set as a coach stays with the golfers it was written for, without the
 author: feedback and practice goals show as from *a former coach* (`CoachId`, and

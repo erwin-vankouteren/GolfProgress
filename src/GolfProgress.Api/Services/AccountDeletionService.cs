@@ -69,6 +69,9 @@ public sealed class AccountDeletionService
         _db.PracticeGoals.RemoveRange(await _db.PracticeGoals.Where(x => x.GolferId == userId).ToListAsync(ct));
         foreach (var goal in await _db.PracticeGoals.Where(x => x.GolferId != userId && x.CoachId == userId).ToListAsync(ct))
             goal.CoachId = null;
+        // Subscriptions (#309): the records of what they paid for. Cancelling with the provider
+        // comes with Stripe (#310); a Google Play subscription is cancelled in Play by the user.
+        _db.Subscriptions.RemoveRange(await _db.Subscriptions.Where(x => x.UserId == userId).ToListAsync(ct));
         _db.Users.Remove(user);
 
         // One save, so one transaction: the account is deleted entirely or not at all.

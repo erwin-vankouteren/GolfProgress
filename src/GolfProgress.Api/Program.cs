@@ -294,6 +294,12 @@ builder.Services.AddOptions<GolfProgress.Api.Configuration.DigestOptions>()
     .ValidateOnStart();
 builder.Services.AddScoped<GolfProgress.Api.Services.DigestService>();
 builder.Services.AddHostedService<GolfProgress.Api.Services.DigestWorker>();
+// Subscriptions (#309, docs/payments.md): the trial, and what a plan allows.
+builder.Services.AddOptions<GolfProgress.Api.Configuration.PaymentsOptions>()
+    .Bind(builder.Configuration.GetSection(GolfProgress.Api.Configuration.PaymentsOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddScoped<GolfProgress.Api.Services.PlanService>();
 
 var app = builder.Build();
 

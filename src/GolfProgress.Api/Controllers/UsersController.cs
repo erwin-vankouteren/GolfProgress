@@ -23,14 +23,17 @@ public sealed class UsersController : ControllerBase
     private readonly LoginThrottle _passwordThrottle;
     private readonly AccountDeletionService _accountDeletion;
     private readonly ILogger<UsersController> _logger;
+    private readonly PlanService _plans;
 
     public UsersController(
         GolfProgressDbContext db,
         IPasswordHasher<User> hasher,
         LoginThrottle passwordThrottle,
         AccountDeletionService accountDeletion,
-        ILogger<UsersController> logger)
+        ILogger<UsersController> logger,
+        PlanService plans)
     {
+        _plans = plans;
         _db = db;
         _hasher = hasher;
         _passwordThrottle = passwordThrottle;
@@ -56,7 +59,7 @@ public sealed class UsersController : ControllerBase
 
         if (user is null) return NotFound();
 
-        return Ok(ToResponse(user, await HasStudentsAsync(user.UserId, ct)));
+        return Ok(ToResponse(user, await HasStudentsAsync(user.UserId, ct), await _plans.ForAsync(user, ct)));
     }
 
     // PATCH /me
@@ -134,7 +137,7 @@ public sealed class UsersController : ControllerBase
             await _db.SaveChangesAsync(ct);
         }
 
-        return Ok(ToResponse(user, await HasStudentsAsync(user.UserId, ct)));
+        return Ok(ToResponse(user, await HasStudentsAsync(user.UserId, ct), await _plans.ForAsync(user, ct)));
     }
 
     // POST /me/password
@@ -261,7 +264,7 @@ public sealed class UsersController : ControllerBase
     private Task<bool> HasStudentsAsync(Guid userId, CancellationToken ct) =>
         _db.CoachLinks.AnyAsync(l => l.CoachId == userId && l.EndedAt == null, ct);
 
-    private static UserResponse ToResponse(User user, bool hasStudents) => new()
+    private static UserResponse ToResponse(User user, bool hasStudents, PlanState plan) => new()
     {
         UserId = user.UserId,
         Email = user.Email,
@@ -278,5 +281,9 @@ public sealed class UsersController : ControllerBase
         HasStudents = hasStudents,
         EmailFeedbackDigest = user.EmailFeedbackDigest,
         EmailCoachDigest = user.EmailCoachDigest,
+        Plan = plan.Plan.ToString(),
+        TrialEndsAt = plan.TrialEndsAt,
+        Coaching = plan.Coaching,
+        Subscription = SubscriptionResponse.From(plan),
     };
 }

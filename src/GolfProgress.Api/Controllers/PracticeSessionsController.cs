@@ -34,6 +34,7 @@ public sealed class PracticeSessionsController : ControllerBase
 
     // POST /me/practice-sessions
     [HttpPost("/me/practice-sessions", Name = "createPracticeSession")]
+    [RequiresSubscription]
     [ProducesResponseType<PracticeSessionResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ResponseHeader(StatusCodes.Status201Created, "Location", "string", "URL of the created practice session.")]
@@ -142,6 +143,7 @@ public sealed class PracticeSessionsController : ControllerBase
 
     // DELETE /me/practice-sessions/{id}
     [HttpDelete("/me/practice-sessions/{id:guid}", Name = "deletePracticeSession")]
+    [RequiresSubscription]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)

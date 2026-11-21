@@ -29,6 +29,7 @@ public class GolfProgressDbContext : DbContext
     public DbSet<FeedbackRead> FeedbackReads => Set<FeedbackRead>();
     public DbSet<PracticeGoal> PracticeGoals => Set<PracticeGoal>();
     public DbSet<DigestRun> DigestRuns => Set<DigestRun>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -456,6 +457,32 @@ public class GolfProgressDbContext : DbContext
             e.ToTable("DigestRuns");
             e.HasKey(x => new { x.Kind, x.Period });
             e.Property(x => x.Kind).HasConversion<string>().HasMaxLength(16);
+        });
+
+        // ---------- SUBSCRIPTIONS (#309, docs/payments.md). A row per product, kept up to date by the
+        // payment provider's webhooks; they go with the user's account.
+        modelBuilder.Entity<Subscription>(e =>
+        {
+            e.ToTable("Subscriptions");
+            e.HasKey(x => x.SubscriptionId);
+
+            // A webhook finds its row by the provider's id; one row per product in it.
+            e.HasIndex(x => new { x.Source, x.ExternalId, x.Product }).IsUnique();
+            e.HasIndex(x => x.UserId);
+
+            e.Property(x => x.Source).HasConversion<string>().HasMaxLength(16);
+            e.Property(x => x.Product).HasConversion<string>().HasMaxLength(16);
+            e.Property(x => x.Period).HasConversion<string>().HasMaxLength(8);
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+            // A Play purchase token can be long; Stripe ids are short.
+            e.Property(x => x.ExternalId).HasMaxLength(512);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("sysutcdatetime()");
+            e.Ignore(x => x.GivesAccess);
+
+            e.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

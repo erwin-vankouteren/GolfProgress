@@ -146,6 +146,7 @@ object Fixtures {
         hasStudents: Boolean = false,
         emailFeedbackDigest: Boolean = true,
         emailCoachDigest: Boolean = true,
+        plan: UserResponse.Plan = UserResponse.Plan.Trial,
     ) = UserResponse(
         userId = userId,
         email = "erwin@example.test",
@@ -162,6 +163,10 @@ object Fixtures {
         hasStudents = hasStudents,
         emailFeedbackDigest = emailFeedbackDigest,
         emailCoachDigest = emailCoachDigest,
+        plan = plan,
+        trialEndsAt = null,
+        coaching = true,
+        subscription = null,
     )
 
     /** A round as the API returns it after saving [request], scored 72. */

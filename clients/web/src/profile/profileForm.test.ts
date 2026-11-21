@@ -80,6 +80,10 @@ describe("preferences", () => {
     expect(emailPreferencesOf({ emailFeedbackDigest: false, emailCoachDigest: true } as Me)).toEqual({
       emailFeedbackDigest: false,
       emailCoachDigest: true,
+      plan: "Trial",
+      trialEndsAt: null,
+      coaching: true,
+      subscription: null,
     });
   });
 });

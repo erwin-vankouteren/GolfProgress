@@ -19,6 +19,10 @@ const user: Schemas["UserResponse"] = {
   hasStudents: false,
   emailFeedbackDigest: true,
   emailCoachDigest: true,
+  plan: "Trial",
+  trialEndsAt: null,
+  coaching: true,
+  subscription: null,
 };
 
 const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>

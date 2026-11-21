@@ -346,6 +346,13 @@ public sealed class SqlServerPersistenceTests
                     PracticeGoalId = coachGoalId, GolferId = otherUserId, CoachId = userId, Title = "As coach", TargetSessions = 4,
                     StartsOn = new DateOnly(2026, 5, 1), EndsOn = new DateOnly(2026, 5, 20), CreatedAt = DateTimeOffset.UtcNow
                 });
+            // Subscriptions (#309).
+            db.Subscriptions.Add(new Subscription
+            {
+                SubscriptionId = Guid.NewGuid(), UserId = userId, Source = SubscriptionSource.Stripe, ExternalId = "sub_test",
+                Product = SubscriptionProduct.Premium, Period = SubscriptionPeriod.Month, Status = SubscriptionStatus.Active,
+                CurrentPeriodEnd = DateTimeOffset.UtcNow.AddDays(30), UpdatedAt = DateTimeOffset.UtcNow
+            });
             await db.SaveChangesAsync();
         }
 
@@ -396,8 +403,9 @@ public sealed class SqlServerPersistenceTests
                 .SingleAsync();
         }
 
-        // Users, the ten tables with a UserId, coaching's three columns, feedback's five and goals' two.
-        Assert.Equal(21, counts.Count);
+        // Users, the eleven tables with a UserId (subscriptions too), coaching's three columns,
+        // feedback's five and goals' two.
+        Assert.Equal(22, counts.Count);
         return counts;
     }
 

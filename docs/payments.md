@@ -104,12 +104,15 @@ second. The Android app never points to the web to pay (Play's payments policy).
 
 | Table | Columns |
 |---|---|
-| `Users` | Gains `TrialEndsAt` (set at signup; for existing accounts, by the migration) |
 | `Subscriptions` | Id, UserId, Source (Stripe, GooglePlay), ExternalId (Stripe subscription id, or Play purchase token), Product (Premium, Coaching), Period, Status (Active, InGracePeriod, OnHold, Cancelled, Expired), CurrentPeriodEnd, CancelAt, CreatedAt, UpdatedAt |
-| `Users` | Gains `StripeCustomerId` |
+| `Users` | Gains `StripeCustomerId` (with Stripe, #310) |
 
 A user is **Subscribed** while a Premium row is Active or InGracePeriod, and has the
 add-on while a Coaching row is. Webhooks only update rows; the state is derived on read.
+
+The trial isn't stored either: it ends `Payments:TrialDays` (30) after the account was
+created, or after `Payments:LaunchDate`, whichever is later. Until `LaunchDate` is set,
+everyone is in the launch period: `plan` is `Trial` and `trialEndsAt` is null.
 
 ## Privacy, tax and legal
 
@@ -147,7 +150,7 @@ add-on while a Coaching row is. Webhooks only update rows; the state is derived 
 2. **Stripe on the web.**
 3. **Google Play Billing on Android.**
 4. **Coaching as an add-on:** pausing links, the add-on in both checkouts.
-5. **Legal and listings**, then **launch**: the date that starts the existing accounts'
+5. **Legal and listings**, then **launch**: setting `Payments__LaunchDate` on the API's App Service, the date that starts the existing accounts'
    30 days.
 
 ## Open questions

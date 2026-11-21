@@ -1,5 +1,6 @@
 using GolfProgress.Api.OpenApi;
 using Enums = GolfProgress.Domain.Enums;
+using Services = GolfProgress.Api.Services;
 namespace GolfProgress.Api.Contracts.Users
 {
     public sealed class UserResponse
@@ -32,5 +33,18 @@ namespace GolfProgress.Api.Contracts.Users
 
         /// <summary>The weekly email about students' activity, for coaches (#245).</summary>
         public bool EmailCoachDigest { get; init; } = true;
+
+        /// <summary>What the user can do (#309, docs/payments.md): the trial, a subscription, or read-only.</summary>
+        [StringEnum(typeof(Services.Plan))]
+        public string Plan { get; init; } = "Trial";
+
+        /// <summary>When the free trial ends, or ended; null in the launch period, before subscriptions start.</summary>
+        public DateTimeOffset? TrialEndsAt { get; init; }
+
+        /// <summary>Whether coaching works: in the trial, or with the Coaching add-on.</summary>
+        public bool Coaching { get; init; }
+
+        /// <summary>The subscription that gives access; null without one.</summary>
+        public SubscriptionResponse? Subscription { get; init; }
     }
 }
