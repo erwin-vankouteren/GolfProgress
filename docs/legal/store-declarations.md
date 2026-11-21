@@ -11,7 +11,8 @@
 |---|---|---|---|
 | Email address | Create account | Yes | Sign-in, password reset |
 | Name (display name) | Create account, Profile | Yes | Shown in the app |
-| Golf rounds, notes, reflections, practice sessions | Entered by the user | Yes | The service itself |
+| Golf rounds, notes, reflections, practice sessions, practice goals | Entered by the user, or a goal by their coach | Yes | The service itself |
+| Feedback messages between a golfer and their coach (#212) | Written by either of them | Yes | The service itself |
 | Profile details (handicap, typical score, preferences) | Profile | Yes | The service itself |
 | The coach's email address, on an invitation (#183) | Typed in by the golfer | Yes, to the golfer who invites | Sending the invitation |
 | Coach links: who coaches whom, and what's shared | Invitations being accepted | Yes | The service itself |
@@ -73,7 +74,8 @@ than by the golfer's own invitation.
 |---|---|---|---|---|
 | Personal info → Email address (the user's, and optionally the address of a coach they invite) | Yes | No | Required | Account management, App functionality |
 | Personal info → Name | Yes | No | Required | Account management, App functionality |
-| App activity → Other user-generated content (rounds, notes, reflections, practice) | Yes | No | Required | App functionality |
+| App activity → Other user-generated content (rounds, notes, reflections, practice, practice goals) | Yes | No | Required | App functionality |
+| Messages → Other in-app messages (feedback between a golfer and their coach) | Yes | No | Optional | App functionality |
 | App activity → App interactions (activity log) | Yes | No | Required | App functionality, Fraud prevention, security and compliance |
 | App info and performance → Crash logs | Yes | No | Required | App functionality (fixing crashes) |
 | App info and performance → Diagnostics | Yes | No | Required | App functionality |
@@ -98,7 +100,7 @@ analytics or ads SDK.
 |---|---|---|---|
 | Contact Info → Email Address (including a coach's, typed in on an invitation) | Yes | No | App Functionality |
 | Contact Info → Name | Yes | No | App Functionality |
-| User Content → Other User Content (rounds, notes, reflections, practice) | Yes | No | App Functionality |
+| User Content → Other User Content (rounds, notes, reflections, practice, practice goals, feedback messages) | Yes | No | App Functionality |
 | Usage Data → Product Interaction (activity log) | Yes | No | App Functionality |
 | Diagnostics → Crash Data | No | No | App Functionality |
 | Diagnostics → Performance Data | No | No | App Functionality |
@@ -117,5 +119,6 @@ Profile → Delete account).
 - [ ] Crash reporting (#119) is configured as described in "Crash reports" above, with
       Prevent Storing of IP Addresses switched on in both Sentry projects.
 - [ ] The **Decide** items above are settled.
-- [ ] Before coaching is released: the data safety form and App Privacy answers above are
-      entered in Play Console and App Store Connect.
+- [x] Coaching: the data safety form above is entered in Play Console (submitted 2026-11-21,
+      adding Other in-app messages for feedback).
+- [ ] Coaching on iOS: the App Privacy answers above are entered in App Store Connect.
