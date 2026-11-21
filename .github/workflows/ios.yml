@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # The package generates from its own copy of the spec (SwiftPM plugins can't read
       # outside the package). It must be identical to api/openapi.json.
@@ -38,7 +38,7 @@ jobs:
         run: swift --version
 
       - name: Cache SwiftPM
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: clients/ios/Packages/GolfProgressAPI/.build
           key: ${{ runner.os }}-spm-${{ hashFiles('clients/ios/Packages/GolfProgressAPI/Package.swift', 'clients/ios/Packages/GolfProgressAPI/Package.resolved') }}
@@ -59,7 +59,7 @@ jobs:
 
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Show toolchain
         run: xcodebuild -version
@@ -75,7 +75,7 @@ jobs:
         run: swiftlint lint --strict
 
       - name: Cache SwiftPM
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
           key: ${{ runner.os }}-app-spm-${{ hashFiles('clients/ios/project.yml', 'clients/ios/Packages/GolfProgressAPI/Package.swift') }}
