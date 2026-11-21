@@ -1,3 +1,4 @@
+import { SubscriptionSection } from "../subscription/SubscriptionSection";
 import { useMutation } from "@tanstack/react-query";
 import { useId, useState, type FormEvent } from "react";
 import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
@@ -59,6 +60,7 @@ export function ProfilePage() {
         <>
           <DetailsSection me={me.data} />
           <PreferencesSection me={me.data} />
+          <SubscriptionSection me={me.data} />
         </>
       )}
       <CoachesSection />

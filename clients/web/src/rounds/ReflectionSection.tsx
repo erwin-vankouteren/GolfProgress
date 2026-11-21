@@ -1,3 +1,4 @@
+import { useCanChange } from "../subscription/plan";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -28,6 +29,8 @@ export function ReflectionSection({ roundId, Heading }: { roundId: string; Headi
   const reflections = useReflections(roundId);
   // A coach reads a student's reflections (#206): nothing to add, and null when not shared.
   const { readOnly } = useSectionPaths();
+  // And after the trial, nothing new is added (#313).
+  const canChange = useCanChange();
   const [adding, setAdding] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const addButton = useRef<HTMLButtonElement>(null);
@@ -82,7 +85,7 @@ export function ReflectionSection({ roundId, Heading }: { roundId: string; Headi
         </p>
       )}
 
-      {readOnly ? null : adding ? (
+      {!canChange ? null : adding ? (
         <ReflectionForm roundId={roundId} onDone={close} />
       ) : (
         !reflections.isPending && (

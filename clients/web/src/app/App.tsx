@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { ApiProblem, type ApiClient } from "../api";
 import { LanguageProvider } from "../i18n/LanguageProvider";
@@ -23,20 +23,27 @@ export function App({
   appVersion: string;
   children: ReactNode;
 }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30_000,
-            refetchOnWindowFocus: true,
-            // A 4xx won't change on retry, so it shows at once. A server or network error
-            // gets one retry, so the error state appears in about a second, not seven.
-            retry: (failureCount, error) => !(error instanceof ApiProblem && error.status < 500) && failureCount < 1,
-          },
+  const [queryClient] = useState(() => {
+    const client: QueryClient = new QueryClient({
+      // The trial ended while the app was open (#313): GET /me again, so the read-only
+      // banner shows and the actions that would only be refused go away.
+      mutationCache: new MutationCache({
+        onError: (error) => {
+          if (error instanceof ApiProblem && error.status === 402) void client.invalidateQueries({ queryKey: ["me"] });
         },
       }),
-  );
+      defaultOptions: {
+        queries: {
+          staleTime: 30_000,
+          refetchOnWindowFocus: true,
+          // A 4xx won't change on retry, so it shows at once. A server or network error
+          // gets one retry, so the error state appears in about a second, not seven.
+          retry: (failureCount, error) => !(error instanceof ApiProblem && error.status < 500) && failureCount < 1,
+        },
+      },
+    });
+    return client;
+  });
 
   // Signing out drops everything cached for that user.
   useEffect(

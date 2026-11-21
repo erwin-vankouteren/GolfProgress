@@ -1,3 +1,4 @@
+import { useCanChange } from "../subscription/plan";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
@@ -49,6 +50,8 @@ export const sessionTypeLabel = (value: string) => sessionTypeLabels[sessionType
 export function PracticePage() {
   const list = usePracticeList();
   const paths = useSectionPaths();
+  // A coach reads a student's practice (#206), and after the trial nothing new is logged (#313).
+  const canChange = useCanChange();
   const intl = useIntl();
   const sentinel = useRef<HTMLDivElement>(null);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = list;
@@ -63,8 +66,7 @@ export function PracticePage() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // A coach reads a student's practice (#206), and logs none.
-  const logButton = paths.readOnly ? null : (
+  const logButton = !canChange ? null : (
     <Link to="/practice/new" className="button button--primary">
       <FormattedMessage {...messages.logPractice} />
     </Link>
@@ -605,6 +607,7 @@ export function PracticeDetailPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const session = usePracticeSession(sessionId!);
   const paths = useSectionPaths();
+  const canChange = useCanChange();
   const intl = useIntl();
   const api = useApi();
   const navigate = useNavigate();
@@ -699,7 +702,7 @@ export function PracticeDetailPage() {
 
       <FeedbackSection targetType="PracticeSession" targetId={s.practiceSessionId} Heading="h2" />
 
-      {!paths.readOnly && (
+      {canChange && (
         <button
           type="button"
           className="button button--danger-outline"

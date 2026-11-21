@@ -1,3 +1,4 @@
+import { PlanBanner } from "../subscription/SubscriptionSection";
 import { useEffect, useRef, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
@@ -99,6 +100,7 @@ export function AppLayout() {
 
         <main id="main" ref={main} tabIndex={-1} className="app-main">
           <OfflineBanner />
+          <PlanBanner />
           <Outlet />
         </main>
       </div>

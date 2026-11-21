@@ -1,3 +1,4 @@
+import { useCanLog } from "../subscription/plan";
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import { wideScreen } from "../common/media";
@@ -36,6 +37,9 @@ export function LogRoundProvider({ children }: { children: ReactNode }) {
 /** A link to Log round that opens the dialog instead, where there's room for one. */
 export function LogRoundLink({ className, children }: { className?: string; children: ReactNode }) {
   const open = useContext(OpenLogRound);
+  // After the trial, nothing new is logged (#313): the banner says why.
+  const canLog = useCanLog();
+  if (!canLog) return null;
 
   return (
     <Link

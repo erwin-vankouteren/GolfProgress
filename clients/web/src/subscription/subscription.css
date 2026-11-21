@@ -1,0 +1,44 @@
+/* Subscriptions (#313). Tokens only. */
+
+.subscribe-form {
+  display: grid;
+  gap: var(--space-lg);
+  max-width: 32rem;
+}
+
+.subscribe-form p,
+.subscription p {
+  margin: 0;
+}
+
+.subscription {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.subscription-plan {
+  font-weight: var(--font-weight-label);
+}
+
+.choice-with-hint {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.plan-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin: 0;
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.plan-banner p {
+  margin: 0;
+  flex: 1 1 20rem;
+}

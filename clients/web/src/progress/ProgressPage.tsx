@@ -1,3 +1,4 @@
+import { useCanLog } from "../subscription/plan";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useId, useState, type FormEvent, type ReactNode } from "react";
 import { FormattedMessage, FormattedNumber, useIntl, type IntlShape } from "react-intl";
@@ -518,6 +519,8 @@ function Stat({ label, children }: { label: PlainMessage; children: ReactNode })
 // ---------------------------------------------------------------- monthly review
 
 function ReviewSection() {
+  // After the trial, reviews already made can be read but no new one made (#313).
+  const canLog = useCanLog();
   const intl = useIntl();
   const id = useId();
   const monthly = useMonthlyTimeline(trendMonths);
@@ -570,7 +573,7 @@ function ReviewSection() {
               )}
               {/* In one place whether or not there's a review yet, so creating one keeps
                   the form, and its "Review ready." announcement, mounted. */}
-              {!nothingToReview && <ReviewForm key={month} month={month} review={review.data} />}
+              {!nothingToReview && canLog && <ReviewForm key={month} month={month} review={review.data} />}
             </>
           )}
         </>

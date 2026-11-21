@@ -643,6 +643,39 @@ export const plainMessages = defineMessages({
   next: { id: "onboarding.next", defaultMessage: "Next" },
   startLogging: { id: "onboarding.finish", defaultMessage: "Log your first round" },
   skipForNow: { id: "onboarding.skip", defaultMessage: "Skip for now" },
+
+  // Subscriptions (#313, docs/payments.md)
+  subscription: { id: "subscription.title", defaultMessage: "Subscription" },
+  planLaunch: { id: "subscription.launch", defaultMessage: "GolfProgress is free during its launch period." },
+  planReadOnly: { id: "subscription.readOnly", defaultMessage: "Your free trial has ended." },
+  subscribedMonthly: { id: "subscription.monthly", defaultMessage: "Monthly subscription" },
+  subscribedYearly: { id: "subscription.yearly", defaultMessage: "Yearly subscription" },
+  coachingIncluded: { id: "subscription.coachingIncluded", defaultMessage: "Coaching included" },
+  billingPeriod: { id: "subscription.period", defaultMessage: "Pay" },
+  addCoaching: { id: "subscription.addCoaching", defaultMessage: "Add Coaching" },
+  coachingHint: {
+    id: "subscription.coachingHint",
+    defaultMessage: "Invite your coach to follow your rounds and practice, give feedback and set practice goals.",
+  },
+  subscribe: { id: "subscription.subscribe", defaultMessage: "Subscribe" },
+  manageSubscription: { id: "subscription.manage", defaultMessage: "Manage subscription" },
+  managedInGooglePlay: {
+    id: "subscription.googlePlay",
+    defaultMessage: "You subscribed in the Android app. Manage it in Google Play.",
+  },
+  subscriptionUnavailable: { id: "subscription.unavailable", defaultMessage: "Subscribing isn't available yet." },
+  subscriptionPricesError: { id: "subscription.pricesError", defaultMessage: "Couldn't load the prices." },
+  subscribeFailed: { id: "subscription.failed", defaultMessage: "Couldn't open the payment page. Please try again." },
+  subscriptionDone: {
+    id: "subscription.done",
+    defaultMessage: "Thanks for subscribing! It can take a moment to show here.",
+  },
+  offlineCantSubscribe: { id: "subscription.offline", defaultMessage: "You're offline. Connect to subscribe." },
+  readOnlyBanner: {
+    id: "subscription.readOnlyBanner",
+    defaultMessage:
+      "Your free trial has ended. Everything you've logged is still here; subscribe to log new rounds and practice.",
+  },
 });
 
 /** Any message that takes no values, for components that are handed one. */
@@ -1012,6 +1045,28 @@ export const messagesWithValues = {
   focusTooLong: defineMessage<{ max: number }>({
     id: "progress.focusTooLong",
     defaultMessage: "Keep it to {max} characters or fewer.",
+  }),
+  trialEndsOn: defineMessage<{ date: string }>({
+    id: "subscription.trialEnds",
+    defaultMessage: "Your free trial runs until {date}.",
+  }),
+  trialEndingBanner: defineMessage<{ date: string }>({
+    id: "subscription.trialEndingBanner",
+    defaultMessage: "Your free trial ends on {date}. Subscribe to keep logging your golf.",
+  }),
+  pricePerMonth: defineMessage<{ price: string }>({ id: "subscription.perMonth", defaultMessage: "{price} a month" }),
+  pricePerYear: defineMessage<{ price: string }>({ id: "subscription.perYear", defaultMessage: "{price} a year" }),
+  coachingFor: defineMessage<{ price: string }>({
+    id: "subscription.coachingFor",
+    defaultMessage: "Add Coaching, {price}",
+  }),
+  subscriptionRenews: defineMessage<{ date: string }>({
+    id: "subscription.renews",
+    defaultMessage: "Renews on {date}.",
+  }),
+  subscriptionCancels: defineMessage<{ date: string }>({
+    id: "subscription.cancels",
+    defaultMessage: "Ends on {date}: it won't renew.",
   }),
 };
 

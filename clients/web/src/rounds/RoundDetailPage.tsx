@@ -1,3 +1,4 @@
+import { useCanChange } from "../subscription/plan";
 import type { ReactNode } from "react";
 import { FormattedMessage, useIntl, type IntlShape } from "react-intl";
 import { Link, useNavigate, useParams } from "react-router";
@@ -24,7 +25,7 @@ import "./rounds.css";
 export function RoundDetailPage() {
   const { roundId } = useParams<{ roundId: string }>();
   const round = useRound(roundId!);
-  const paths = useSectionPaths();
+  const canChange = useCanChange();
   const summary = useRoundSummary();
   const level = usePaneHeadingLevel();
   const Title = level === 1 ? "h1" : "h2";
@@ -63,7 +64,7 @@ export function RoundDetailPage() {
         <Title>
           <PlayedDate value={round.data.playedAt} />
         </Title>
-        {!paths.readOnly && (
+        {canChange && (
           <Link to={`/rounds/${round.data.roundId}/edit`} className="button">
             <FormattedMessage {...messages.edit} />
           </Link>
