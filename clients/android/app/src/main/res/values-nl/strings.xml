@@ -579,4 +579,8 @@
     <string name="goal_too_long">Een doel duurt hooguit %1$d weken.</string>
     <string name="goal_save_failed">Het doel kon niet worden opgeslagen. Probeer het opnieuw.</string>
     <string name="goal_offline">Je bent offline. Maak verbinding om het doel op te slaan.</string>
+
+    <!-- Coaching as an add-on (#312) -->
+    <string name="coaching_needed">Coaching hoort op dit moment niet bij je abonnement, dus je kunt geen coach uitnodigen.</string>
+    <string name="student_paused">Gepauzeerd: deze golfer heeft op dit moment geen coaching. Je ziet hun golf weer zodra die coaching toevoegt.</string>
 </resources>

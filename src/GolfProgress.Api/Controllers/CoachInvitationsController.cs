@@ -64,6 +64,7 @@ public sealed class CoachInvitationsController : ControllerBase
     //
     // An open invitation to the same address is sent again, with a new link (resent: true).
     [HttpPost("/me/coach-invitations", Name = "inviteCoach")]
+    [RequiresSubscription(Coaching = true)]
     [ProducesResponseType<CoachInvitationResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]

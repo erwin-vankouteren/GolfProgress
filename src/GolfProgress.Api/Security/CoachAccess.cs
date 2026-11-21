@@ -1,3 +1,4 @@
+using GolfProgress.Api.Services;
 using GolfProgress.Domain.Entities;
 using GolfProgress.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -22,17 +23,27 @@ public enum CoachShare
 /// golfer, and its sharing covers what's asked for. Read on every request, so removing a
 /// coach or switching sharing off applies to the next one. Callers answer 404 when it
 /// fails, so a coach can't tell whether a golfer or item exists.
+/// A link is also paused while the golfer has no Coaching, in the trial or as an add-on
+/// (#312, docs/payments.md): it counts as not active until they have it again.
 /// </summary>
 public sealed class CoachAccess
 {
     private readonly GolfProgressDbContext _db;
+    private readonly PlanService _plans;
 
-    public CoachAccess(GolfProgressDbContext db) => _db = db;
+    public CoachAccess(GolfProgressDbContext db, PlanService plans)
+    {
+        _db = db;
+        _plans = plans;
+    }
 
-    /// <summary>The caller's active link to the golfer, with the golfer; null without one.</summary>
-    public Task<CoachLink?> ActiveLinkAsync(Guid coachId, Guid golferId, CancellationToken ct) =>
-        _db.CoachLinks.AsNoTracking().Include(l => l.Golfer)
+    /// <summary>The caller's active link to the golfer, with the golfer; null without one, or while it's paused.</summary>
+    public async Task<CoachLink?> ActiveLinkAsync(Guid coachId, Guid golferId, CancellationToken ct)
+    {
+        var link = await _db.CoachLinks.AsNoTracking().Include(l => l.Golfer)
             .FirstOrDefaultAsync(l => l.CoachId == coachId && l.GolferId == golferId && l.EndedAt == null, ct);
+        return link is not null && await _plans.HasCoachingAsync(golferId, ct) ? link : null;
+    }
 
     /// <summary>The caller's active link to the golfer when it covers [share]; null otherwise.</summary>
     public async Task<CoachLink?> LinkCoveringAsync(Guid coachId, Guid golferId, CoachShare share, CancellationToken ct) =>

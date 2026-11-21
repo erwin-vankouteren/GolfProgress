@@ -46,7 +46,7 @@ fun sharedItems(
         if (sharePractice) add(SharedItem.Practice)
     }
 
-enum class InviteProblem { Failed, CantConnect, TooManyToday }
+enum class InviteProblem { Failed, CantConnect, TooManyToday, CoachingNeeded }
 
 enum class CancelProblem { Failed, CantConnect }
 
@@ -239,6 +239,8 @@ class CoachesViewModel
         private fun inviteProblemOf(e: Exception): InviteProblem =
             when {
                 e is ApiProblem && e.status == 429 -> InviteProblem.TooManyToday
+                // No Coaching after the trial (#312).
+                e is ApiProblem && e.status == 402 -> InviteProblem.CoachingNeeded
                 e is ApiProblem -> InviteProblem.Failed
                 else -> InviteProblem.CantConnect
             }

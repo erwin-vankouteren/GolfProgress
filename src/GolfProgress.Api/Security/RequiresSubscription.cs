@@ -20,9 +20,18 @@ public sealed class RequiresSubscriptionAttribute : Attribute, IFilterFactory, I
     /// <summary>The problem's type, for clients that want more than the status.</summary>
     public const string ProblemType = "https://golfprogress.app/problems/subscription-required";
 
+    /// <summary>The type when it's Coaching that's missing (#312).</summary>
+    public const string CoachingProblemType = "https://golfprogress.app/problems/coaching-required";
+
+    /// <summary>
+    /// Needs Coaching, in the trial or as an add-on (#312), rather than only being able to log:
+    /// for the golfer's side of coaching, such as inviting a coach.
+    /// </summary>
+    public bool Coaching { get; init; }
+
     public bool IsReusable => true;
 
-    public IFilterMetadata CreateInstance(IServiceProvider serviceProvider) => new Filter();
+    public IFilterMetadata CreateInstance(IServiceProvider serviceProvider) => new Filter(Coaching);
 
     public Type Type => typeof(ProblemDetails);
 
@@ -32,7 +41,7 @@ public sealed class RequiresSubscriptionAttribute : Attribute, IFilterFactory, I
     {
     }
 
-    private sealed class Filter : IAsyncActionFilter
+    private sealed class Filter(bool coaching) : IAsyncActionFilter
     {
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
@@ -41,13 +50,15 @@ public sealed class RequiresSubscriptionAttribute : Attribute, IFilterFactory, I
                 .ForUserAsync(http.User.GetUserId(), http.RequestAborted);
 
             // No such user: the endpoint answers that itself.
-            if (plan is { CanLog: false })
+            if (plan is not null && (coaching ? !plan.Coaching : !plan.CanLog))
             {
                 var problem = http.RequestServices.GetRequiredService<ProblemDetailsFactory>().CreateProblemDetails(
                     http,
                     StatusCodes.Status402PaymentRequired,
-                    title: "Your free trial has ended. Subscribe to log and change your golf.",
-                    type: ProblemType);
+                    title: coaching
+                        ? "Add Coaching to your subscription to work with a coach."
+                        : "Your free trial has ended. Subscribe to log and change your golf.",
+                    type: coaching ? CoachingProblemType : ProblemType);
                 context.Result = new ObjectResult(problem) { StatusCode = StatusCodes.Status402PaymentRequired };
                 return;
             }

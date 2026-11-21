@@ -237,6 +237,7 @@ private fun InviteCard(
                         InviteProblem.Failed -> R.string.invite_failed
                         InviteProblem.CantConnect -> R.string.auth_cant_connect
                         InviteProblem.TooManyToday -> R.string.too_many_invitations
+                        InviteProblem.CoachingNeeded -> R.string.coaching_needed
                     },
                 ),
             )

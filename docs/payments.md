@@ -47,8 +47,11 @@ subscribing on another one. The stores' own free-trial offers stay off.
 
 **When Coaching stops** (the add-on lapses, or the golfer drops to read-only), the links
 stay but are **paused**: the coach's routes answer 404 as if the link had ended, and the
-coach's Students list shows the golfer as paused. Renewing resumes them, with nothing
-lost. Feedback and goals already written stay visible to the golfer.
+coach's Students list shows the golfer as paused, without their last activity or unread
+replies; the weekly digest leaves them out. The coach can still end a paused link.
+Renewing resumes them, with nothing lost. Feedback and goals already written stay
+visible to the golfer, but they can't invite a coach or write to one: those answer 402
+with problem type `coaching-required`.
 
 **A coach's own state doesn't matter** for coaching: a coach who never subscribed can
 still read their students' data, write feedback and set goals, as long as the golfer has

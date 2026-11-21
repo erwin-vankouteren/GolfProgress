@@ -210,6 +210,17 @@ class StudentScreensTest {
     }
 
     @Test
+    fun `a paused student says so, and doesn't open`() {
+        var opened: java.util.UUID? = null
+        val viewModel = StudentsViewModel(FakeStudentRepository(students = listOf(Fixtures.student("Ann", paused = true))))
+        themed { StudentsScreen(onOpenStudent = { opened = it }, viewModel = viewModel) }
+
+        compose.onNodeWithText("Paused", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Ann").performClick()
+        assertNull(opened)
+    }
+
+    @Test
     fun `without students, it says how they get here`() {
         val viewModel = StudentsViewModel(FakeStudentRepository())
         themed { StudentsScreen(onOpenStudent = {}, viewModel = viewModel) }

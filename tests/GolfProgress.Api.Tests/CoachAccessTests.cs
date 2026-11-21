@@ -1,5 +1,7 @@
 using GolfProgress.Api.Security;
 using GolfProgress.Domain.Entities;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -104,6 +106,7 @@ public sealed class CoachAccessTests : IAsyncLifetime
 
     public Task DisposeAsync()
     {
+        _launched?.Dispose();
         _factory.Dispose();
         return Task.CompletedTask;
     }
@@ -128,6 +131,7 @@ public sealed class CoachAccessTests : IAsyncLifetime
     [InlineData("a pending invitation")]
     [InlineData("a link the golfer ended")]
     [InlineData("a link the coach ended")]
+    [InlineData("a link paused without Coaching")]
     public async Task WithoutAnActiveLink_EveryProbeIs404_AndChangesNothing(string state)
     {
         var caller = state switch
@@ -141,9 +145,16 @@ public sealed class CoachAccessTests : IAsyncLifetime
             Assert.Equal(HttpStatusCode.NoContent, (await Client(_annId).DeleteAsync($"/me/coaches/{_linkId}")).StatusCode);
         if (state == "a link the coach ended")
             Assert.Equal(HttpStatusCode.NoContent, (await Client(_coachId).DeleteAsync($"/coach/students/{_annId}")).StatusCode);
+        // #312: subscriptions started long ago, and Ann's trial is over without Coaching.
+        if (state == "a link paused without Coaching")
+            await PauseAnnsCoachingAsync();
 
         foreach (var probe in Probes())
+        {
+            // A coach can still end a paused link: the Students list shows it, paused.
+            if (state == "a link paused without Coaching" && probe.Template == StopCoaching) continue;
             await AssertNotFoundAsync(caller, probe);
+        }
 
         await AssertNothingChangedAsync();
     }
@@ -305,7 +316,28 @@ public sealed class CoachAccessTests : IAsyncLifetime
     private static string Normalise(string? rawText) =>
         Regex.Replace("/" + (rawText ?? "").TrimStart('/'), @"\{(\w+)(:[^}]*)?\}", "{$1}");
 
-    private HttpClient Client(Guid userId) => TestWorld.ClientFor(_factory, userId);
+    /// <summary>After <see cref="PauseAnnsCoachingAsync"/>, the app with subscriptions started.</summary>
+    private WebApplicationFactory<Program>? _launched;
+
+    private HttpClient Client(Guid userId)
+    {
+        if (_launched is null) return TestWorld.ClientFor(_factory, userId);
+        var client = _launched.CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", TestWorld.TokenFor(userId));
+        return client;
+    }
+
+    private async Task PauseAnnsCoachingAsync()
+    {
+        await _factory.WithDbAsync(async db =>
+        {
+            (await db.Users.SingleAsync(u => u.UserId == _annId)).CreatedAt = DateTimeOffset.UtcNow.AddDays(-120);
+            await db.SaveChangesAsync();
+        });
+        _launched = _factory.WithWebHostBuilder(b => b.ConfigureServices(s =>
+            s.PostConfigure<GolfProgress.Api.Configuration.PaymentsOptions>(o => o.LaunchDate = DateTimeOffset.UtcNow.AddDays(-90))));
+    }
 
     /// <param name="Template">The method and route, as <see cref="Normalise"/> writes registered routes.</param>
     /// <param name="Changes">Whether a successful request edits or deletes something.</param>

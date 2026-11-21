@@ -17,6 +17,8 @@ public enum FeedbackProblem
     /// <summary>The golfer named no coach, or one who can't see the item.</summary>
     NoSuchCoach,
     HourlyLimit,
+    /// <summary>The golfer has no Coaching (#312): answered 402.</summary>
+    CoachingRequired,
 }
 
 /// <summary>
@@ -29,11 +31,13 @@ public sealed class FeedbackService
 {
     private readonly GolfProgressDbContext _db;
     private readonly CoachAccess _access;
+    private readonly PlanService _plans;
 
-    public FeedbackService(GolfProgressDbContext db, CoachAccess access)
+    public FeedbackService(GolfProgressDbContext db, CoachAccess access, PlanService plans)
     {
         _db = db;
         _access = access;
+        _plans = plans;
     }
 
     /// <summary>What a coach must be shown to see an item of this type.</summary>
@@ -77,6 +81,8 @@ public sealed class FeedbackService
         Guid threadCoach;
         if (callerId == golferId)
         {
+            // Writing to a coach is part of Coaching (#312); what's written stays readable without it.
+            if (!await _plans.HasCoachingAsync(golferId, ct)) return (null, FeedbackProblem.CoachingRequired);
             // Only to a coach who can see it: otherwise nobody would read it.
             if (coachId is not { } named || named == golferId
                 || await _access.LinkCoveringAsync(named, golferId, ShareFor(type), ct) is null)

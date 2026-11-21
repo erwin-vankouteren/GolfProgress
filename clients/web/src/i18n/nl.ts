@@ -569,6 +569,11 @@ export const nl: Record<string, string> = {
   "subscription.failed": "De betaalpagina kon niet worden geopend. Probeer het opnieuw.",
   "subscription.done": "Bedankt voor je abonnement! Het kan even duren voordat het hier staat.",
   "subscription.offline": "Je bent offline. Maak verbinding om je te abonneren.",
+  "subscription.coachingNeeded":
+    "Voeg coaching toe aan je abonnement om een coach uit te nodigen en je coaches je golf te laten volgen.",
+  "subscription.addCoachingLink": "Coaching toevoegen",
+  "students.paused":
+    "Gepauzeerd: deze golfer heeft op dit moment geen coaching. Je ziet hun golf weer zodra die coaching toevoegt.",
   "subscription.readOnlyBanner":
     "Je gratis proefperiode is voorbij. Alles wat je hebt ingevoerd staat er nog; neem een abonnement om nieuwe rondes en trainingen in te voeren.",
   "subscription.trialEnds": "Je gratis proefperiode loopt tot {date}.",

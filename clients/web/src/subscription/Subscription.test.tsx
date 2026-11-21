@@ -31,6 +31,7 @@ const soon = new Date(Date.now() + 10 * 86_400_000).toISOString();
 
 beforeAll(async () => {
   await import("../profile/ProfilePage");
+  await import("../coaching/StudentsPage");
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -185,5 +186,46 @@ describe("read-only after the trial (#313)", () => {
 
     expect(await screen.findByText(/Your free trial ends on/)).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Log round" }).length).toBeGreaterThan(0);
+  });
+});
+
+describe("Coaching as an add-on (#312)", () => {
+  it("tells a golfer without Coaching how to get it, instead of the invite form", async () => {
+    renderSignedIn("/profile", {
+      "GET /me": () => json(200, { ...me, plan: "Subscribed", trialEndsAt: "2026-10-01T00:00:00Z", coaching: false }),
+      "GET /me/coaches": () => json(200, { coaches: [], invitations: [] }),
+    });
+    const coaches = await screen.findByRole("region", { name: "Coaches" });
+
+    expect(await within(coaches).findByText(/Add Coaching to your subscription to invite a coach/)).toBeInTheDocument();
+    expect(within(coaches).getByRole("link", { name: "Add Coaching" })).toHaveAttribute(
+      "href",
+      "/profile#subscription",
+    );
+    expect(within(coaches).queryByRole("button", { name: "Send invitation" })).not.toBeInTheDocument();
+  });
+
+  it("shows a coach a paused student, without a link to their golf", async () => {
+    const student = {
+      golferId: "00000000-0000-0000-0000-00000000000c",
+      displayName: "Sam",
+      lastActivityOn: null,
+      unreadReplies: 0,
+      shareReflections: true,
+      sharePractice: true,
+      paused: true,
+    };
+    renderSignedIn("/students", {
+      "GET /me": () => json(200, { ...me, hasStudents: true }),
+      "GET /coach/students": () =>
+        new Response(JSON.stringify([student]), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "X-Total-Count": "1" },
+        }),
+    });
+
+    expect(await screen.findByText(/Paused: they don't have Coaching at the moment/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sam" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Sam" })).not.toBeInTheDocument();
   });
 });

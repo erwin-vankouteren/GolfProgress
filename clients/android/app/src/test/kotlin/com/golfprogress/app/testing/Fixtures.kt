@@ -389,6 +389,7 @@ object Fixtures {
         unreadReplies: Int = 0,
         shareReflections: Boolean = true,
         sharePractice: Boolean = true,
+        paused: Boolean = false,
     ) = StudentResponse(
         golferId = id,
         displayName = name,
@@ -396,6 +397,7 @@ object Fixtures {
         unreadReplies = unreadReplies,
         shareReflections = shareReflections,
         sharePractice = sharePractice,
+        paused = paused,
     )
 
     fun studentOverview(

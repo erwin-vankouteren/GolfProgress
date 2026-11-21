@@ -22,14 +22,17 @@ public sealed class CoachStudentsController : ControllerBase
     private readonly CoachAccess _access;
     private readonly StudentOverviewService _overview;
     private readonly FeedbackService _feedback;
+    private readonly PlanService _plans;
 
     public CoachStudentsController(
         GolfProgressDbContext db,
         CoachInvitationService invitations,
         CoachAccess access,
         StudentOverviewService overview,
-        FeedbackService feedback)
+        FeedbackService feedback,
+        PlanService plans)
     {
+        _plans = plans;
         _db = db;
         _invitations = invitations;
         _access = access;
@@ -57,6 +60,9 @@ public sealed class CoachStudentsController : ControllerBase
             .Where(l => l.CoachId == coachId && l.EndedAt == null)
             .ToListAsync(ct);
         var golferIds = links.Select(l => l.GolferId).ToList();
+        // Without Coaching, a student's link is paused (#312): listed, but nothing about their golf.
+        var coaching = await _plans.CoachingOfAsync(golferIds, ct);
+        bool Paused(Guid golferId) => !coaching.GetValueOrDefault(golferId);
         // Practice only counts where it's shared: a date is still something the coach sees.
         var sharingPractice = links.Where(l => l.SharePractice).Select(l => l.GolferId).ToList();
 
@@ -87,10 +93,11 @@ public sealed class CoachStudentsController : ControllerBase
             {
                 GolferId = l.GolferId,
                 DisplayName = CoachInvitationService.DisplayNameOf(l.Golfer),
-                LastActivityOn = LastActivityOf(l.GolferId),
-                UnreadReplies = unread.GetValueOrDefault(l.GolferId),
+                LastActivityOn = Paused(l.GolferId) ? null : LastActivityOf(l.GolferId),
+                UnreadReplies = Paused(l.GolferId) ? 0 : unread.GetValueOrDefault(l.GolferId),
                 ShareReflections = l.ShareReflections,
                 SharePractice = l.SharePractice,
+                Paused = Paused(l.GolferId),
             })
             .OrderByDescending(s => s.LastActivityOn)
             .ThenBy(s => s.DisplayName, StringComparer.OrdinalIgnoreCase)

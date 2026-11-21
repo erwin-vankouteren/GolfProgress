@@ -205,11 +205,16 @@ private fun StudentRow(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = DesignTokens.touchTarget)
-                .clickable(role = Role.Button, onClick = onOpen)
+                // Paused without Coaching (#312): nothing of theirs to open.
+                .then(if (student.paused) Modifier else Modifier.clickable(role = Role.Button, onClick = onOpen))
                 .semantics(mergeDescendants = true) {},
     ) {
         Column(Modifier.padding(DesignTokens.Spacing.lg), verticalArrangement = Arrangement.spacedBy(DesignTokens.Spacing.xs)) {
             Text(student.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (student.paused) {
+                Hint(stringResource(R.string.student_paused))
+                return@Column
+            }
             Hint(
                 student.lastActivityOn?.let { stringResource(R.string.student_last_activity, formatDate(it.toString())) }
                     ?: stringResource(R.string.student_no_activity),

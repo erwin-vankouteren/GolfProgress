@@ -578,4 +578,8 @@
     <string name="goal_too_long">A goal can last at most %1$d weeks.</string>
     <string name="goal_save_failed">Couldn\'t save the goal. Please try again.</string>
     <string name="goal_offline">You\'re offline. Connect to save the goal.</string>
+
+    <!-- Coaching as an add-on (#312) -->
+    <string name="coaching_needed">Coaching isn\'t part of your subscription at the moment, so you can\'t invite a coach.</string>
+    <string name="student_paused">Paused: they don\'t have Coaching at the moment. You\'ll see their golf again when they add it.</string>
 </resources>

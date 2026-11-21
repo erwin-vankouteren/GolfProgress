@@ -118,3 +118,14 @@
   align-items: center;
   min-height: var(--touch-target);
 }
+
+/* Without Coaching (#312): instead of the invite form. */
+.coaching-needed {
+  display: grid;
+  gap: var(--space-md);
+  justify-items: start;
+}
+
+.coaching-needed p {
+  margin: 0;
+}

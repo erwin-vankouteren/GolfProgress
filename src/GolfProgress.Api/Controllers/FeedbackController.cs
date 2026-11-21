@@ -39,6 +39,7 @@ public sealed class FeedbackController : ControllerBase
     [ProducesResponseType<FeedbackMessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status402PaymentRequired)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<FeedbackMessageResponse>> Write([FromBody] CreateFeedbackRequest request, CancellationToken ct)
     {
@@ -54,6 +55,10 @@ public sealed class FeedbackController : ControllerBase
             FeedbackProblem.NoSuchCoach => this.FieldError(nameof(request.CoachId), "Choose a coach who can see this."),
             FeedbackProblem.HourlyLimit => Problem(
                 statusCode: StatusCodes.Status429TooManyRequests, title: "Too many messages this hour. Try again later."),
+            FeedbackProblem.CoachingRequired => Problem(
+                statusCode: StatusCodes.Status402PaymentRequired,
+                title: "Add Coaching to your subscription to work with a coach.",
+                type: RequiresSubscriptionAttribute.CoachingProblemType),
             _ => Ok(message),
         };
     }

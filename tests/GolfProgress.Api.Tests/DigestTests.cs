@@ -1,3 +1,4 @@
+using GolfProgress.Api.Configuration;
 using GolfProgress.Api.Email;
 using GolfProgress.Api.Services;
 using GolfProgress.Domain.Entities;
@@ -178,6 +179,38 @@ public sealed class DigestTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, (await PatchMeAsync(_coachId, new { emailCoachDigest = false })).StatusCode);
         await RunAsync(Monday.AddDays(14));
         Assert.Empty(CoachDigests());
+    }
+
+    [Fact]
+    public async Task AStudentWithoutCoaching_IsLeftOutOfTheCoachDigest()
+    {
+        // Subscriptions started long ago (#312): Ann's trial is over and she has no Coaching;
+        // Ben pays for the subscription with Coaching.
+        var launched = _factory.WithWebHostBuilder(b => b.ConfigureServices(s =>
+            s.PostConfigure<PaymentsOptions>(o => o.LaunchDate = DateTimeOffset.UtcNow.AddDays(-90))));
+        await _base.WithDbAsync(async db =>
+        {
+            foreach (var user in db.Users) user.CreatedAt = DateTimeOffset.UtcNow.AddDays(-120);
+            foreach (var product in new[] { SubscriptionProduct.Premium, SubscriptionProduct.Coaching })
+            {
+                db.Subscriptions.Add(new Subscription
+                {
+                    SubscriptionId = Guid.NewGuid(), UserId = _benId, Source = SubscriptionSource.Stripe, ExternalId = "sub_ben",
+                    Product = product, Period = SubscriptionPeriod.Month, Status = SubscriptionStatus.Active,
+                    CurrentPeriodEnd = DateTimeOffset.UtcNow.AddDays(10), UpdatedAt = DateTimeOffset.UtcNow,
+                });
+            }
+            await db.SaveChangesAsync();
+        });
+        await RoundAsync(_annId, Monday.AddDays(-1));
+        await RoundAsync(_benId, Monday.AddDays(-1));
+
+        using (var scope = launched.Services.CreateScope())
+            await scope.ServiceProvider.GetRequiredService<DigestService>().RunDueAsync(Monday, CancellationToken.None);
+
+        var email = Assert.Single(CoachDigests());
+        Assert.DoesNotContain("Ann", email.PlainText);
+        Assert.Contains("- Ben: 1 new round", email.PlainText);
     }
 
     [Fact]

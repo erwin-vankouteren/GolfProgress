@@ -66,8 +66,18 @@ function Student({ student }: { student: Schemas["StudentResponse"] }) {
     <li className="card">
       <div>
         <h2>
-          <Link to={`/students/${student.golferId}`}>{student.displayName}</Link>
+          {/* Paused without Coaching (#312): nothing of theirs to open. */}
+          {student.paused ? (
+            student.displayName
+          ) : (
+            <Link to={`/students/${student.golferId}`}>{student.displayName}</Link>
+          )}
         </h2>
+        {student.paused && (
+          <p className="hint">
+            <FormattedMessage {...messages.studentPaused} />
+          </p>
+        )}
         <p className="hint">
           {student.lastActivityOn ? (
             <FormattedMessage

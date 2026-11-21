@@ -671,6 +671,15 @@ export const plainMessages = defineMessages({
     defaultMessage: "Thanks for subscribing! It can take a moment to show here.",
   },
   offlineCantSubscribe: { id: "subscription.offline", defaultMessage: "You're offline. Connect to subscribe." },
+  coachingNeeded: {
+    id: "subscription.coachingNeeded",
+    defaultMessage: "Add Coaching to your subscription to invite a coach and let your coaches follow your golf.",
+  },
+  addCoachingLink: { id: "subscription.addCoachingLink", defaultMessage: "Add Coaching" },
+  studentPaused: {
+    id: "students.paused",
+    defaultMessage: "Paused: they don't have Coaching at the moment. You'll see their golf again when they add it.",
+  },
   readOnlyBanner: {
     id: "subscription.readOnlyBanner",
     defaultMessage:

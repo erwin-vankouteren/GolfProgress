@@ -685,6 +685,16 @@
           }
         },
         "responses": {
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
@@ -2354,6 +2364,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7485,6 +7505,7 @@
           "displayName",
           "golferId",
           "lastActivityOn",
+          "paused",
           "sharePractice",
           "shareReflections",
           "unreadReplies"
@@ -7511,6 +7532,9 @@
             "type": "boolean"
           },
           "sharePractice": {
+            "type": "boolean"
+          },
+          "paused": {
             "type": "boolean"
           }
         },

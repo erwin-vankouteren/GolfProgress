@@ -12,4 +12,10 @@ public sealed class StudentResponse
     public int UnreadReplies { get; init; }
     public bool ShareReflections { get; init; }
     public bool SharePractice { get; init; }
+
+    /// <summary>
+    /// The golfer has no Coaching now (#312): their data can't be opened until they add it, and
+    /// the last activity and unread replies aren't shown meanwhile.
+    /// </summary>
+    public bool Paused { get; init; }
 }

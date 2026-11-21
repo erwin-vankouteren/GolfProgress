@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useId, useState, type FormEvent } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
+import { Link } from "react-router";
 import { ApiProblem, unwrap, type Schemas } from "../api";
-import { queryKeys, useCoaches } from "../api/queries";
+import { queryKeys, useCoaches, useMe } from "../api/queries";
 import { useApi } from "../app/ApiContext";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 import { LoadError, Skeleton, useOnline } from "../common/states";
@@ -23,6 +24,9 @@ export const sharedLabels: Record<SharedItem, PlainMessage> = {
  */
 export function CoachesSection() {
   const coaches = useCoaches();
+  // Coaching is a paid add-on after the trial (#312): without it, coaches are paused and
+  // nobody new can be invited. Unknown while /me loads: the API refuses anyway.
+  const coaching = useMe().data?.coaching ?? true;
 
   return (
     <Section title={messages.coachesTitle}>
@@ -40,7 +44,18 @@ export function CoachesSection() {
           <PendingInvitations invitations={coaches.data.invitations} />
         </>
       )}
-      <InviteForm />
+      {coaching ? (
+        <InviteForm />
+      ) : (
+        <div className="coaching-needed">
+          <p>
+            <FormattedMessage {...messages.coachingNeeded} />
+          </p>
+          <Link to="/profile#subscription" className="button button--primary">
+            <FormattedMessage {...messages.addCoachingLink} />
+          </Link>
+        </div>
+      )}
     </Section>
   );
 }

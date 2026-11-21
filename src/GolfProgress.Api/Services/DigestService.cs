@@ -29,6 +29,7 @@ public sealed class DigestService
     private readonly DigestOptions _options;
     private readonly Uri _app;
     private readonly ILogger<DigestService> _log;
+    private readonly PlanService _plans;
 
     public DigestService(
         GolfProgressDbContext db,
@@ -36,8 +37,10 @@ public sealed class DigestService
         IEmailSender sender,
         IOptions<DigestOptions> options,
         IOptions<PasswordResetOptions> passwordReset,
-        ILogger<DigestService> log)
+        ILogger<DigestService> log,
+        PlanService plans)
     {
+        _plans = plans;
         _db = db;
         _feedback = feedback;
         _sender = sender;
@@ -148,6 +151,9 @@ public sealed class DigestService
             .Include(l => l.Golfer)
             .Where(l => l.EndedAt == null && l.Coach.EmailCoachDigest && l.Coach.Email != null)
             .ToListAsync(ct);
+        // A student without Coaching is paused (#312): nothing about them goes to the coach.
+        var coaching = await _plans.CoachingOfAsync(links.Select(l => l.GolferId).Distinct().ToList(), ct);
+        links = links.Where(l => coaching.GetValueOrDefault(l.GolferId)).ToList();
         var golferIds = links.Select(l => l.GolferId).Distinct().ToList();
 
         var rounds = await _db.Rounds.AsNoTracking()

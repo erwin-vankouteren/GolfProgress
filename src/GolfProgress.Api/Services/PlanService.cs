@@ -60,6 +60,30 @@ public sealed class PlanService
             : null;
     }
 
+    /// <summary>
+    /// Whether each of these golfers has Coaching (#312): their coaches' links count only while
+    /// they do. Golfers that don't exist are left out.
+    /// </summary>
+    public async Task<Dictionary<Guid, bool>> CoachingOfAsync(IReadOnlyCollection<Guid> golferIds, CancellationToken ct)
+    {
+        if (golferIds.Count == 0) return new Dictionary<Guid, bool>();
+        var signedUp = await _db.Users.AsNoTracking()
+            .Where(u => golferIds.Contains(u.UserId))
+            .Select(u => new { u.UserId, u.CreatedAt })
+            .ToListAsync(ct);
+        var subscriptions = (await _db.Subscriptions.AsNoTracking()
+                .Where(s => golferIds.Contains(s.UserId))
+                .ToListAsync(ct))
+            .ToLookup(s => s.UserId);
+        var now = DateTimeOffset.UtcNow;
+        return signedUp.ToDictionary(
+            u => u.UserId,
+            u => Compute(u.CreatedAt, subscriptions[u.UserId].ToList(), _options, now).Coaching);
+    }
+
+    public async Task<bool> HasCoachingAsync(Guid golferId, CancellationToken ct) =>
+        (await CoachingOfAsync([golferId], ct)).GetValueOrDefault(golferId);
+
     private Task<List<Subscription>> SubscriptionsOfAsync(Guid userId, CancellationToken ct) =>
         _db.Subscriptions.AsNoTracking().Where(s => s.UserId == userId).ToListAsync(ct);
 

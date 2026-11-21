@@ -107,6 +107,11 @@ class CoachesViewModelTest {
         viewModel.send()
         assertEquals(InviteProblem.TooManyToday, viewModel.state.value.inviteProblem)
 
+        // No Coaching after the trial (#312).
+        coaching.failWith = ApiProblem(402)
+        viewModel.send()
+        assertEquals(InviteProblem.CoachingNeeded, viewModel.state.value.inviteProblem)
+
         coaching.failWith = IOException("offline")
         viewModel.send()
         assertEquals(InviteProblem.CantConnect, viewModel.state.value.inviteProblem)
