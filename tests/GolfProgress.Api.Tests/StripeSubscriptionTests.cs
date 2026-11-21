@@ -97,7 +97,9 @@ public sealed class StripeSubscriptionTests : IAsyncLifetime
         Assert.Equal(_annId.ToString(), options.SubscriptionData.Metadata["userId"]);
         Assert.Equal("https://app.example.test/profile?subscription=done", options.SuccessUrl);
         Assert.Equal("required", options.ConsentCollection.TermsOfService);
-        Assert.True(options.AutomaticTax.Enabled);
+        // Off unless asked for: the prices are what customers pay.
+        Assert.False(options.AutomaticTax.Enabled);
+        Assert.Null(options.CustomerUpdate);
 
         await Ann().PostAsJsonAsync("/me/subscription/checkout", new { period = "Month" });
         Assert.Equal(["price_pm"], _stripe.Checkouts[1].LineItems.Select(i => i.Price));

@@ -41,6 +41,9 @@ param alertEmail string = ''
 @description('Stripe price ids, price_… (docs/payments.md → "Setup outside the code"): { premiumMonth, premiumYear, coachingMonth, coachingYear }. Empty leaves subscribing on the web off. Put the secrets in Key Vault first, as stripe-secret-key and stripe-webhook-secret: the settings refer to them.')
 param stripePrices object = {}
 
+@description('Let Stripe Tax add VAT at checkout. Off: the prices are what customers pay, and VAT is accounted for outside Stripe.')
+param stripeAutomaticTax bool = false
+
 @description('When subscriptions start (docs/payments.md → "Existing accounts"), as an ISO date such as 2027-01-15T00:00:00Z. Empty: the free launch period.')
 param paymentsLaunchDate string = ''
 
@@ -265,6 +268,7 @@ var paymentSettings = concat(
         { name: 'Payments__Stripe__PremiumYearPrice', value: stripePrices.premiumYear }
         { name: 'Payments__Stripe__CoachingMonthPrice', value: stripePrices.coachingMonth }
         { name: 'Payments__Stripe__CoachingYearPrice', value: stripePrices.coachingYear }
+        { name: 'Payments__Stripe__AutomaticTax', value: string(stripeAutomaticTax) }
       ]
 )
 

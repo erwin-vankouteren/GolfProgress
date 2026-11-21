@@ -121,8 +121,9 @@ everyone is in the launch period: `plan` is `Trial` and `trialEndsAt` is null.
   deletes the rows; a Play subscription is cancelled in Play by the user (the app says so
   before deleting).
 - **VAT:** as the seller on the web, we charge Dutch VAT, or the customer's country's
-  through the EU One-Stop Shop. Stripe Tax calculates it; registering for OSS is yours to
-  do. On Google Play, Google is the seller and handles VAT.
+  through the EU One-Stop Shop. The prices are what customers pay, VAT included, and the VAT
+  is accounted for outside Stripe (Stripe Tax is off: `stripeAutomaticTax`); registering
+  for OSS is yours to do. On Google Play, Google is the seller and handles VAT.
 - **Right of withdrawal (EU):** 14 days, unless the customer agrees to start straight away
   and gives up that right. Checkout asks for that consent.
 - **Documents to update before launch:** terms → "Price" (plans, renewal, cancelling,
@@ -133,9 +134,10 @@ everyone is in the launch period: `plan` is `Trial` and `trialEndsAt` is null.
 
 1. **Stripe**, in test mode for staging and live mode for production:
    - Products **GolfProgress** (€2.99 a month, €29 a year) and **Coaching** (€1.99, €19),
-     prices including tax. Their four `price_…` ids go into `stripePrices` in
+     the amounts customers pay (set up with tax behaviour "exclusive", so Stripe adds
+     nothing to them). Their four `price_…` ids go into `stripePrices` in
      `infra/<environment>.bicepparam`.
-   - **Stripe Tax** on, **Customer Portal** set up (switching period, adding and removing
+   - **Customer Portal** set up (switching period, adding and removing
      Coaching, cancelling, invoices), and the terms' URL `https://<web>/terms` under
      Settings → Public details: checkout asks to accept it.
    - A **webhook** to `https://<api>/webhooks/stripe` for `checkout.session.completed` and

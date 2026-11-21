@@ -45,8 +45,11 @@ public sealed class StripeOptions
     public string? CoachingMonthPrice { get; set; }
     public string? CoachingYearPrice { get; set; }
 
-    /// <summary>Stripe Tax works out the VAT; it has to be switched on in the Stripe dashboard.</summary>
-    public bool AutomaticTax { get; set; } = true;
+    /// <summary>
+    /// Stripe Tax adds VAT at checkout; it has to be switched on in the Stripe dashboard. Off
+    /// (the default): the prices are what customers pay, VAT included, accounted for outside Stripe.
+    /// </summary>
+    public bool AutomaticTax { get; set; }
 
     /// <summary>
     /// Checkout asks to accept the terms, and with them to start straight away, giving up
